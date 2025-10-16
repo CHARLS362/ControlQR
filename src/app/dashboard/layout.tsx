@@ -1,0 +1,319 @@
+'use client';
+
+import * as React from 'react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import Image from 'next/image';
+
+import {
+  BookCopy,
+  FileText,
+  Home,
+  LogOut,
+  PanelLeft,
+  QrCode,
+  Settings,
+  Users,
+} from 'lucide-react';
+
+import {
+  SidebarProvider,
+  Sidebar,
+  SidebarHeader,
+  SidebarContent,
+  SidebarMenu,
+  SidebarMenuItem,
+  SidebarMenuButton,
+  SidebarFooter,
+  SidebarInset,
+} from '@/components/ui/sidebar';
+import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from '@/components/ui/breadcrumb';
+import { AppLogo } from '@/components/icons';
+import { PlaceHolderImages } from '@/lib/placeholder-images';
+
+function DashboardSidebar() {
+  const pathname = usePathname();
+  const isActive = (path: string) => pathname === path;
+
+  const userAvatar = PlaceHolderImages.find((img) => img.id === 'user-avatar');
+
+  return (
+    <Sidebar
+      variant="sidebar"
+      collapsible="icon"
+      className="group-data-[variant=sidebar]:bg-sidebar group-data-[variant=sidebar]:text-sidebar-foreground group-data-[variant=sidebar]:border-sidebar-border"
+    >
+      <SidebarHeader className="h-16 flex items-center gap-2 p-4">
+        <AppLogo className="size-8 text-sidebar-primary" />
+        <span className="text-xl font-bold font-headline text-sidebar-foreground group-data-[collapsible=icon]:hidden">
+          QRAttendance
+        </span>
+      </SidebarHeader>
+      <SidebarContent>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              asChild
+              isActive={isActive('/dashboard')}
+              tooltip="Dashboard"
+            >
+              <Link href="/dashboard">
+                <Home />
+                <span>Dashboard</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              asChild
+              isActive={isActive('/dashboard/courses')}
+              tooltip="Courses"
+            >
+              <Link href="/dashboard/courses">
+                <BookCopy />
+                <span>Courses</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              asChild
+              isActive={isActive('/dashboard/students')}
+              tooltip="Students"
+            >
+              <Link href="/dashboard/students">
+                <Users />
+                <span>Students</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              asChild
+              isActive={isActive('/dashboard/scan')}
+              tooltip="Scan"
+            >
+              <Link href="/dashboard/scan">
+                <QrCode />
+                <span>Scan Attendance</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              asChild
+              isActive={isActive('/dashboard/reports')}
+              tooltip="Reports"
+            >
+              <Link href="/dashboard/reports">
+                <FileText />
+                <span>Reports</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarContent>
+      <SidebarFooter className="p-4">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              className="w-full justify-start gap-2 p-2 h-auto hover:bg-sidebar-accent"
+            >
+              {userAvatar && (
+                <Image
+                  className="rounded-full"
+                  src={userAvatar.imageUrl}
+                  alt="User Avatar"
+                  width={32}
+                  height={32}
+                  data-ai-hint={userAvatar.imageHint}
+                />
+              )}
+              <div className="text-left group-data-[collapsible=icon]:hidden">
+                <p className="font-medium text-sidebar-foreground">Admin</p>
+                <p className="text-xs text-sidebar-foreground/70">
+                  admin@example.com
+                </p>
+              </div>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent side="right" align="start" sideOffset={12}>
+            <DropdownMenuLabel>My Account</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem>
+              <Settings className="mr-2" />
+              Settings
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <Link href="/">
+              <DropdownMenuItem>
+                <LogOut className="mr-2" />
+                Logout
+              </DropdownMenuItem>
+            </Link>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </SidebarFooter>
+    </Sidebar>
+  );
+}
+
+function DashboardBreadcrumb() {
+  const pathname = usePathname();
+  const segments = pathname.split('/').filter(Boolean);
+
+  return (
+    <Breadcrumb className="hidden md:flex">
+      <BreadcrumbList>
+        <BreadcrumbItem>
+          <BreadcrumbLink asChild>
+            <Link href="/dashboard">Dashboard</Link>
+          </BreadcrumbLink>
+        </BreadcrumbItem>
+        {segments.slice(1).map((segment, index) => (
+          <React.Fragment key={segment}>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              {index === segments.length - 2 ? (
+                <BreadcrumbPage className="capitalize">
+                  {segment.replace('-', ' ')}
+                </BreadcrumbPage>
+              ) : (
+                <BreadcrumbLink asChild>
+                  <Link
+                    href={`/${segments.slice(0, index + 2).join('/')}`}
+                    className="capitalize"
+                  >
+                    {segment.replace('-', ' ')}
+                  </Link>
+                </BreadcrumbLink>
+              )}
+            </BreadcrumbItem>
+          </React.Fragment>
+        ))}
+      </BreadcrumbList>
+    </Breadcrumb>
+  );
+}
+
+export default function DashboardLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const userAvatar = PlaceHolderImages.find((img) => img.id === 'user-avatar');
+  return (
+    <SidebarProvider>
+      <DashboardSidebar />
+      <SidebarInset>
+        <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background/80 backdrop-blur-sm px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button size="icon" variant="outline" className="sm:hidden">
+                <PanelLeft className="h-5 w-5" />
+                <span className="sr-only">Toggle Menu</span>
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left" className="sm:max-w-xs bg-sidebar text-sidebar-foreground border-sidebar-border p-0">
+               <SidebarHeader className="h-16 flex items-center gap-2 p-4">
+                <AppLogo className="size-8 text-sidebar-primary" />
+                <span className="text-xl font-bold font-headline text-sidebar-foreground">
+                  QRAttendance
+                </span>
+              </SidebarHeader>
+              <nav className="grid gap-6 text-lg font-medium p-4">
+                <Link
+                  href="/dashboard"
+                  className="flex items-center gap-4 px-2.5 text-sidebar-foreground/70 hover:text-sidebar-foreground"
+                >
+                  <Home className="h-5 w-5" />
+                  Dashboard
+                </Link>
+                <Link
+                  href="/dashboard/courses"
+                  className="flex items-center gap-4 px-2.5 text-sidebar-foreground/70 hover:text-sidebar-foreground"
+                >
+                  <BookCopy className="h-5 w-5" />
+                  Courses
+                </Link>
+                 <Link
+                  href="/dashboard/students"
+                  className="flex items-center gap-4 px-2.5 text-sidebar-foreground/70 hover:text-sidebar-foreground"
+                >
+                  <Users className="h-5 w-5" />
+                  Students
+                </Link>
+                <Link
+                  href="/dashboard/scan"
+                  className="flex items-center gap-4 px-2.5 text-sidebar-foreground/70 hover:text-sidebar-foreground"
+                >
+                  <QrCode className="h-5 w-5" />
+                  Scan Attendance
+                </Link>
+                <Link
+                  href="/dashboard/reports"
+                  className="flex items-center gap-4 px-2.5 text-sidebar-foreground/70 hover:text-sidebar-foreground"
+                >
+                  <FileText className="h-5 w-5" />
+                  Reports
+                </Link>
+              </nav>
+            </SheetContent>
+          </Sheet>
+          <DashboardBreadcrumb />
+          <div className="relative ml-auto flex-1 md:grow-0" />
+           <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                size="icon"
+                className="overflow-hidden rounded-full"
+              >
+              {userAvatar && (
+                <Image
+                  src={userAvatar.imageUrl}
+                  width={36}
+                  height={36}
+                  alt="Avatar"
+                  className="overflow-hidden rounded-full"
+                  data-ai-hint={userAvatar.imageHint}
+                />
+              )}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>My Account</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem>Settings</DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <Link href="/">
+                <DropdownMenuItem>Logout</DropdownMenuItem>
+              </Link>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </header>
+        <main className="flex flex-1 flex-col gap-4 p-4 sm:px-6 sm:py-0 md:gap-8">
+          {children}
+        </main>
+      </SidebarInset>
+    </SidebarProvider>
+  );
+}

@@ -1,3 +1,58 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "student-1",
+      "description": "Avatar for Liam Johnson",
+      "imageUrl": "https://picsum.photos/seed/1/100/100",
+      "imageHint": "male person"
+    },
+    {
+      "id": "student-2",
+      "description": "Avatar for Olivia Smith",
+      "imageUrl": "https://picsum.photos/seed/2/100/100",
+      "imageHint": "female person"
+    },
+    {
+      "id": "student-3",
+      "description": "Avatar for Noah Williams",
+      "imageUrl": "https://picsum.photos/seed/3/100/100",
+      "imageHint": "male person"
+    },
+    {
+      "id": "student-4",
+      "description": "Avatar for Emma Brown",
+      "imageUrl": "https://picsum.photos/seed/4/100/100",
+      "imageHint": "female person"
+    },
+    {
+      "id": "student-5",
+      "description": "Avatar for Ava Jones",
+      "imageUrl": "https://picsum.photos/seed/5/100/100",
+      "imageHint": "female person"
+    },
+    {
+      "id": "student-6",
+      "description": "Avatar for Lucas Garcia",
+      "imageUrl": "https://picsum.photos/seed/6/100/100",
+      "imageHint": "male person"
+    },
+    {
+      "id": "student-7",
+      "description": "Avatar for Mia Miller",
+      "imageUrl": "https://picsum.photos/seed/7/100/100",
+      "imageHint": "female person"
+    },
+    {
+      "id": "student-8",
+      "description": "Avatar for Ethan Davis",
+      "imageUrl": "https://picsum.photos/seed/8/100/100",
+      "imageHint": "male person"
+    },
+    {
+      "id": "user-avatar",
+      "description": "Default user avatar",
+      "imageUrl": "https://picsum.photos/seed/99/100/100",
+      "imageHint": "person"
+    }
+  ]
 }
