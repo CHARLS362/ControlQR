@@ -122,16 +122,17 @@ export default function ScanPage() {
 
   return (
     <>
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight font-headline">
-          Escanear Asistencia
-        </h1>
-        <p className="text-muted-foreground mt-1">
-          Usa un escáner de códigos de barras para registrar la asistencia.
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight font-headline">
+            Escanear Asistencia
+          </h1>
+          <p className="text-muted-foreground mt-1">
+            Usa un escáner de códigos de barras para registrar la asistencia.
+          </p>
+        </div>
       </div>
-      <div className="flex justify-center">
-        <Card className="w-full max-w-2xl shadow-subtle">
+      <Card className="w-full shadow-subtle">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <QrCode />
@@ -141,10 +142,9 @@ export default function ScanPage() {
               Selecciona un curso y comienza a escanear las credenciales de los estudiantes.
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className='mb-6'>
-                <Select value={selectedCourse} onValueChange={setSelectedCourse}>
-                    <SelectTrigger className="w-full">
+          <CardContent className="flex flex-col items-center gap-6">
+             <Select value={selectedCourse} onValueChange={setSelectedCourse}>
+                    <SelectTrigger className="w-full max-w-sm">
                         <SelectValue placeholder="Seleccionar un curso" />
                     </SelectTrigger>
                     <SelectContent>
@@ -155,7 +155,6 @@ export default function ScanPage() {
                         ))}
                     </SelectContent>
                 </Select>
-            </div>
             
             <Input
               ref={inputRef}
@@ -164,55 +163,56 @@ export default function ScanPage() {
               onKeyDown={handleKeyPress}
               autoFocus
             />
-            <div className="aspect-video bg-foreground rounded-lg overflow-hidden relative flex items-center justify-center">
-              <div className="absolute top-0 left-0 w-full h-full bg-grid-slate-800/[0.2] [mask-image:linear-gradient(0deg,#fff,rgba(255,255,255,0))]"></div>
-              <div className="absolute top-1/2 left-1/2 h-48 w-48 -translate-x-1/2 -translate-y-1/2 rounded-lg border-4 border-dashed border-gray-400"></div>
-              <div
-                className="absolute h-1 w-full bg-green-400/50 shadow-[0_0_10px_2px_#34D399]"
-                style={{
-                  animation: 'scan-line 3s linear infinite',
-                }}
-              ></div>
-              <div className="z-10 text-center p-4">
-                {isLoading && (
+            <div className="w-full max-w-2xl">
+              <div className="aspect-video bg-foreground rounded-lg overflow-hidden relative flex items-center justify-center">
+                <div className="absolute top-0 left-0 w-full h-full bg-grid-slate-800/[0.2] [mask-image:linear-gradient(0deg,#fff,rgba(255,255,255,0))]"></div>
+                <div className="absolute top-1/2 left-1/2 h-48 w-48 -translate-x-1/2 -translate-y-1/2 rounded-lg border-4 border-dashed border-gray-400"></div>
+                <div
+                  className="absolute h-1 w-full bg-green-400/50 shadow-[0_0_10px_2px_#34D399]"
+                  style={{
+                    animation: 'scan-line 3s linear infinite',
+                  }}
+                ></div>
+                <div className="z-10 text-center p-4">
+                  {isLoading && (
+                      <>
+                          <LoaderCircle className="h-24 w-24 text-blue-400 animate-spin mx-auto" />
+                          <p className="text-lg font-semibold text-white mt-4">
+                              Procesando...
+                          </p>
+                      </>
+                  )}
+                  {scanResult?.status === 'success' && !isLoading && (
                     <>
-                        <LoaderCircle className="h-24 w-24 text-blue-400 animate-spin mx-auto" />
-                        <p className="text-lg font-semibold text-white mt-4">
-                            Procesando...
-                        </p>
+                      <CheckCircle className="h-24 w-24 text-green-400 animate-pulse mx-auto" />
+                      <p className="text-lg font-semibold text-white mt-4">
+                        {scanResult.message}
+                      </p>
                     </>
-                )}
-                {scanResult?.status === 'success' && !isLoading && (
-                  <>
-                    <CheckCircle className="h-24 w-24 text-green-400 animate-pulse mx-auto" />
-                    <p className="text-lg font-semibold text-white mt-4">
-                      {scanResult.message}
-                    </p>
-                  </>
-                )}
+                  )}
 
-                {scanResult?.status === 'error' && !isLoading && (
-                  <>
-                    <XCircle className="h-24 w-24 text-red-400 animate-pulse mx-auto" />
-                    <p className="text-lg font-semibold text-white mt-4">
-                      {scanResult.message}
-                    </p>
-                  </>
-                )}
+                  {scanResult?.status === 'error' && !isLoading && (
+                    <>
+                      <XCircle className="h-24 w-24 text-red-400 animate-pulse mx-auto" />
+                      <p className="text-lg font-semibold text-white mt-4">
+                        {scanResult.message}
+                      </p>
+                    </>
+                  )}
 
-                {!isLoading && !scanResult && (
-                    <div className='text-white text-lg font-semibold'>
-                        Esperando escaneo...
-                    </div>
-                )}
+                  {!isLoading && !scanResult && (
+                      <div className='text-white text-lg font-semibold'>
+                          Esperando escaneo...
+                      </div>
+                  )}
+                </div>
               </div>
-            </div>
-            <div className="mt-4 text-center text-sm text-muted-foreground">
-              El sistema está listo para recibir datos del escáner.
+              <div className="mt-4 text-center text-sm text-muted-foreground">
+                El sistema está listo para recibir datos del escáner.
+              </div>
             </div>
           </CardContent>
         </Card>
-      </div>
       <style jsx>{`
         @keyframes scan-line {
           0% {
