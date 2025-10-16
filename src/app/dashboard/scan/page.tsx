@@ -38,9 +38,13 @@ export default function ScanPage() {
       try {
         const response = await fetch('/api/courses');
         const data = await response.json();
-        setCourses(data);
-        if (data.length > 0) {
-            setSelectedCourse(data[0].id);
+        if (Array.isArray(data)) {
+          setCourses(data);
+          if (data.length > 0) {
+              setSelectedCourse(data[0].id);
+          }
+        } else {
+            setCourses([]);
         }
       } catch (error) {
         console.error('Error fetching courses:', error);
@@ -144,7 +148,7 @@ export default function ScanPage() {
                         <SelectValue placeholder="Seleccionar un curso" />
                     </SelectTrigger>
                     <SelectContent>
-                        {courses.map((course) => (
+                        {Array.isArray(courses) && courses.map((course) => (
                         <SelectItem key={course.id} value={course.id}>
                             {course.name}
                         </SelectItem>
