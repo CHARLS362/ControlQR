@@ -50,106 +50,56 @@ import {
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { reasoningToolForAttendanceRecordDeletion } from '@/ai/flows/reasoning-tool-attendance-deletion';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 function DeleteAttendanceDialog({ record }: { record: Attendance }) {
-  const [open, setOpen] = React.useState(false);
-  const [reason, setReason] = React.useState('');
-  const [aiResponse, setAiResponse] = React.useState<{
-    shouldDelete: boolean;
-    reasoning: string;
-  } | null>(null);
-  const [isThinking, setIsThinking] = React.useState(false);
   const { toast } = useToast();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsThinking(true);
-    setAiResponse(null);
-    try {
-      const response = await reasoningToolForAttendanceRecordDeletion({
-        studentId: record.studentId,
-        courseId: record.courseId,
-        date: record.date,
-        reason: reason,
-      });
-      setAiResponse(response);
-    } catch (error) {
-      console.error(error);
-      toast({
-        title: 'Error',
-        description: 'Failed to get reasoning from AI.',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsThinking(false);
-    }
+  const handleDelete = () => {
+    // Here you would typically call an API to delete the record
+    console.log('Deleting record:', record.id);
+    toast({
+      title: 'Registro eliminado',
+      description: 'El registro de asistencia ha sido eliminado.',
+    });
   };
 
-  React.useEffect(() => {
-    if (open) {
-      setReason('');
-      setAiResponse(null);
-      setIsThinking(false);
-    }
-  }, [open]);
-
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive">
-          Delete Record
+    <AlertDialog>
+      <AlertDialogTrigger asChild>
+        <DropdownMenuItem
+          onSelect={(e) => e.preventDefault()}
+          className="text-destructive"
+        >
+          Eliminar Registro
         </DropdownMenuItem>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-[480px]">
-        <form onSubmit={handleSubmit}>
-          <DialogHeader>
-            <DialogTitle>Delete Attendance Record?</DialogTitle>
-            <DialogDescription>
-              Provide a reason for deleting this record. An AI assistant will
-              evaluate if deletion is justified.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label htmlFor="reason">Reason for Deletion</Label>
-              <Textarea
-                id="reason"
-                placeholder="e.g., Student was marked present by mistake."
-                value={reason}
-                onChange={(e) => setReason(e.target.value)}
-                required
-              />
-            </div>
-          </div>
-          {aiResponse && (
-            <Alert variant={aiResponse.shouldDelete ? 'default' : 'destructive'}>
-              <AlertTitle>
-                {aiResponse.shouldDelete ? 'Recommendation: Delete' : 'Recommendation: Do Not Delete'}
-              </AlertTitle>
-              <AlertDescription>{aiResponse.reasoning}</AlertDescription>
-            </Alert>
-          )}
-          <DialogFooter className="mt-4">
-            <Button
-              type="submit"
-              disabled={isThinking || !reason}
-              variant="destructive"
-            >
-              {isThinking ? 'Thinking...' : 'Get Recommendation'}
-            </Button>
-            {aiResponse?.shouldDelete && (
-                <Button onClick={() => {
-                     toast({ title: 'Success', description: 'Record deleted.'});
-                     setOpen(false)
-                }}>Confirm Deletion</Button>
-            )}
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>¿Estás seguro de que quieres eliminar este registro?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Esta acción no se puede deshacer. Esto eliminará permanentemente el registro de asistencia.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+          <AlertDialogAction onClick={handleDelete} className={cn('bg-destructive text-destructive-foreground hover:bg-destructive/90')}>
+            Eliminar
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }
 
@@ -161,25 +111,25 @@ export default function ReportsPage() {
     <>
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight font-headline">Attendance Reports</h1>
+          <h1 className="text-3xl font-bold tracking-tight font-headline">Reportes de Asistencia</h1>
           <p className="text-muted-foreground mt-1">
-            View and export attendance records.
+            Ver y exportar registros de asistencia.
           </p>
         </div>
         <Button>
-          <Download className="mr-2 h-4 w-4" /> Export Report
+          <Download className="mr-2 h-4 w-4" /> Exportar Reporte
         </Button>
       </div>
       <Card className="shadow-subtle">
         <CardHeader>
-          <CardTitle>Filter Records</CardTitle>
+          <CardTitle>Filtrar Registros</CardTitle>
           <CardDescription>
-            Select filters to narrow down attendance records.
+            Selecciona filtros para acotar los registros de asistencia.
           </CardDescription>
           <div className="flex items-center gap-4 pt-4">
             <Select>
               <SelectTrigger className="w-[280px]">
-                <SelectValue placeholder="Select a course" />
+                <SelectValue placeholder="Seleccionar un curso" />
               </SelectTrigger>
               <SelectContent>
                 {courses.map((course) => (
@@ -199,7 +149,7 @@ export default function ReportsPage() {
                   )}
                 >
                   <CalendarIcon className="mr-2 h-4 w-4" />
-                  {date ? format(date, 'PPP') : <span>Pick a date</span>}
+                  {date ? format(date, 'PPP') : <span>Elige una fecha</span>}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0">
@@ -217,12 +167,12 @@ export default function ReportsPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Student</TableHead>
-                <TableHead>Course</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead>Status</TableHead>
+                <TableHead>Estudiante</TableHead>
+                <TableHead>Curso</TableHead>
+                <TableHead>Fecha</TableHead>
+                <TableHead>Estado</TableHead>
                 <TableHead>
-                  <span className="sr-only">Actions</span>
+                  <span className="sr-only">Acciones</span>
                 </TableHead>
               </TableRow>
             </TableHeader>
@@ -263,8 +213,8 @@ export default function ReportsPage() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuItem>View Details</DropdownMenuItem>
+                        <DropdownMenuLabel>Acciones</DropdownMenuLabel>
+                        <DropdownMenuItem>Ver Detalles</DropdownMenuItem>
                         <DeleteAttendanceDialog record={record} />
                       </DropdownMenuContent>
                     </DropdownMenu>
