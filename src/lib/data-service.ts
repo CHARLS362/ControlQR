@@ -1,0 +1,131 @@
+
+import pool from './db';
+import type { Student, Course, Attendance } from './types';
+import { RowDataPacket } from 'mysql2';
+
+// === Funciones para Estudiantes ===
+
+export async function getStudents(): Promise<Student[]> {
+  const [rows] = await pool.query<RowDataPacket[]>("SELECT id, name, email, avatar, registration_date as registrationDate FROM students ORDER BY name ASC");
+  return rows as Student[];
+}
+
+export async function getStudentById(id: string): Promise<Student | null> {
+    const [rows] = await pool.query<RowDataPacket[]>("SELECT id, name, email, avatar, registration_date as registrationDate FROM students WHERE id = ?", [id]);
+    if (rows.length === 0) {
+        return null;
+    }
+    return rows[0] as Student;
+}
+
+
+// === Funciones para Cursos ===
+
+export async function getCourses(): Promise<Course[]> {
+  const [rows] = await pool.query<RowDataPacket[]>(`
+    SELECT c.id, c.name, c.description, COUNT(sc.student_id) as studentCount
+    FROM courses c
+    LEFT JOIN student_courses sc ON c.id = sc.course_id
+    GROUP BY c.id, c.name, c.description
+    ORDER BY c.name ASC
+  `);
+  return rows.map(row => ({
+    ...row,
+    studentCount: Number(row.studentCount)
+  })) as Course[];
+}
+
+// === Funciones para Asistencia ===
+
+export async function getAttendance(): Promise<Attendance[]> {
+    const [rows] = await pool.query<RowDataPacket[]>(`
+        SELECT 
+            a.id,
+            s.name as studentName,
+            s.id as studentId,
+            c.name as courseName,
+            c.id as courseId,
+            a.date,
+            a.status
+        FROM attendance a
+        JOIN students s ON a.student_id = s.id
+        JOIN courses c ON a.course_id = c.id
+        ORDER BY a.date DESC, s.name ASC
+    `);
+    return rows as Attendance[];
+}
+
+export async function getAttendanceForToday(studentId: string, courseId: string): Promise<Attendance | null> {
+    const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+    const [rows] = await pool.query<RowDataPacket[]>(
+        "SELECT * FROM attendance WHERE student_id = ? AND course_id = ? AND DATE(date) = ?",
+        [studentId, courseId, today]
+    );
+    if (rows.length === 0) {
+        return null;
+    }
+    return rows[0] as Attendance;
+}
+
+
+export async function recordAttendance(studentId: string, courseId: string, status: 'Presente' | 'Ausente'): Promise<void> {
+    const now = new Date();
+    await pool.query(
+        "INSERT INTO attendance (student_id, course_id, date, status) VALUES (?, ?, ?, ?)",
+        [studentId, courseId, now, status]
+    );
+}
+
+export async function deleteAttendanceRecord(id: string): Promise<void> {
+    await pool.query("DELETE FROM attendance WHERE id = ?", [id]);
+}
+
+
+// === Funciones para Estadísticas (Dashboard) ===
+
+export async function getDashboardStats() {
+  const [[studentsCount]]: any = await pool.query("SELECT COUNT(*) as count FROM students");
+  const [[coursesCount]]: any = await pool.query("SELECT COUNT(*) as count FROM courses");
+  
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+  const [[presentCount]]: any = await pool.query(
+    "SELECT COUNT(*) as count FROM attendance WHERE status = 'Presente' AND date >= ?",
+    [thirtyDaysAgo]
+  );
+  const [[absentCount]]: any = await pool.query(
+    "SELECT COUNT(*) as count FROM attendance WHERE status = 'Ausente' AND date >= ?",
+    [thirtyDaysAgo]
+  );
+
+  const sixMonthsAgo = new Date();
+  sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+  
+  const [chartDataRows]: any = await pool.query(`
+    SELECT 
+        DATE_FORMAT(date, '%Y-%m') as month,
+        SUM(CASE WHEN status = 'Presente' THEN 1 ELSE 0 END) as present,
+        SUM(CASE WHEN status = 'Ausente' THEN 1 ELSE 0 END) as absent
+    FROM attendance
+    WHERE date >= ?
+    GROUP BY month
+    ORDER BY month ASC;
+  `, [sixMonthsAgo]);
+
+  const monthNames = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
+  const chartData = chartDataRows.map((row: any) => ({
+    month: monthNames[new Date(row.month + '-02').getMonth()], // Add day to parse date correctly
+    present: Number(row.present),
+    absent: Number(row.absent)
+  }));
+
+
+  return {
+    totalStudents: studentsCount.count,
+    totalCourses: coursesCount.count,
+    totalPresent: presentCount.count,
+    totalAbsent: absentCount.count,
+    chartData: chartData
+  };
+}
