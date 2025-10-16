@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Button } from '@/components/ui/button';
@@ -9,39 +10,99 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { CheckCircle, QrCode, XCircle } from 'lucide-react';
+import { CheckCircle, QrCode, XCircle, LoaderCircle } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
+import { useToast } from '@/hooks/use-toast';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import type { Course } from '@/lib/types';
 
 export default function ScanPage() {
-  const [lastScan, setLastScan] = useState<{
-    data: string;
+  const [scanResult, setScanResult] = useState<{
+    message: string;
     status: 'success' | 'error';
   } | null>(null);
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [selectedCourse, setSelectedCourse] = useState<string>('');
+  const [isLoading, setIsLoading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    async function fetchCourses() {
+      try {
+        const response = await fetch('/api/courses');
+        const data = await response.json();
+        setCourses(data);
+        if (data.length > 0) {
+            setSelectedCourse(data[0].id);
+        }
+      } catch (error) {
+        console.error('Error fetching courses:', error);
+        toast({
+            variant: 'destructive',
+            title: 'Error',
+            description: 'No se pudieron cargar los cursos.'
+        })
+      }
+    }
+    fetchCourses();
+  }, [toast]);
+
 
   useEffect(() => {
     // Keep the input focused to capture scanner input
-    inputRef.current?.focus();
-    document.addEventListener('click', () => inputRef.current?.focus());
+    const focusInput = () => inputRef.current?.focus();
+    focusInput();
+    document.addEventListener('click', focusInput);
 
     return () => {
-      document.removeEventListener('click', () => inputRef.current?.focus());
+      document.removeEventListener('click', focusInput);
     };
   }, []);
 
-  const handleScan = (code: string) => {
-    // Here you would typically validate the student ID
-    // For now, we'll simulate a success/error state
-    const isAlreadyRegistered = Math.random() > 0.5;
-
-    if (isAlreadyRegistered) {
-      setLastScan({ data: 'Ya Registrado', status: 'error' });
-    } else {
-      setLastScan({ data: `Éxito: ${code}`, status: 'success' });
+  const handleScan = async (studentId: string) => {
+    if (!selectedCourse) {
+        toast({
+            variant: 'destructive',
+            title: 'Curso no seleccionado',
+            description: 'Por favor, selecciona un curso antes de escanear.'
+        });
+        return;
     }
+    
+    setIsLoading(true);
+    setScanResult(null);
 
-    // Clear the scan status after a few seconds
-    setTimeout(() => setLastScan(null), 3000);
+    try {
+        const response = await fetch('/api/attendance/scan', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ studentId, courseId: selectedCourse }),
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            setScanResult({ message: result.message, status: 'success' });
+        } else {
+            setScanResult({ message: result.message || 'Error desconocido', status: 'error' });
+        }
+
+    } catch (error) {
+        setScanResult({ message: 'No se pudo conectar con el servidor.', status: 'error' });
+    } finally {
+        setIsLoading(false);
+        // Clear the scan status after a few seconds
+        setTimeout(() => setScanResult(null), 4000);
+    }
   };
 
   const handleKeyPress = (event: React.KeyboardEvent<HTMLInputElement>) => {
@@ -54,15 +115,6 @@ export default function ScanPage() {
     }
   };
 
-  const simulateScan = (status: 'success' | 'error') => {
-    if (status === 'success') {
-      handleScan('STU-SIM-001');
-    } else {
-      setLastScan({ data: 'Ya Registrado', status: 'error' });
-      setTimeout(() => setLastScan(null), 3000);
-    }
-  };
-
 
   return (
     <>
@@ -71,7 +123,7 @@ export default function ScanPage() {
           Escanear Asistencia
         </h1>
         <p className="text-muted-foreground mt-1">
-          Usa la cámara para escanear los códigos QR de los estudiantes o un escáner de códigos de barras.
+          Usa un escáner de códigos de barras para registrar la asistencia.
         </p>
       </div>
       <div className="flex justify-center">
@@ -79,13 +131,28 @@ export default function ScanPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <QrCode />
-              Escáner de Código QR
+              Escáner de Asistencia
             </CardTitle>
             <CardDescription>
-              Coloca el código QR del estudiante dentro del marco o escanea con el dispositivo.
+              Selecciona un curso y comienza a escanear las credenciales de los estudiantes.
             </CardDescription>
           </CardHeader>
           <CardContent>
+            <div className='mb-6'>
+                <Select value={selectedCourse} onValueChange={setSelectedCourse}>
+                    <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Seleccionar un curso" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {courses.map((course) => (
+                        <SelectItem key={course.id} value={course.id}>
+                            {course.name}
+                        </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+            </div>
+            
             <Input
               ref={inputRef}
               type="text"
@@ -102,41 +169,42 @@ export default function ScanPage() {
                   animation: 'scan-line 3s linear infinite',
                 }}
               ></div>
-              <div className="z-10 text-center">
-                {lastScan?.status === 'success' && (
+              <div className="z-10 text-center p-4">
+                {isLoading && (
+                    <>
+                        <LoaderCircle className="h-24 w-24 text-blue-400 animate-spin mx-auto" />
+                        <p className="text-lg font-semibold text-white mt-4">
+                            Procesando...
+                        </p>
+                    </>
+                )}
+                {scanResult?.status === 'success' && !isLoading && (
                   <>
                     <CheckCircle className="h-24 w-24 text-green-400 animate-pulse mx-auto" />
                     <p className="text-lg font-semibold text-white mt-4">
-                      {lastScan.data}
+                      {scanResult.message}
                     </p>
                   </>
                 )}
 
-                {lastScan?.status === 'error' && (
+                {scanResult?.status === 'error' && !isLoading && (
                   <>
                     <XCircle className="h-24 w-24 text-red-400 animate-pulse mx-auto" />
                     <p className="text-lg font-semibold text-white mt-4">
-                      {lastScan.data}
+                      {scanResult.message}
                     </p>
                   </>
+                )}
+
+                {!isLoading && !scanResult && (
+                    <div className='text-white text-lg font-semibold'>
+                        Esperando escaneo...
+                    </div>
                 )}
               </div>
             </div>
             <div className="mt-4 text-center text-sm text-muted-foreground">
-              O conecta un escáner compatible como ZKTeco ZKB207.
-            </div>
-            <div className="mt-4 flex justify-center gap-4">
-              <Button
-                variant="secondary"
-                onClick={() => simulateScan('success')}
-              >
-                <CheckCircle className="mr-2 h-4 w-4" />
-                Simular Éxito
-              </Button>
-              <Button variant="destructive" onClick={() => simulateScan('error')}>
-                <XCircle className="mr-2 h-4 w-4" />
-                Simular Fallo
-              </Button>
+              El sistema está listo para recibir datos del escáner.
             </div>
           </CardContent>
         </Card>
