@@ -3,7 +3,7 @@ export type Student = {
   name: string;
   email: string;
   avatar: string;
-  registrationDate: string;
+  registrationDate: string; // Should be ISO 8601 string date
 };
 
 export type Course = {
@@ -19,6 +19,6 @@ export type Attendance = {
   studentId: string;
   courseName: string;
   courseId: string;
-  date: string;
+  date: string; // Should be ISO 8601 string date
   status: 'Presente' | 'Ausente';
 };

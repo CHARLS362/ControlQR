@@ -1,15 +1,14 @@
 
 import { NextResponse } from 'next/server';
-import { getConnection } from '@/lib/db';
+import { getCourses } from '@/lib/data-service';
 
 export async function GET() {
   try {
-    const connection = await getConnection();
-    const [rows] = await connection.execute('SELECT id, name, description, (SELECT COUNT(*) FROM inscriptions WHERE course_id = courses.id) as studentCount FROM courses');
-    await connection.end();
-    return NextResponse.json(rows);
+    const courses = await getCourses();
+    return NextResponse.json(courses);
   } catch (error) {
     console.error(error);
-    return NextResponse.json({ message: 'Error al obtener los cursos' }, { status: 500 });
+    const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+    return NextResponse.json({ message: 'Error al obtener los cursos', error: errorMessage }, { status: 500 });
   }
 }

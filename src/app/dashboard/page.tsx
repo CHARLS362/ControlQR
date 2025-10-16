@@ -15,16 +15,8 @@ import {
   ChartTooltipContent,
 } from '@/components/ui/chart';
 import { BookCopy, Users, CheckCircle, XCircle } from 'lucide-react';
-import { courses, students, attendance } from '@/lib/data';
-
-const chartData = [
-  { month: 'Enero', present: 186, absent: 30 },
-  { month: 'Febrero', present: 305, absent: 20 },
-  { month: 'Marzo', present: 237, absent: 50 },
-  { month: 'Abril', present: 273, absent: 40 },
-  { month: 'Mayo', present: 209, absent: 60 },
-  { month: 'Junio', present: 214, absent: 70 },
-];
+import React from 'react';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const chartConfig = {
   present: {
@@ -37,11 +29,96 @@ const chartConfig = {
   },
 };
 
+type Stats = {
+    totalStudents: number;
+    totalCourses: number;
+    totalPresent: number;
+    totalAbsent: number;
+    chartData: { month: string, present: number, absent: number }[];
+}
+
 export default function Dashboard() {
-  const totalStudents = students.length;
-  const totalCourses = courses.length;
-  const totalPresent = attendance.filter((a) => a.status === 'Present').length;
-  const totalAbsent = attendance.filter((a) => a.status === 'Absent').length;
+  const [stats, setStats] = React.useState<Stats | null>(null);
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    async function fetchStats() {
+      try {
+        const response = await fetch('/api/stats/dashboard');
+        if (!response.ok) {
+          throw new Error('Failed to fetch stats');
+        }
+        const data = await response.json();
+        setStats(data);
+      } catch (error) {
+        console.error("Error fetching dashboard stats:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchStats();
+  }, []);
+
+  if (loading || !stats) {
+    return (
+      <div className="flex flex-col gap-8 py-8">
+        <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total de Estudiantes</CardTitle>
+              <Users className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <Skeleton className="h-8 w-16 mb-1" />
+              <Skeleton className="h-4 w-48" />
+            </CardContent>
+          </Card>
+           <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total de Cursos</CardTitle>
+              <BookCopy className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <Skeleton className="h-8 w-16 mb-1" />
+              <Skeleton className="h-4 w-44" />
+            </CardContent>
+          </Card>
+           <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total de Presentes</CardTitle>
+              <CheckCircle className="h-4 w-4 text-green-500" />
+            </CardHeader>
+            <CardContent>
+               <Skeleton className="h-8 w-16 mb-1" />
+               <Skeleton className="h-4 w-32" />
+            </CardContent>
+          </Card>
+           <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total de Ausentes</CardTitle>
+              <XCircle className="h-4 w-4 text-red-500" />
+            </CardHeader>
+            <CardContent>
+                <Skeleton className="h-8 w-16 mb-1" />
+                <Skeleton className="h-4 w-32" />
+            </CardContent>
+          </Card>
+        </div>
+        <Card className="shadow-subtle">
+          <CardHeader>
+            <Skeleton className="h-8 w-64" />
+            <Skeleton className="h-5 w-96 mt-2" />
+          </CardHeader>
+          <CardContent>
+            <Skeleton className="min-h-[200px] w-full" />
+          </CardContent>
+          <CardFooter>
+            <Skeleton className="h-4 w-80" />
+          </CardFooter>
+        </Card>
+      </div>
+    )
+  }
 
   return (
     <div className="flex flex-col gap-8 py-8">
@@ -52,7 +129,7 @@ export default function Dashboard() {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{totalStudents}</div>
+            <div className="text-2xl font-bold">{stats.totalStudents}</div>
             <p className="text-xs text-muted-foreground">+2 desde el mes pasado</p>
           </CardContent>
         </Card>
@@ -62,7 +139,7 @@ export default function Dashboard() {
             <BookCopy className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{totalCourses}</div>
+            <div className="text-2xl font-bold">{stats.totalCourses}</div>
             <p className="text-xs text-muted-foreground">+1 desde el último semestre</p>
           </CardContent>
         </Card>
@@ -72,7 +149,7 @@ export default function Dashboard() {
             <CheckCircle className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{totalPresent}</div>
+            <div className="text-2xl font-bold">{stats.totalPresent}</div>
             <p className="text-xs text-muted-foreground">en los últimos 30 días</p>
           </CardContent>
         </Card>
@@ -82,7 +159,7 @@ export default function Dashboard() {
             <XCircle className="h-4 w-4 text-red-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{totalAbsent}</div>
+            <div className="text-2xl font-bold">{stats.totalAbsent}</div>
             <p className="text-xs text-muted-foreground">en los últimos 30 días</p>
           </CardContent>
         </Card>
@@ -96,7 +173,7 @@ export default function Dashboard() {
         </CardHeader>
         <CardContent>
           <ChartContainer config={chartConfig} className="min-h-[200px] w-full">
-            <BarChart accessibilityLayer data={chartData}>
+            <BarChart accessibilityLayer data={stats.chartData}>
               <CartesianGrid vertical={false} />
               <XAxis
                 dataKey="month"

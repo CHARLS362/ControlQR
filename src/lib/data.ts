@@ -1,3 +1,5 @@
+// This file is no longer in use, as data is now fetched from the database.
+// It is kept for reference purposes.
 import type { Student, Course, Attendance } from './types';
 
 export const students: Student[] = [

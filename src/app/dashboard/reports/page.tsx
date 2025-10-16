@@ -31,26 +31,13 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { Calendar as CalendarIcon, Download, MoreHorizontal } from 'lucide-react';
-import { attendance, courses } from '@/lib/data';
-import type { Attendance } from '@/lib/types';
+import { Calendar as CalendarIcon, Download, MoreHorizontal, LoaderCircle } from 'lucide-react';
+import type { Attendance, Course } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { useToast } from '@/hooks/use-toast';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -62,17 +49,36 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import { useToast } from '@/hooks/use-toast';
+import { Skeleton } from '@/components/ui/skeleton';
 
-function DeleteAttendanceDialog({ record }: { record: Attendance }) {
+
+function DeleteAttendanceDialog({ record, onRecordDeleted }: { record: Attendance, onRecordDeleted: (id: string) => void }) {
   const { toast } = useToast();
 
-  const handleDelete = () => {
-    // Here you would typically call an API to delete the record
-    console.log('Deleting record:', record.id);
-    toast({
-      title: 'Registro eliminado',
-      description: 'El registro de asistencia ha sido eliminado.',
-    });
+  const handleDelete = async () => {
+    try {
+      const response = await fetch(`/api/attendance/${record.id}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        throw new Error('No se pudo eliminar el registro.');
+      }
+
+      toast({
+        title: 'Registro eliminado',
+        description: 'El registro de asistencia ha sido eliminado.',
+      });
+      onRecordDeleted(record.id);
+    } catch (error) {
+      console.error('Error deleting record:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Ocurrió un error al eliminar.',
+      });
+    }
   };
 
   return (
@@ -105,7 +111,67 @@ function DeleteAttendanceDialog({ record }: { record: Attendance }) {
 
 
 export default function ReportsPage() {
-  const [date, setDate] = React.useState<Date>();
+  const [attendance, setAttendance] = React.useState<Attendance[]>([]);
+  const [courses, setCourses] = React.useState<Course[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const { toast } = useToast();
+
+  const [date, setDate] = React.useState<Date | undefined>();
+  const [selectedCourse, setSelectedCourse] = React.useState<string>('');
+
+  React.useEffect(() => {
+    async function fetchData() {
+      setLoading(true);
+      try {
+        const [attendanceRes, coursesRes] = await Promise.all([
+          fetch('/api/attendance'),
+          fetch('/api/courses'),
+        ]);
+
+        if (!attendanceRes.ok || !coursesRes.ok) {
+          throw new Error('Error al cargar los datos');
+        }
+
+        const attendanceData = await attendanceRes.json();
+        const coursesData = await coursesRes.json();
+
+        setAttendance(attendanceData);
+        setCourses(coursesData);
+      } catch (error) {
+        console.error(error);
+        toast({
+          variant: 'destructive',
+          title: 'Error',
+          description: 'No se pudieron cargar los reportes.'
+        });
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchData();
+  }, [toast]);
+
+  const handleRecordDeleted = (deletedId: string) => {
+    setAttendance(prev => prev.filter(record => record.id !== deletedId));
+  };
+  
+  const filteredAttendance = React.useMemo(() => {
+    return attendance
+      .filter((record) => {
+        if (!selectedCourse) return true;
+        return record.courseId === selectedCourse;
+      })
+      .filter((record) => {
+        if (!date) return true;
+        // Compare only the date part, ignoring time
+        const recordDate = new Date(record.date);
+        recordDate.setUTCHours(0, 0, 0, 0);
+        const filterDate = new Date(date);
+        filterDate.setUTCHours(0, 0, 0, 0);
+        return recordDate.getTime() === filterDate.getTime();
+      });
+  }, [attendance, selectedCourse, date]);
+
 
   return (
     <>
@@ -126,14 +192,15 @@ export default function ReportsPage() {
           <CardDescription>
             Selecciona filtros para acotar los registros de asistencia.
           </CardDescription>
-          <div className="flex items-center gap-4 pt-4">
-            <Select>
-              <SelectTrigger className="w-[280px]">
+          <div className="flex flex-wrap items-center gap-4 pt-4">
+            <Select value={selectedCourse} onValueChange={setSelectedCourse}>
+              <SelectTrigger className="w-full sm:w-[280px]">
                 <SelectValue placeholder="Seleccionar un curso" />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="">Todos los cursos</SelectItem>
                 {courses.map((course) => (
-                  <SelectItem key={course.id} value={course.id}>
+                  <SelectItem key={course.id} value={String(course.id)}>
                     {course.name}
                   </SelectItem>
                 ))}
@@ -144,7 +211,7 @@ export default function ReportsPage() {
                 <Button
                   variant={'outline'}
                   className={cn(
-                    'w-[280px] justify-start text-left font-normal',
+                    'w-full sm:w-[280px] justify-start text-left font-normal',
                     !date && 'text-muted-foreground'
                   )}
                 >
@@ -177,50 +244,68 @@ export default function ReportsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {attendance.map((record: Attendance) => (
-                <TableRow key={record.id}>
-                  <TableCell className="font-medium">
-                    {record.studentName}
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {record.courseName}
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {record.date}
-                  </TableCell>
-                  <TableCell>
-                    <Badge
-                      variant={
-                        record.status === 'Presente' ? 'default' : 'destructive'
-                      }
-                      className={
-                        record.status === 'Presente' ? 'bg-emerald-500/80 hover:bg-emerald-500 text-white' : ''
-                      }
-                    >
-                      {record.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          aria-haspopup="true"
-                          size="icon"
-                          variant="ghost"
-                        >
-                          <MoreHorizontal className="h-4 w-4" />
-                          <span className="sr-only">Alternar menú</span>
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-                        <DropdownMenuItem>Ver Detalles</DropdownMenuItem>
-                        <DeleteAttendanceDialog record={record} />
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+              {loading ? (
+                Array.from({ length: 5 }).map((_, index) => (
+                   <TableRow key={index}>
+                    <TableCell><Skeleton className="h-5 w-32" /></TableCell>
+                    <TableCell><Skeleton className="h-5 w-48" /></TableCell>
+                    <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                    <TableCell><Skeleton className="h-6 w-20 rounded-full" /></TableCell>
+                    <TableCell><Skeleton className="h-8 w-8" /></TableCell>
+                  </TableRow>
+                ))
+              ) : filteredAttendance.length > 0 ? (
+                filteredAttendance.map((record: Attendance) => (
+                  <TableRow key={record.id}>
+                    <TableCell className="font-medium">
+                      {record.studentName}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {record.courseName}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {new Date(record.date).toLocaleDateString()}
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        variant={
+                          record.status === 'Presente' ? 'default' : 'destructive'
+                        }
+                        className={
+                          record.status === 'Presente' ? 'bg-emerald-500/80 hover:bg-emerald-500 text-white' : ''
+                        }
+                      >
+                        {record.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            aria-haspopup="true"
+                            size="icon"
+                            variant="ghost"
+                          >
+                            <MoreHorizontal className="h-4 w-4" />
+                            <span className="sr-only">Alternar menú</span>
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuLabel>Acciones</DropdownMenuLabel>
+                          <DropdownMenuItem>Ver Detalles</DropdownMenuItem>
+                          <DeleteAttendanceDialog record={record} onRecordDeleted={handleRecordDeleted} />
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={5} className="h-24 text-center">
+                    No se encontraron resultados.
                   </TableCell>
                 </TableRow>
-              ))}
+              )}
             </TableBody>
           </Table>
         </CardContent>
