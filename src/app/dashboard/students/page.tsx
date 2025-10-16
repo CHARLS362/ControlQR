@@ -36,7 +36,7 @@ import { MoreHorizontal, PlusCircle, Upload } from 'lucide-react';
 import { students } from '@/lib/data';
 import type { Student } from '@/lib/types';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
-import { PlaceholderQrCode } from '@/components/icons';
+import { QRCodeSVG } from 'qrcode.react';
 import { Badge } from '@/components/ui/badge';
 
 export default function StudentsPage() {
@@ -139,8 +139,15 @@ export default function StudentsPage() {
                               Este código QR único se utiliza para escanear la asistencia.
                             </DialogDescription>
                           </DialogHeader>
-                          <div className="flex items-center justify-center p-4">
-                            <PlaceholderQrCode className="w-64 h-64" />
+                          <div className="flex items-center justify-center p-4 bg-white rounded-md">
+                            <QRCodeSVG 
+                              value={student.id} 
+                              size={256}
+                              bgColor={"#ffffff"}
+                              fgColor={"#000000"}
+                              level={"L"}
+                              includeMargin={false}
+                            />
                           </div>
                            <div className="text-center text-sm text-muted-foreground">
                                 ID de Estudiante: <Badge variant="secondary">{student.id}</Badge>
