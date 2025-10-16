@@ -38,6 +38,8 @@ import type { Student } from '@/lib/types';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { QRCodeSVG } from 'qrcode.react';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import Barcode from 'react-barcode';
 
 export default function StudentsPage() {
   const getAvatar = (avatarId: string) => {
@@ -125,31 +127,44 @@ export default function StudentsPage() {
                             <DropdownMenuLabel>Acciones</DropdownMenuLabel>
                             <DropdownMenuItem>Editar</DropdownMenuItem>
                             <DialogTrigger asChild>
-                              <DropdownMenuItem>Ver Código QR</DropdownMenuItem>
+                              <DropdownMenuItem>Ver Códigos</DropdownMenuItem>
                             </DialogTrigger>
                             <DropdownMenuItem className="text-destructive">
                               Eliminar
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
-                        <DialogContent className="sm:max-w-[425px]">
+                        <DialogContent className="sm:max-w-md">
                           <DialogHeader>
-                            <DialogTitle>Código QR para {student.name}</DialogTitle>
+                            <DialogTitle>Códigos para {student.name}</DialogTitle>
                             <DialogDescription>
-                              Este código QR único se utiliza para escanear la asistencia.
+                              Usa cualquiera de estos códigos para escanear la asistencia.
                             </DialogDescription>
                           </DialogHeader>
-                          <div className="flex items-center justify-center p-4 bg-white rounded-md">
-                            <QRCodeSVG 
-                              value={student.id} 
-                              size={256}
-                              bgColor={"#ffffff"}
-                              fgColor={"#000000"}
-                              level={"L"}
-                              includeMargin={false}
-                            />
-                          </div>
-                           <div className="text-center text-sm text-muted-foreground">
+                          <Tabs defaultValue="qr" className="w-full">
+                            <TabsList className="grid w-full grid-cols-2">
+                              <TabsTrigger value="qr">Código QR</TabsTrigger>
+                              <TabsTrigger value="barcode">Código de Barras</TabsTrigger>
+                            </TabsList>
+                            <TabsContent value="qr">
+                              <div className="flex flex-col items-center justify-center p-4 bg-white rounded-md mt-4">
+                                <QRCodeSVG 
+                                  value={student.id} 
+                                  size={256}
+                                  bgColor={"#ffffff"}
+                                  fgColor={"#000000"}
+                                  level={"L"}
+                                  includeMargin={false}
+                                />
+                              </div>
+                            </TabsContent>
+                            <TabsContent value="barcode">
+                               <div className="flex flex-col items-center justify-center p-4 bg-white rounded-md mt-4">
+                                <Barcode value={student.id} />
+                              </div>
+                            </TabsContent>
+                          </Tabs>
+                           <div className="text-center text-sm text-muted-foreground pt-4">
                                 ID de Estudiante: <Badge variant="secondary">{student.id}</Badge>
                             </div>
                         </DialogContent>
