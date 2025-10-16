@@ -6,14 +6,14 @@ export default function ScanPage() {
   return (
     <>
        <div>
-          <h1 className="text-3xl font-bold tracking-tight font-headline">Scan Attendance</h1>
-          <p className="text-muted-foreground mt-1">Use the camera to scan student QR codes and record attendance.</p>
+          <h1 className="text-3xl font-bold tracking-tight font-headline">Escanear Asistencia</h1>
+          <p className="text-muted-foreground mt-1">Usa la cámara para escanear los códigos QR de los estudiantes y registrar la asistencia.</p>
       </div>
       <div className="flex justify-center">
         <Card className="w-full max-w-2xl shadow-subtle">
             <CardHeader>
-                <CardTitle className="flex items-center gap-2"><QrCode/>QR Code Scanner</CardTitle>
-                <CardDescription>Position the student's QR code within the frame.</CardDescription>
+                <CardTitle className="flex items-center gap-2"><QrCode/>Escáner de Código QR</CardTitle>
+                <CardDescription>Coloca el código QR del estudiante dentro del marco.</CardDescription>
             </CardHeader>
             <CardContent>
                 <div className="aspect-video bg-foreground rounded-lg overflow-hidden relative flex items-center justify-center">
@@ -28,19 +28,19 @@ export default function ScanPage() {
                     <div className="z-10 text-center">
                         {/* Example of success state */}
                         {/* <CheckCircle className="h-24 w-24 text-green-400 animate-pulse"/>
-                        <p className="text-lg font-semibold text-white mt-4">Scan Successful: John Doe</p> */}
+                        <p className="text-lg font-semibold text-white mt-4">Escaneo Exitoso: John Doe</p> */}
 
                         {/* Example of failure state */}
                         {/* <XCircle className="h-24 w-24 text-red-400 animate-pulse"/>
-                        <p className="text-lg font-semibold text-white mt-4">Already Checked In</p> */}
+                        <p className="text-lg font-semibold text-white mt-4">Ya Registrado</p> */}
                     </div>
                 </div>
                  <div className="mt-4 text-center text-sm text-muted-foreground">
-                    Or connect a compatible scanner like ZKTeco ZKB207.
+                    O conecta un escáner compatible como ZKTeco ZKB207.
                 </div>
                  <div className="mt-4 flex justify-center gap-4">
-                    <Button variant="secondary"><CheckCircle className="mr-2 h-4 w-4"/>Simulate Success</Button>
-                    <Button variant="destructive"><XCircle className="mr-2 h-4 w-4"/>Simulate Failure</Button>
+                    <Button variant="secondary"><CheckCircle className="mr-2 h-4 w-4"/>Simular Éxito</Button>
+                    <Button variant="destructive"><XCircle className="mr-2 h-4 w-4"/>Simular Fallo</Button>
                 </div>
             </CardContent>
         </Card>

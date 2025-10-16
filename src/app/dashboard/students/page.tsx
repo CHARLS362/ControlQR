@@ -48,34 +48,34 @@ export default function StudentsPage() {
     <>
       <div className="flex items-center justify-between">
          <div>
-          <h1 className="text-3xl font-bold tracking-tight font-headline">Students</h1>
-          <p className="text-muted-foreground mt-1">Manage student registration and information.</p>
+          <h1 className="text-3xl font-bold tracking-tight font-headline">Estudiantes</h1>
+          <p className="text-muted-foreground mt-1">Gestionar el registro y la información de los estudiantes.</p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline">
-            <Upload className="mr-2 h-4 w-4" /> Bulk Upload
+            <Upload className="mr-2 h-4 w-4" /> Carga Masiva
           </Button>
           <Button>
-            <PlusCircle className="mr-2 h-4 w-4" /> Add Student
+            <PlusCircle className="mr-2 h-4 w-4" /> Añadir Estudiante
           </Button>
         </div>
       </div>
       <Card className="shadow-subtle">
         <CardHeader>
-          <CardTitle>Student Roster</CardTitle>
+          <CardTitle>Lista de Estudiantes</CardTitle>
           <CardDescription>
-            List of all registered students.
+            Lista de todos los estudiantes registrados.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Registration Date</TableHead>
+                <TableHead>Nombre</TableHead>
+                <TableHead>Correo Electrónico</TableHead>
+                <TableHead>Fecha de Registro</TableHead>
                 <TableHead>
-                  <span className="sr-only">Actions</span>
+                  <span className="sr-only">Acciones</span>
                 </TableHead>
               </TableRow>
             </TableHeader>
@@ -118,32 +118,32 @@ export default function StudentsPage() {
                               variant="ghost"
                             >
                               <MoreHorizontal className="h-4 w-4" />
-                              <span className="sr-only">Toggle menu</span>
+                              <span className="sr-only">Alternar menú</span>
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                            <DropdownMenuItem>Edit</DropdownMenuItem>
+                            <DropdownMenuLabel>Acciones</DropdownMenuLabel>
+                            <DropdownMenuItem>Editar</DropdownMenuItem>
                             <DialogTrigger asChild>
-                              <DropdownMenuItem>View QR Code</DropdownMenuItem>
+                              <DropdownMenuItem>Ver Código QR</DropdownMenuItem>
                             </DialogTrigger>
                             <DropdownMenuItem className="text-destructive">
-                              Delete
+                              Eliminar
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
                         <DialogContent className="sm:max-w-[425px]">
                           <DialogHeader>
-                            <DialogTitle>QR Code for {student.name}</DialogTitle>
+                            <DialogTitle>Código QR para {student.name}</DialogTitle>
                             <DialogDescription>
-                              This unique QR code is used for attendance scanning.
+                              Este código QR único se utiliza para escanear la asistencia.
                             </DialogDescription>
                           </DialogHeader>
                           <div className="flex items-center justify-center p-4">
                             <PlaceholderQrCode className="w-64 h-64" />
                           </div>
                            <div className="text-center text-sm text-muted-foreground">
-                                Student ID: <Badge variant="secondary">{student.id}</Badge>
+                                ID de Estudiante: <Badge variant="secondary">{student.id}</Badge>
                             </div>
                         </DialogContent>
                       </Dialog>

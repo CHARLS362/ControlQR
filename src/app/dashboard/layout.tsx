@@ -72,11 +72,11 @@ function DashboardSidebar() {
             <SidebarMenuButton
               asChild
               isActive={isActive('/dashboard')}
-              tooltip="Dashboard"
+              tooltip="Panel de Control"
             >
               <Link href="/dashboard">
                 <Home />
-                <span>Dashboard</span>
+                <span>Panel de Control</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
@@ -84,11 +84,11 @@ function DashboardSidebar() {
             <SidebarMenuButton
               asChild
               isActive={isActive('/dashboard/courses')}
-              tooltip="Courses"
+              tooltip="Cursos"
             >
               <Link href="/dashboard/courses">
                 <BookCopy />
-                <span>Courses</span>
+                <span>Cursos</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
@@ -96,11 +96,11 @@ function DashboardSidebar() {
             <SidebarMenuButton
               asChild
               isActive={isActive('/dashboard/students')}
-              tooltip="Students"
+              tooltip="Estudiantes"
             >
               <Link href="/dashboard/students">
                 <Users />
-                <span>Students</span>
+                <span>Estudiantes</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
@@ -108,11 +108,11 @@ function DashboardSidebar() {
             <SidebarMenuButton
               asChild
               isActive={isActive('/dashboard/scan')}
-              tooltip="Scan"
+              tooltip="Escanear"
             >
               <Link href="/dashboard/scan">
                 <QrCode />
-                <span>Scan Attendance</span>
+                <span>Escanear Asistencia</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
@@ -120,11 +120,11 @@ function DashboardSidebar() {
             <SidebarMenuButton
               asChild
               isActive={isActive('/dashboard/reports')}
-              tooltip="Reports"
+              tooltip="Reportes"
             >
               <Link href="/dashboard/reports">
                 <FileText />
-                <span>Reports</span>
+                <span>Reportes</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
@@ -141,7 +141,7 @@ function DashboardSidebar() {
                 <Image
                   className="rounded-full"
                   src={userAvatar.imageUrl}
-                  alt="User Avatar"
+                  alt="Avatar de usuario"
                   width={32}
                   height={32}
                   data-ai-hint={userAvatar.imageHint}
@@ -156,17 +156,17 @@ function DashboardSidebar() {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent side="right" align="start" sideOffset={12}>
-            <DropdownMenuLabel>My Account</DropdownMenuLabel>
+            <DropdownMenuLabel>Mi Cuenta</DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem>
               <Settings className="mr-2" />
-              Settings
+              Configuración
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <Link href="/">
               <DropdownMenuItem>
                 <LogOut className="mr-2" />
-                Logout
+                Cerrar Sesión
               </DropdownMenuItem>
             </Link>
           </DropdownMenuContent>
@@ -180,12 +180,20 @@ function DashboardBreadcrumb() {
   const pathname = usePathname();
   const segments = pathname.split('/').filter(Boolean);
 
+  const translatedSegments: { [key: string]: string } = {
+    dashboard: 'Panel de Control',
+    courses: 'Cursos',
+    students: 'Estudiantes',
+    scan: 'Escanear Asistencia',
+    reports: 'Reportes',
+  };
+
   return (
     <Breadcrumb className="hidden md:flex">
       <BreadcrumbList>
         <BreadcrumbItem>
           <BreadcrumbLink asChild>
-            <Link href="/dashboard">Dashboard</Link>
+            <Link href="/dashboard">Panel de Control</Link>
           </BreadcrumbLink>
         </BreadcrumbItem>
         {segments.slice(1).map((segment, index) => (
@@ -194,7 +202,7 @@ function DashboardBreadcrumb() {
             <BreadcrumbItem>
               {index === segments.length - 2 ? (
                 <BreadcrumbPage className="capitalize">
-                  {segment.replace('-', ' ')}
+                  {translatedSegments[segment] || segment.replace('-', ' ')}
                 </BreadcrumbPage>
               ) : (
                 <BreadcrumbLink asChild>
@@ -202,7 +210,7 @@ function DashboardBreadcrumb() {
                     href={`/${segments.slice(0, index + 2).join('/')}`}
                     className="capitalize"
                   >
-                    {segment.replace('-', ' ')}
+                    {translatedSegments[segment] || segment.replace('-', ' ')}
                   </Link>
                 </BreadcrumbLink>
               )}
@@ -229,7 +237,7 @@ export default function DashboardLayout({
             <SheetTrigger asChild>
               <Button size="icon" variant="outline" className="sm:hidden">
                 <PanelLeft className="h-5 w-5" />
-                <span className="sr-only">Toggle Menu</span>
+                <span className="sr-only">Alternar Menú</span>
               </Button>
             </SheetTrigger>
             <SheetContent side="left" className="sm:max-w-xs bg-sidebar text-sidebar-foreground border-sidebar-border p-0">
@@ -245,35 +253,35 @@ export default function DashboardLayout({
                   className="flex items-center gap-4 px-2.5 text-sidebar-foreground/70 hover:text-sidebar-foreground"
                 >
                   <Home className="h-5 w-5" />
-                  Dashboard
+                  Panel de Control
                 </Link>
                 <Link
                   href="/dashboard/courses"
                   className="flex items-center gap-4 px-2.5 text-sidebar-foreground/70 hover:text-sidebar-foreground"
                 >
                   <BookCopy className="h-5 w-5" />
-                  Courses
+                  Cursos
                 </Link>
                  <Link
                   href="/dashboard/students"
                   className="flex items-center gap-4 px-2.5 text-sidebar-foreground/70 hover:text-sidebar-foreground"
                 >
                   <Users className="h-5 w-5" />
-                  Students
+                  Estudiantes
                 </Link>
                 <Link
                   href="/dashboard/scan"
                   className="flex items-center gap-4 px-2.5 text-sidebar-foreground/70 hover:text-sidebar-foreground"
                 >
                   <QrCode className="h-5 w-5" />
-                  Scan Attendance
+                  Escanear Asistencia
                 </Link>
                 <Link
                   href="/dashboard/reports"
                   className="flex items-center gap-4 px-2.5 text-sidebar-foreground/70 hover:text-sidebar-foreground"
                 >
                   <FileText className="h-5 w-5" />
-                  Reports
+                  Reportes
                 </Link>
               </nav>
             </SheetContent>
@@ -300,12 +308,12 @@ export default function DashboardLayout({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuLabel>My Account</DropdownMenuLabel>
+              <DropdownMenuLabel>Mi Cuenta</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>Settings</DropdownMenuItem>
+              <DropdownMenuItem>Configuración</DropdownMenuItem>
               <DropdownMenuSeparator />
               <Link href="/">
-                <DropdownMenuItem>Logout</DropdownMenuItem>
+                <DropdownMenuItem>Cerrar Sesión</DropdownMenuItem>
               </Link>
             </DropdownMenuContent>
           </DropdownMenu>

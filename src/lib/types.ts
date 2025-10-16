@@ -20,5 +20,5 @@ export type Attendance = {
   courseName: string;
   courseId: string;
   date: string;
-  status: 'Present' | 'Absent';
+  status: 'Presente' | 'Ausente';
 };

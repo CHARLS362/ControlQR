@@ -18,21 +18,21 @@ import { BookCopy, Users, CheckCircle, XCircle } from 'lucide-react';
 import { courses, students, attendance } from '@/lib/data';
 
 const chartData = [
-  { month: 'January', present: 186, absent: 30 },
-  { month: 'February', present: 305, absent: 20 },
-  { month: 'March', present: 237, absent: 50 },
-  { month: 'April', present: 273, absent: 40 },
-  { month: 'May', present: 209, absent: 60 },
-  { month: 'June', present: 214, absent: 70 },
+  { month: 'Enero', present: 186, absent: 30 },
+  { month: 'Febrero', present: 305, absent: 20 },
+  { month: 'Marzo', present: 237, absent: 50 },
+  { month: 'Abril', present: 273, absent: 40 },
+  { month: 'Mayo', present: 209, absent: 60 },
+  { month: 'Junio', present: 214, absent: 70 },
 ];
 
 const chartConfig = {
   present: {
-    label: 'Present',
+    label: 'Presente',
     color: 'hsl(var(--chart-2))',
   },
   absent: {
-    label: 'Absent',
+    label: 'Ausente',
     color: 'hsl(var(--chart-5))',
   },
 };
@@ -48,50 +48,50 @@ export default function Dashboard() {
       <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
         <Card className="shadow-subtle">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Students</CardTitle>
+            <CardTitle className="text-sm font-medium">Total de Estudiantes</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{totalStudents}</div>
-            <p className="text-xs text-muted-foreground">+2 since last month</p>
+            <p className="text-xs text-muted-foreground">+2 desde el mes pasado</p>
           </CardContent>
         </Card>
         <Card className="shadow-subtle">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Courses</CardTitle>
+            <CardTitle className="text-sm font-medium">Total de Cursos</CardTitle>
             <BookCopy className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{totalCourses}</div>
-            <p className="text-xs text-muted-foreground">+1 since last semester</p>
+            <p className="text-xs text-muted-foreground">+1 desde el último semestre</p>
           </CardContent>
         </Card>
         <Card className="shadow-subtle">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Present</CardTitle>
+            <CardTitle className="text-sm font-medium">Total de Presentes</CardTitle>
             <CheckCircle className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{totalPresent}</div>
-            <p className="text-xs text-muted-foreground">in the last 30 days</p>
+            <p className="text-xs text-muted-foreground">en los últimos 30 días</p>
           </CardContent>
         </Card>
         <Card className="shadow-subtle">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Absent</CardTitle>
+            <CardTitle className="text-sm font-medium">Total de Ausentes</CardTitle>
             <XCircle className="h-4 w-4 text-red-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{totalAbsent}</div>
-            <p className="text-xs text-muted-foreground">in the last 30 days</p>
+            <p className="text-xs text-muted-foreground">en los últimos 30 días</p>
           </CardContent>
         </Card>
       </div>
       <Card className="shadow-subtle">
         <CardHeader>
-          <CardTitle className="font-headline">Attendance Overview</CardTitle>
+          <CardTitle className="font-headline">Resumen de Asistencia</CardTitle>
           <CardDescription>
-            A summary of student attendance over the last 6 months.
+            Un resumen de la asistencia de los estudiantes en los últimos 6 meses.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -117,7 +117,7 @@ export default function Dashboard() {
         </CardContent>
         <CardFooter>
           <div className="text-xs text-muted-foreground">
-            Showing total attendance for the last 6 months.
+            Mostrando la asistencia total de los últimos 6 meses.
           </div>
         </CardFooter>
       </Card>

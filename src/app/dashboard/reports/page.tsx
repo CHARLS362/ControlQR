@@ -82,7 +82,7 @@ function DeleteAttendanceDialog({ record }: { record: Attendance }) {
           onSelect={(e) => e.preventDefault()}
           className="text-destructive"
         >
-          Eliminar Registro
+          Eliminar
         </DropdownMenuItem>
       </AlertDialogTrigger>
       <AlertDialogContent>
@@ -191,10 +191,10 @@ export default function ReportsPage() {
                   <TableCell>
                     <Badge
                       variant={
-                        record.status === 'Present' ? 'default' : 'destructive'
+                        record.status === 'Presente' ? 'default' : 'destructive'
                       }
                       className={
-                        record.status === 'Present' ? 'bg-emerald-500/80 hover:bg-emerald-500 text-white' : ''
+                        record.status === 'Presente' ? 'bg-emerald-500/80 hover:bg-emerald-500 text-white' : ''
                       }
                     >
                       {record.status}
@@ -209,7 +209,7 @@ export default function ReportsPage() {
                           variant="ghost"
                         >
                           <MoreHorizontal className="h-4 w-4" />
-                          <span className="sr-only">Toggle menu</span>
+                          <span className="sr-only">Alternar menú</span>
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
