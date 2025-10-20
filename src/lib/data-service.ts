@@ -28,12 +28,38 @@ export async function validateUser(email: string, password_provided: string): Pr
 // === Funciones para Estudiantes ===
 
 export async function getStudents(): Promise<Student[]> {
-  const [rows] = await pool.query<RowDataPacket[]>("SELECT id, name, email, avatar, registration_date as registrationDate FROM students ORDER BY name ASC");
+  const [rows] = await pool.query<RowDataPacket[]>(`
+    SELECT 
+        s.id, 
+        s.name, 
+        s.email, 
+        s.avatar, 
+        s.registration_date as registrationDate,
+        c.id as courseId,
+        c.name as courseName
+    FROM students s
+    LEFT JOIN student_courses sc ON s.id = sc.student_id
+    LEFT JOIN courses c ON sc.course_id = c.id
+    ORDER BY s.name ASC
+  `);
   return rows as Student[];
 }
 
 export async function getStudentById(id: string): Promise<Student | null> {
-    const [rows] = await pool.query<RowDataPacket[]>("SELECT id, name, email, avatar, registration_date as registrationDate FROM students WHERE id = ?", [id]);
+    const [rows] = await pool.query<RowDataPacket[]>(`
+        SELECT 
+            s.id, 
+            s.name, 
+            s.email, 
+            s.avatar, 
+            s.registration_date as registrationDate,
+            c.id as courseId,
+            c.name as courseName
+        FROM students s
+        LEFT JOIN student_courses sc ON s.id = sc.student_id
+        LEFT JOIN courses c ON sc.course_id = c.id
+        WHERE s.id = ?
+    `, [id]);
     if (rows.length === 0) {
         return null;
     }
@@ -47,24 +73,67 @@ function generateStudentId(): string {
 }
 
 export async function createStudent(studentData: StudentFormValues): Promise<Student> {
-    const id = generateStudentId();
-    const registrationDate = new Date().toISOString().slice(0, 10);
-    const avatar = studentData.avatar || `student-${Math.ceil(Math.random() * 8)}`;
-    
-    await pool.query(
-        "INSERT INTO students (id, name, email, avatar, registration_date) VALUES (?, ?, ?, ?, ?)",
-        [id, studentData.name, studentData.email, avatar, registrationDate]
-    );
+    const connection = await pool.getConnection();
+    await connection.beginTransaction();
 
-    return { ...studentData, id, registrationDate, avatar };
+    try {
+        const id = generateStudentId();
+        const registrationDate = new Date().toISOString().slice(0, 10);
+        const avatar = studentData.avatar || `student-${Math.ceil(Math.random() * 8)}`;
+        
+        await connection.query(
+            "INSERT INTO students (id, name, email, avatar, registration_date) VALUES (?, ?, ?, ?, ?)",
+            [id, studentData.name, studentData.email, avatar, registrationDate]
+        );
+
+        await connection.query(
+            "INSERT INTO student_courses (student_id, course_id) VALUES (?, ?)",
+            [id, studentData.courseId]
+        );
+
+        await connection.commit();
+
+        const newStudent = await getStudentById(id);
+        if (!newStudent) {
+            throw new Error("Failed to fetch newly created student");
+        }
+        return newStudent;
+
+    } catch (error) {
+        await connection.rollback();
+        throw error; // Re-throw the error to be handled by the API route
+    } finally {
+        connection.release();
+    }
 }
 
 export async function updateStudent(id: string, studentData: StudentFormValues): Promise<Student | null> {
-    await pool.query(
-        "UPDATE students SET name = ?, email = ? WHERE id = ?",
-        [studentData.name, studentData.email, id]
-    );
-    return getStudentById(id);
+    const connection = await pool.getConnection();
+    await connection.beginTransaction();
+
+    try {
+        await connection.query(
+            "UPDATE students SET name = ?, email = ? WHERE id = ?",
+            [studentData.name, studentData.email, id]
+        );
+
+        // Remove existing course assignment and add the new one
+        await connection.query("DELETE FROM student_courses WHERE student_id = ?", [id]);
+        await connection.query(
+            "INSERT INTO student_courses (student_id, course_id) VALUES (?, ?)",
+            [id, studentData.courseId]
+        );
+
+        await connection.commit();
+        
+        return getStudentById(id);
+
+    } catch (error) {
+        await connection.rollback();
+        throw error;
+    } finally {
+        connection.release();
+    }
 }
 
 export async function deleteStudent(id: string): Promise<void> {

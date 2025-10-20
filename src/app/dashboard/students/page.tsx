@@ -48,7 +48,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { MoreHorizontal, PlusCircle, Upload, LoaderCircle } from 'lucide-react';
-import type { Student, StudentFormValues } from '@/lib/types';
+import type { Student, StudentFormValues, Course } from '@/lib/types';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { QRCodeSVG } from 'qrcode.react';
 import { Badge } from '@/components/ui/badge';
@@ -68,17 +68,47 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 
 // --- Formulario de Estudiante ---
 function StudentForm({ student, onSuccess }: { student?: Student; onSuccess: () => void; }) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [courses, setCourses] = React.useState<Course[]>([]);
+  
+  React.useEffect(() => {
+    async function fetchCourses() {
+      try {
+        const response = await fetch('/api/courses');
+        if (!response.ok) {
+          throw new Error('No se pudieron cargar los cursos.');
+        }
+        const data = await response.json();
+        setCourses(data);
+      } catch (error) {
+         toast({
+          variant: 'destructive',
+          title: 'Error',
+          description: 'No se pudieron cargar los cursos para la selección.',
+        });
+      }
+    }
+    fetchCourses();
+  }, [toast]);
+  
   const form = useForm<StudentFormValues>({
     resolver: zodResolver(studentSchema),
     defaultValues: {
       name: student?.name || '',
       email: student?.email || '',
+      courseId: student?.courseId || '',
     },
   });
 
@@ -145,6 +175,34 @@ function StudentForm({ student, onSuccess }: { student?: Student; onSuccess: () 
             </FormItem>
           )}
         />
+         <FormField
+          control={form.control}
+          name="courseId"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Asignar Curso</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecciona un curso para el estudiante" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {courses.length === 0 ? (
+                    <SelectItem value="loading" disabled>Cargando cursos...</SelectItem>
+                  ) : (
+                    courses.map(course => (
+                      <SelectItem key={course.id} value={course.id}>
+                        {course.name}
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
         <DialogFooter>
           <DialogClose asChild>
             <Button type="button" variant="outline">
@@ -186,7 +244,7 @@ function StudentDialog({
         <DialogHeader>
           <DialogTitle>{student ? 'Editar Estudiante' : 'Añadir Nuevo Estudiante'}</DialogTitle>
           <DialogDescription>
-            {student ? 'Edita los detalles del estudiante.' : 'Completa el formulario para añadir un nuevo estudiante.'}
+            {student ? 'Edita los detalles y la asignación del curso del estudiante.' : 'Completa el formulario para añadir un nuevo estudiante y asignarlo a un curso.'}
           </DialogDescription>
         </DialogHeader>
         <StudentForm student={student} onSuccess={handleSuccess} />
@@ -305,7 +363,7 @@ export default function StudentsPage() {
         <CardHeader>
           <CardTitle>Lista de Estudiantes</CardTitle>
           <CardDescription>
-            Lista de todos los estudiantes registrados.
+            Lista de todos los estudiantes registrados y el curso al que pertenecen.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -314,7 +372,7 @@ export default function StudentsPage() {
               <TableRow>
                 <TableHead>Nombre</TableHead>
                 <TableHead>Correo Electrónico</TableHead>
-                <TableHead>Fecha de Registro</TableHead>
+                <TableHead>Curso Asignado</TableHead>
                 <TableHead>
                   <span className="sr-only">Acciones</span>
                 </TableHead>
@@ -334,7 +392,7 @@ export default function StudentsPage() {
                       </div>
                     </TableCell>
                     <TableCell><Skeleton className="h-5 w-48" /></TableCell>
-                    <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                    <TableCell><Skeleton className="h-5 w-40" /></TableCell>
                     <TableCell><Skeleton className="h-8 w-8" /></TableCell>
                   </TableRow>
                 ))
@@ -369,7 +427,7 @@ export default function StudentsPage() {
                         {student.email}
                       </TableCell>
                       <TableCell className="text-muted-foreground">
-                        {new Date(student.registrationDate).toLocaleDateString()}
+                        {student.courseName || 'No asignado'}
                       </TableCell>
                       <TableCell>
                         <Dialog>

@@ -6,6 +6,8 @@ export type Student = {
   email: string;
   avatar: string;
   registrationDate: string; // Should be ISO 8601 string date
+  courseId?: string;
+  courseName?: string;
 };
 
 export type Course = {
@@ -41,6 +43,7 @@ export const studentSchema = z.object({
   name: z.string().min(3, { message: "El nombre debe tener al menos 3 caracteres." }),
   email: z.string().email({ message: "Por favor, introduce un correo electrónico válido." }),
   avatar: z.string().optional(),
+  courseId: z.string().min(1, { message: "Debes seleccionar un curso." }),
 });
 
 export type StudentFormValues = z.infer<typeof studentSchema>;
