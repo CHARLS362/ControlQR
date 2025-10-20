@@ -31,47 +31,53 @@ const qrcodeRegionId = "reader";
 const CameraScanner = ({ onScan, disabled }: { onScan: (decodedText: string) => void, disabled: boolean }) => {
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
-
+  const onScanRef = useRef(onScan);
+  onScanRef.current = onScan;
+  
   useEffect(() => {
-    if (!scannerRef.current) {
-      scannerRef.current = new Html5Qrcode(qrcodeRegionId);
-    }
-    const scanner = scannerRef.current;
+    const scanner = new Html5Qrcode(qrcodeRegionId);
+    scannerRef.current = scanner;
 
     const startScanner = async () => {
       try {
         const cameras = await Html5Qrcode.getCameras();
         if (cameras && cameras.length) {
           setHasCameraPermission(true);
-          if (scanner.getState() !== Html5QrcodeScannerState.SCANNING) {
-            await scanner.start(
-              { facingMode: "environment" },
-              {
-                fps: 10,
-                qrbox: { width: 250, height: 250 },
-                aspectRatio: 1.0,
-              },
-              onScan,
-              (errorMessage) => { /* ignore */ }
-            );
-          }
+          await scanner.start(
+            { facingMode: "environment" },
+            {
+              fps: 30,
+              qrbox: { width: 250, height: 250 },
+              aspectRatio: 1.0,
+              rememberLastUsedCamera: false,
+            },
+            (decodedText) => onScanRef.current(decodedText),
+            (errorMessage) => { /* ignore */ }
+          );
         } else {
-            setHasCameraPermission(false);
+          setHasCameraPermission(false);
         }
       } catch (err) {
-        console.error("Camera permission error:", err);
+        console.error("Error starting scanner:", err);
         setHasCameraPermission(false);
       }
     };
-    
+
     startScanner();
 
     return () => {
-      if (scanner && scanner.isScanning) {
-        scanner.stop().catch(err => console.error("Failed to stop scanner", err));
-      }
+      const stopScanner = async () => {
+        try {
+          if (scanner && scanner.isScanning) {
+            await scanner.stop();
+          }
+        } catch (err) {
+          console.error("Failed to stop scanner gracefully:", err);
+        }
+      };
+      stopScanner();
     };
-  }, [onScan]);
+  }, []);
 
   if (hasCameraPermission === false) {
     return (
@@ -85,30 +91,28 @@ const CameraScanner = ({ onScan, disabled }: { onScan: (decodedText: string) => 
     )
   }
 
-  return (
-    <div id={qrcodeRegionId} className="w-full aspect-video bg-foreground rounded-lg overflow-hidden" />
-  );
+  return <div id={qrcodeRegionId} className="w-full aspect-video bg-foreground rounded-lg overflow-hidden" />;
 };
 
 
 // --- Scan Result Display Component ---
 const ScanResultDisplay = ({
-  isLoading,
+  isProcessing,
   scanResult,
   scannedCode,
 }: {
-  isLoading: boolean;
+  isProcessing: boolean;
   scanResult: { message: string; status: 'success' | 'error' } | null;
   scannedCode: string | null;
 }) => {
   const getMessage = () => {
-    if (isLoading) return `Procesando: ${scannedCode}...`;
+    if (isProcessing) return `Procesando: ${scannedCode}...`;
     if (scanResult) return `${scanResult.message} (${scannedCode})`;
     return 'Esperando escaneo...';
   }
 
   const getIcon = () => {
-    if (isLoading) return <LoaderCircle className="h-16 w-16 text-blue-400 animate-spin mx-auto" />;
+    if (isProcessing) return <LoaderCircle className="h-16 w-16 text-blue-400 animate-spin mx-auto" />;
     if (scanResult?.status === 'success') return <CheckCircle className="h-16 w-16 text-green-400 mx-auto" />;
     if (scanResult?.status === 'error') return <XCircle className="h-16 w-16 text-red-400 mx-auto" />;
     return <QrCode className="h-16 w-16 text-muted-foreground mx-auto" />;
@@ -131,7 +135,7 @@ export default function ScanPage() {
   const [scannedCode, setScannedCode] = useState<string | null>(null);
   const [courses, setCourses] = useState<Course[]>([]);
   const [selectedCourse, setSelectedCourse] = useState<string>('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
   const [activeTab, setActiveTab] = useState('camera');
   
   const inputRef = useRef<HTMLInputElement>(null);
@@ -146,7 +150,7 @@ export default function ScanPage() {
         if (Array.isArray(data)) {
           setCourses(data);
           if (data.length > 0) {
-            setSelectedCourse(data[0].id);
+            setSelectedCourse(String(data[0].id));
           }
         } else {
           setCourses([]);
@@ -174,8 +178,8 @@ export default function ScanPage() {
   }, [activeTab]);
 
   // --- Core Scan Handling Logic ---
-  const handleScan = useCallback(async (code: string) => {
-    if (isLoading) return; // Prevent multiple submissions
+  const processScan = useCallback(async (code: string) => {
+    if (isProcessing) return; // Prevent multiple submissions
 
     if (!selectedCourse) {
       toast({
@@ -186,7 +190,7 @@ export default function ScanPage() {
       return;
     }
 
-    setIsLoading(true);
+    setIsProcessing(true);
     setScannedCode(code);
     setScanResult(null);
 
@@ -205,20 +209,20 @@ export default function ScanPage() {
     } catch (error) {
       setScanResult({ message: 'No se pudo conectar con el servidor.', status: 'error' });
     } finally {
-      setIsLoading(false);
+      setIsProcessing(false);
       setTimeout(() => {
         setScanResult(null);
         setScannedCode(null);
       }, 3000); // Clear result after 3 seconds
     }
-  }, [selectedCourse, isLoading, toast]);
+  }, [selectedCourse, isProcessing, toast]);
 
 
   const handleKeyPress = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'Enter') {
       const code = event.currentTarget.value;
       if (code) {
-        handleScan(code);
+        processScan(code);
         event.currentTarget.value = '';
       }
     }
@@ -244,7 +248,7 @@ export default function ScanPage() {
             </SelectTrigger>
             <SelectContent>
               {Array.isArray(courses) && courses.map((course) => (
-                <SelectItem key={course.id} value={course.id}>{course.name}</SelectItem>
+                <SelectItem key={course.id} value={String(course.id)}>{course.name}</SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -256,9 +260,9 @@ export default function ScanPage() {
             </TabsList>
             <TabsContent value="camera">
               <div className="aspect-video bg-foreground rounded-lg overflow-hidden relative flex items-center justify-center mt-4">
-                 <CameraScanner onScan={handleScan} disabled={isLoading} />
+                 {activeTab === 'camera' && <CameraScanner onScan={processScan} disabled={isProcessing} />}
                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                    <ScanResultDisplay isLoading={isLoading} scanResult={scanResult} scannedCode={scannedCode} />
+                    <ScanResultDisplay isProcessing={isProcessing} scanResult={scanResult} scannedCode={scannedCode} />
                  </div>
               </div>
             </TabsContent>
@@ -269,12 +273,12 @@ export default function ScanPage() {
                   className="sr-only"
                   onKeyDown={handleKeyPress}
                   autoFocus
-                  disabled={isLoading}
+                  disabled={isProcessing}
                 />
               <div className="aspect-video bg-foreground rounded-lg overflow-hidden relative flex items-center justify-center mt-4">
                 <div className="absolute top-1/2 left-1/2 h-48 w-48 -translate-x-1/2 -translate-y-1/2 rounded-lg border-4 border-dashed border-gray-400 pointer-events-none"></div>
                 <div className="absolute inset-0 flex items-center justify-center">
-                    <ScanResultDisplay isLoading={isLoading} scanResult={scanResult} scannedCode={scannedCode} />
+                    <ScanResultDisplay isProcessing={isProcessing} scanResult={scanResult} scannedCode={scannedCode} />
                  </div>
               </div>
                <div className="mt-4 text-center text-sm text-muted-foreground">
@@ -287,3 +291,5 @@ export default function ScanPage() {
     </>
   );
 }
+
+    
