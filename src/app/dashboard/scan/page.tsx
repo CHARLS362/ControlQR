@@ -33,7 +33,6 @@ const CameraScanner = ({ onScan, disabled, isVisible }: { onScan: (decodedText: 
       return;
     }
     
-    // Safety check for the element
     const readerElement = document.getElementById(qrcodeRegionId);
     if (!readerElement) {
         console.error("QR Code reader element not found");
@@ -48,21 +47,23 @@ const CameraScanner = ({ onScan, disabled, isVisible }: { onScan: (decodedText: 
         const cameras = await Html5Qrcode.getCameras();
         if (cameras && cameras.length) {
           setHasCameraPermission(true);
-          await scanner.start(
-            { facingMode: "environment" },
-            {
-              fps: 30,
-              qrbox: { width: 250, height: 250 },
-              aspectRatio: 1.0,
-              rememberLastUsedCamera: false,
-            },
-            (decodedText) => {
-              if (!disabled) {
-                onScanRef.current(decodedText);
-              }
-            },
-            (errorMessage) => { /* ignore */ }
-          );
+          if (!scanner.isScanning) {
+            await scanner.start(
+              { facingMode: "environment" },
+              {
+                fps: 30,
+                qrbox: { width: 250, height: 250 },
+                aspectRatio: 1.0,
+                rememberLastUsedCamera: false,
+              },
+              (decodedText) => {
+                if (!disabled) {
+                  onScanRef.current(decodedText);
+                }
+              },
+              (errorMessage) => { /* ignore */ }
+            );
+          }
         } else {
           setHasCameraPermission(false);
         }
@@ -116,7 +117,7 @@ const ScanResultDisplay = ({
 }) => {
   const getMessage = () => {
     if (isProcessing) return `Procesando: ${scannedCode}...`;
-    if (scanResult) return `${scanResult.message} (${scannedCode})`;
+    if (scanResult) return `${scanResult.message}`;
     return 'Esperando escaneo...';
   }
 
@@ -173,20 +174,27 @@ export default function ScanPage() {
       });
 
       const result = await response.json();
-      setScanResult({
+      const newResult = {
         message: result.message || (response.ok ? 'Éxito' : 'Error desconocido'),
         status: response.ok ? 'success' : 'error',
-      });
+      };
+      setScanResult(newResult);
+      
+      // Clear the message after a short delay to allow user to see it
+      setTimeout(() => {
+        if(scanResult === newResult) {
+            setScanResult(null);
+            setScannedCode(null);
+        }
+      }, 2000);
+
     } catch (error) {
       setScanResult({ message: 'No se pudo conectar con el servidor.', status: 'error' });
     } finally {
-      setIsProcessing(false);
-      setTimeout(() => {
-        setScanResult(null);
-        setScannedCode(null);
-      }, 3000); // Clear result after 3 seconds
+       // Allow next scan almost immediately
+      setTimeout(() => setIsProcessing(false), 500);
     }
-  }, [isProcessing]);
+  }, [isProcessing, scanResult]);
 
 
   const handleKeyPress = (event: React.KeyboardEvent<HTMLInputElement>) => {
