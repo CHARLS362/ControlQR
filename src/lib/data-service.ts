@@ -1,7 +1,29 @@
 
 import pool from './db';
-import type { Student, Course, Attendance } from './types';
+import type { Student, Course, Attendance, User } from './types';
 import { RowDataPacket } from 'mysql2';
+import crypto from 'crypto';
+
+
+// === Funciones de Autenticación ===
+
+export async function validateUser(email: string, password_provided: string): Promise<User | null> {
+    const [rows] = await pool.query<RowDataPacket[]>("SELECT id, name, email, password FROM users WHERE email = ?", [email]);
+    if (rows.length === 0) {
+        return null;
+    }
+
+    const user = rows[0] as User;
+    const password_hash = crypto.createHash('sha256').update(password_provided).digest('hex');
+
+    if (password_hash === user.password) {
+        // No devolver el hash de la contraseña
+        const { password, ...userWithoutPassword } = user;
+        return userWithoutPassword;
+    }
+
+    return null;
+}
 
 // === Funciones para Estudiantes ===
 
@@ -52,7 +74,8 @@ export async function getAttendance(): Promise<Attendance[]> {
         JOIN courses c ON a.course_id = c.id
         ORDER BY a.date DESC, s.name ASC
     `);
-    return rows as Attendance[];
+    // Asegurarse de que el ID sea un string
+    return rows.map(row => ({...row, id: String(row.id)})) as Attendance[];
 }
 
 export async function getAttendanceForToday(studentId: string, courseId: string): Promise<Attendance | null> {
@@ -64,7 +87,8 @@ export async function getAttendanceForToday(studentId: string, courseId: string)
     if (rows.length === 0) {
         return null;
     }
-    return rows[0] as Attendance;
+    const record = rows[0];
+    return { ...record, id: String(record.id) } as Attendance;
 }
 
 
@@ -77,7 +101,11 @@ export async function recordAttendance(studentId: string, courseId: string, stat
 }
 
 export async function deleteAttendanceRecord(id: string): Promise<void> {
-    await pool.query("DELETE FROM attendance WHERE id = ?", [id]);
+    const numericId = parseInt(id, 10);
+    if (isNaN(numericId)) {
+      throw new Error("ID de asistencia inválido.");
+    }
+    await pool.query("DELETE FROM attendance WHERE id = ?", [numericId]);
 }
 
 

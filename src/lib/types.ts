@@ -1,3 +1,4 @@
+
 export type Student = {
   id: string;
   name: string;
@@ -22,3 +23,12 @@ export type Attendance = {
   date: string; // Should be ISO 8601 string date
   status: 'Presente' | 'Ausente';
 };
+
+export type User = {
+    id: number;
+    name: string;
+    email: string;
+    password?: string; // El hash de la contraseña, opcional para no exponerlo siempre
+    role?: string;
+    created_at?: string;
+}
