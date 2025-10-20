@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -31,7 +32,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { Calendar as CalendarIcon, Download, MoreHorizontal, LoaderCircle } from 'lucide-react';
+import { Calendar as CalendarIcon, Download, MoreHorizontal } from 'lucide-react';
 import type { Attendance, Course } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -172,6 +173,31 @@ export default function ReportsPage() {
       });
   }, [attendance, selectedCourse, date]);
 
+  const exportToCSV = () => {
+    const headers = ['ID Registro', 'Estudiante', 'ID Estudiante', 'Curso', 'ID Curso', 'Fecha', 'Estado'];
+    const rows = filteredAttendance.map(record => [
+      record.id,
+      record.studentName,
+      record.studentId,
+      record.courseName,
+      String(record.courseId),
+      new Date(record.date).toLocaleString(),
+      record.status,
+    ]);
+
+    let csvContent = "data:text/csv;charset=utf-8," 
+      + headers.join(",") + "\n" 
+      + rows.map(e => e.join(",")).join("\n");
+      
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "reporte_asistencia.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
 
   return (
     <>
@@ -182,7 +208,7 @@ export default function ReportsPage() {
             Ver y exportar registros de asistencia.
           </p>
         </div>
-        <Button>
+        <Button onClick={exportToCSV} disabled={filteredAttendance.length === 0}>
           <Download className="mr-2 h-4 w-4" /> Exportar Reporte
         </Button>
       </div>

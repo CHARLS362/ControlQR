@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -22,6 +23,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
@@ -31,10 +33,22 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogFooter,
+  DialogClose,
 } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
-import { MoreHorizontal, PlusCircle, Upload } from 'lucide-react';
-import type { Student } from '@/lib/types';
+import { MoreHorizontal, PlusCircle, Upload, LoaderCircle } from 'lucide-react';
+import type { Student, StudentFormValues } from '@/lib/types';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { QRCodeSVG } from 'qrcode.react';
 import { Badge } from '@/components/ui/badge';
@@ -42,34 +56,228 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Barcode from 'react-barcode';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { studentSchema } from '@/lib/types';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { cn } from '@/lib/utils';
+
+// --- Formulario de Estudiante ---
+function StudentForm({ student, onSuccess }: { student?: Student; onSuccess: () => void; }) {
+  const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const form = useForm<StudentFormValues>({
+    resolver: zodResolver(studentSchema),
+    defaultValues: {
+      name: student?.name || '',
+      email: student?.email || '',
+    },
+  });
+
+  const onSubmit = async (values: StudentFormValues) => {
+    setIsSubmitting(true);
+    try {
+      const method = student ? 'PUT' : 'POST';
+      const url = student ? `/api/students/${student.id}` : '/api/students';
+      const response = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(values),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error al ${student ? 'actualizar' : 'crear'} el estudiante.`);
+      }
+
+      const responseData = await response.json();
+      
+      toast({
+        title: `Estudiante ${student ? 'actualizado' : 'creado'}`,
+        description: `El estudiante "${responseData.name}" ha sido ${student ? 'actualizado' : 'creado'} correctamente.`,
+      });
+      onSuccess();
+    } catch (error) {
+      console.error(error);
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Ocurrió un error inesperado.',
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <FormField
+          control={form.control}
+          name="name"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Nombre Completo</FormLabel>
+              <FormControl>
+                <Input placeholder="Ej: Juan Pérez" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="email"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Correo Electrónico</FormLabel>
+              <FormControl>
+                <Input type="email" placeholder="juan.perez@example.com" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <DialogFooter>
+          <DialogClose asChild>
+            <Button type="button" variant="outline">
+              Cancelar
+            </Button>
+          </DialogClose>
+          <Button type="submit" disabled={isSubmitting}>
+            {isSubmitting && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
+            {student ? 'Actualizar' : 'Crear'} Estudiante
+          </Button>
+        </DialogFooter>
+      </form>
+    </Form>
+  );
+}
+
+
+// --- Diálogo de Estudiante ---
+function StudentDialog({
+  student,
+  onSuccess,
+  children,
+}: {
+  student?: Student;
+  onSuccess: () => void;
+  children: React.ReactNode;
+}) {
+  const [open, setOpen] = React.useState(false);
+  
+  const handleSuccess = () => {
+    onSuccess();
+    setOpen(false);
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>{children}</DialogTrigger>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle>{student ? 'Editar Estudiante' : 'Añadir Nuevo Estudiante'}</DialogTitle>
+          <DialogDescription>
+            {student ? 'Edita los detalles del estudiante.' : 'Completa el formulario para añadir un nuevo estudiante.'}
+          </DialogDescription>
+        </DialogHeader>
+        <StudentForm student={student} onSuccess={handleSuccess} />
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// --- Diálogo de Eliminación ---
+function DeleteStudentDialog({ student, onSuccess }: { student: Student; onSuccess: () => void; }) {
+  const { toast } = useToast();
+  
+  const handleDelete = async () => {
+     try {
+      const response = await fetch(`/api/students/${student.id}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        throw new Error('No se pudo eliminar al estudiante.');
+      }
+      toast({
+        title: 'Estudiante eliminado',
+        description: `El estudiante "${student.name}" ha sido eliminado.`,
+      });
+      onSuccess();
+    } catch (error) {
+      console.error(error);
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Este estudiante podría tener registros de asistencia. No se puede eliminar.',
+      });
+    }
+  }
+
+  return (
+    <AlertDialog>
+      <AlertDialogTrigger asChild>
+        <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive">
+          Eliminar
+        </DropdownMenuItem>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Esta acción no se puede deshacer. Esto eliminará permanentemente al estudiante <span className="font-bold">"{student.name}"</span> y todos sus registros de asistencia.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+          <AlertDialogAction onClick={handleDelete} className={cn('bg-destructive text-destructive-foreground hover:bg-destructive/90')}>
+            Eliminar
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
+
 
 export default function StudentsPage() {
   const [students, setStudents] = React.useState<Student[]>([]);
   const [loading, setLoading] = React.useState(true);
   const { toast } = useToast();
 
-  React.useEffect(() => {
-    async function fetchStudents() {
-      try {
-        const response = await fetch('/api/students');
-        if (!response.ok) {
-          throw new Error('Error al cargar los estudiantes');
-        }
-        const data = await response.json();
-        setStudents(data);
-      } catch (error) {
-        console.error('Error fetching students:', error);
-        toast({
-          variant: 'destructive',
-          title: 'Error',
-          description: 'No se pudieron cargar los estudiantes.',
-        });
-      } finally {
-        setLoading(false);
+  const fetchStudents = React.useCallback(async () => {
+    setLoading(true);
+    try {
+      const response = await fetch('/api/students');
+      if (!response.ok) {
+        throw new Error('Error al cargar los estudiantes');
       }
+      const data = await response.json();
+      setStudents(data);
+    } catch (error) {
+      console.error('Error fetching students:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'No se pudieron cargar los estudiantes.',
+      });
+    } finally {
+      setLoading(false);
     }
-    fetchStudents();
   }, [toast]);
+
+  React.useEffect(() => {
+    fetchStudents();
+  }, [fetchStudents]);
 
   const getAvatar = (avatarId: string) => {
     return PlaceHolderImages.find((img) => img.id === avatarId);
@@ -83,12 +291,14 @@ export default function StudentsPage() {
           <p className="text-muted-foreground mt-1">Gestionar el registro y la información de los estudiantes.</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline">
+          <Button variant="outline" onClick={() => toast({ title: 'Función no implementada', description: 'La carga masiva de estudiantes estará disponible pronto.'})}>
             <Upload className="mr-2 h-4 w-4" /> Carga Masiva
           </Button>
-          <Button>
-            <PlusCircle className="mr-2 h-4 w-4" /> Añadir Estudiante
-          </Button>
+          <StudentDialog onSuccess={fetchStudents}>
+             <Button>
+              <PlusCircle className="mr-2 h-4 w-4" /> Añadir Estudiante
+            </Button>
+          </StudentDialog>
         </div>
       </div>
       <Card className="shadow-subtle">
@@ -135,7 +345,7 @@ export default function StudentsPage() {
                     <TableRow key={student.id}>
                       <TableCell className="font-medium">
                         <div className="flex items-center gap-3">
-                          {avatar && (
+                          {avatar ? (
                             <Image
                               src={avatar.imageUrl}
                               alt={student.name}
@@ -144,6 +354,10 @@ export default function StudentsPage() {
                               className="rounded-full"
                               data-ai-hint={avatar.imageHint}
                             />
+                          ) : (
+                            <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center text-muted-foreground text-xs">
+                              ?
+                            </div>
                           )}
                           <div>
                             {student.name}
@@ -172,13 +386,16 @@ export default function StudentsPage() {
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                               <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-                              <DropdownMenuItem>Editar</DropdownMenuItem>
+                               <StudentDialog student={student} onSuccess={fetchStudents}>
+                                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                                  Editar
+                                </DropdownMenuItem>
+                              </StudentDialog>
                               <DialogTrigger asChild>
                                 <DropdownMenuItem>Ver Códigos</DropdownMenuItem>
                               </DialogTrigger>
-                              <DropdownMenuItem className="text-destructive">
-                                Eliminar
-                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DeleteStudentDialog student={student} onSuccess={fetchStudents} />
                             </DropdownMenuContent>
                           </DropdownMenu>
                           <DialogContent className="sm:max-w-md">

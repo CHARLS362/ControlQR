@@ -1,4 +1,5 @@
 
+
 export type Student = {
   id: string;
   name: string;
@@ -32,3 +33,22 @@ export type User = {
     role?: string;
     created_at?: string;
 }
+
+// Tipos para validación de formularios
+import { z } from 'zod';
+
+export const studentSchema = z.object({
+  name: z.string().min(3, { message: "El nombre debe tener al menos 3 caracteres." }),
+  email: z.string().email({ message: "Por favor, introduce un correo electrónico válido." }),
+  avatar: z.string().optional(),
+});
+
+export type StudentFormValues = z.infer<typeof studentSchema>;
+
+
+export const courseSchema = z.object({
+  name: z.string().min(3, { message: "El nombre del curso debe tener al menos 3 caracteres." }),
+  description: z.string().optional(),
+});
+
+export type CourseFormValues = z.infer<typeof courseSchema>;

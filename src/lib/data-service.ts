@@ -1,6 +1,6 @@
 
 import pool from './db';
-import type { Student, Course, Attendance, User } from './types';
+import type { Student, Course, Attendance, User, StudentFormValues, CourseFormValues } from './types';
 import { RowDataPacket } from 'mysql2';
 import crypto from 'crypto';
 
@@ -40,6 +40,37 @@ export async function getStudentById(id: string): Promise<Student | null> {
     return rows[0] as Student;
 }
 
+function generateStudentId(): string {
+  const timestamp = Date.now().toString(36);
+  const randomPart = Math.random().toString(36).substring(2, 7);
+  return `STU-${timestamp}-${randomPart}`.toUpperCase();
+}
+
+export async function createStudent(studentData: StudentFormValues): Promise<Student> {
+    const id = generateStudentId();
+    const registrationDate = new Date().toISOString().slice(0, 10);
+    const avatar = studentData.avatar || `student-${Math.ceil(Math.random() * 8)}`;
+    
+    await pool.query(
+        "INSERT INTO students (id, name, email, avatar, registration_date) VALUES (?, ?, ?, ?, ?)",
+        [id, studentData.name, studentData.email, avatar, registrationDate]
+    );
+
+    return { ...studentData, id, registrationDate, avatar };
+}
+
+export async function updateStudent(id: string, studentData: StudentFormValues): Promise<Student | null> {
+    await pool.query(
+        "UPDATE students SET name = ?, email = ? WHERE id = ?",
+        [studentData.name, studentData.email, id]
+    );
+    return getStudentById(id);
+}
+
+export async function deleteStudent(id: string): Promise<void> {
+    await pool.query("DELETE FROM students WHERE id = ?", [id]);
+}
+
 
 // === Funciones para Cursos ===
 
@@ -56,6 +87,35 @@ export async function getCourses(): Promise<Course[]> {
     studentCount: Number(row.studentCount)
   })) as Course[];
 }
+
+
+function generateCourseId(): string {
+  const timestamp = Date.now().toString(36);
+  const randomPart = Math.random().toString(36).substring(2, 5);
+  return `CRS-${timestamp}-${randomPart}`.toUpperCase();
+}
+
+
+export async function createCourse(courseData: CourseFormValues): Promise<Course> {
+    const id = generateCourseId();
+    await pool.query(
+        "INSERT INTO courses (id, name, description) VALUES (?, ?, ?)",
+        [id, courseData.name, courseData.description || null]
+    );
+    return { ...courseData, id, studentCount: 0, description: courseData.description || '' };
+}
+
+export async function updateCourse(id: string, courseData: CourseFormValues): Promise<void> {
+    await pool.query(
+        "UPDATE courses SET name = ?, description = ? WHERE id = ?",
+        [courseData.name, courseData.description || null, id]
+    );
+}
+
+export async function deleteCourse(id: string): Promise<void> {
+    await pool.query("DELETE FROM courses WHERE id = ?", [id]);
+}
+
 
 // === Funciones para Asistencia ===
 
