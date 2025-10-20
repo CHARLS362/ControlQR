@@ -17,17 +17,29 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import type { Course } from '@/lib/types';
 import { Html5Qrcode, Html5QrcodeScannerState } from 'html5-qrcode';
+import { cn } from '@/lib/utils';
 
 const qrcodeRegionId = "reader";
 
 // --- Camera Scanner Component ---
-const CameraScanner = ({ onScan, disabled }: { onScan: (decodedText: string) => void, disabled: boolean }) => {
+const CameraScanner = ({ onScan, disabled, isVisible }: { onScan: (decodedText: string) => void, disabled: boolean, isVisible: boolean }) => {
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
   const onScanRef = useRef(onScan);
   onScanRef.current = onScan;
   
   useEffect(() => {
+    if (!isVisible) {
+      return;
+    }
+    
+    // Safety check for the element
+    const readerElement = document.getElementById(qrcodeRegionId);
+    if (!readerElement) {
+        console.error("QR Code reader element not found");
+        return;
+    }
+
     const scanner = new Html5Qrcode(qrcodeRegionId);
     scannerRef.current = scanner;
 
@@ -74,7 +86,7 @@ const CameraScanner = ({ onScan, disabled }: { onScan: (decodedText: string) => 
       };
       stopScanner();
     };
-  }, [disabled]);
+  }, [disabled, isVisible]);
 
   if (hasCameraPermission === false) {
     return (
@@ -206,15 +218,15 @@ export default function ScanPage() {
               <TabsTrigger value="camera"><Camera className="mr-2" />Cámara</TabsTrigger>
               <TabsTrigger value="keyboard"><Keyboard className="mr-2" />Escáner Externo</TabsTrigger>
             </TabsList>
-            <TabsContent value="camera">
+            <TabsContent value="camera" className={cn(activeTab !== 'camera' && 'hidden')}>
               <div className="aspect-video bg-foreground rounded-lg overflow-hidden relative flex items-center justify-center mt-4">
-                 {activeTab === 'camera' && <CameraScanner onScan={processScan} disabled={isProcessing} />}
+                 <CameraScanner onScan={processScan} disabled={isProcessing} isVisible={activeTab === 'camera'} />
                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                     <ScanResultDisplay isProcessing={isProcessing} scanResult={scanResult} scannedCode={scannedCode} />
                  </div>
               </div>
             </TabsContent>
-            <TabsContent value="keyboard">
+            <TabsContent value="keyboard" className={cn(activeTab !== 'keyboard' && 'hidden')}>
                <Input
                   ref={inputRef}
                   type="text"
