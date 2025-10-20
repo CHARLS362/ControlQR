@@ -13,13 +13,6 @@ import { Input } from '@/components/ui/input';
 import { CheckCircle, QrCode, XCircle, LoaderCircle, Camera, Keyboard } from 'lucide-react';
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import type { Course } from '@/lib/types';
@@ -51,7 +44,11 @@ const CameraScanner = ({ onScan, disabled }: { onScan: (decodedText: string) => 
               aspectRatio: 1.0,
               rememberLastUsedCamera: false,
             },
-            (decodedText) => onScanRef.current(decodedText),
+            (decodedText) => {
+              if (!disabled) {
+                onScanRef.current(decodedText);
+              }
+            },
             (errorMessage) => { /* ignore */ }
           );
         } else {
@@ -77,7 +74,7 @@ const CameraScanner = ({ onScan, disabled }: { onScan: (decodedText: string) => 
       };
       stopScanner();
     };
-  }, []);
+  }, [disabled]);
 
   if (hasCameraPermission === false) {
     return (
@@ -133,39 +130,10 @@ const ScanResultDisplay = ({
 export default function ScanPage() {
   const [scanResult, setScanResult] = useState<{ message: string; status: 'success' | 'error' } | null>(null);
   const [scannedCode, setScannedCode] = useState<string | null>(null);
-  const [courses, setCourses] = useState<Course[]>([]);
-  const [selectedCourse, setSelectedCourse] = useState<string>('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [activeTab, setActiveTab] = useState('camera');
   
   const inputRef = useRef<HTMLInputElement>(null);
-  const { toast } = useToast();
-
-  // --- Data Fetching ---
-  useEffect(() => {
-    async function fetchCourses() {
-      try {
-        const response = await fetch('/api/courses');
-        const data = await response.json();
-        if (Array.isArray(data)) {
-          setCourses(data);
-          if (data.length > 0) {
-            setSelectedCourse(String(data[0].id));
-          }
-        } else {
-          setCourses([]);
-        }
-      } catch (error) {
-        console.error('Error fetching courses:', error);
-        toast({
-          variant: 'destructive',
-          title: 'Error',
-          description: 'No se pudieron cargar los cursos.',
-        });
-      }
-    }
-    fetchCourses();
-  }, [toast]);
 
   // --- Keyboard Scanner Input Focus ---
   useEffect(() => {
@@ -181,15 +149,6 @@ export default function ScanPage() {
   const processScan = useCallback(async (code: string) => {
     if (isProcessing) return; // Prevent multiple submissions
 
-    if (!selectedCourse) {
-      toast({
-        variant: 'destructive',
-        title: 'Curso no seleccionado',
-        description: 'Por favor, selecciona un curso antes de escanear.',
-      });
-      return;
-    }
-
     setIsProcessing(true);
     setScannedCode(code);
     setScanResult(null);
@@ -198,7 +157,7 @@ export default function ScanPage() {
       const response = await fetch('/api/attendance/scan', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ studentId: code, courseId: selectedCourse }),
+        body: JSON.stringify({ studentId: code }),
       });
 
       const result = await response.json();
@@ -215,7 +174,7 @@ export default function ScanPage() {
         setScannedCode(null);
       }, 3000); // Clear result after 3 seconds
     }
-  }, [selectedCourse, isProcessing, toast]);
+  }, [isProcessing]);
 
 
   const handleKeyPress = (event: React.KeyboardEvent<HTMLInputElement>) => {
@@ -239,20 +198,9 @@ export default function ScanPage() {
       <Card className="w-full shadow-subtle">
         <CardHeader>
           <CardTitle className="flex items-center gap-2"><QrCode />Escáner de Asistencia</CardTitle>
-          <CardDescription>Selecciona un curso y el modo de escaneo.</CardDescription>
+          <CardDescription>Selecciona el modo de escaneo. El sistema registrará la asistencia en el curso correspondiente.</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col items-center gap-6">
-          <Select value={selectedCourse} onValueChange={setSelectedCourse}>
-            <SelectTrigger className="w-full max-w-sm">
-              <SelectValue placeholder="Seleccionar un curso" />
-            </SelectTrigger>
-            <SelectContent>
-              {Array.isArray(courses) && courses.map((course) => (
-                <SelectItem key={course.id} value={String(course.id)}>{course.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full max-w-2xl">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="camera"><Camera className="mr-2" />Cámara</TabsTrigger>
@@ -291,5 +239,3 @@ export default function ScanPage() {
     </>
   );
 }
-
-    

@@ -1,13 +1,13 @@
 
 import { NextResponse } from 'next/server';
-import { getStudentById, getAttendanceForToday, recordAttendance } from '@/lib/data-service';
+import { getStudentById, getAttendanceForToday, recordAttendance, getCourses } from '@/lib/data-service';
 
 export async function POST(request: Request) {
   try {
-    const { studentId, courseId } = await request.json();
+    const { studentId } = await request.json();
 
-    if (!studentId || !courseId) {
-      return NextResponse.json({ message: 'Faltan el ID del estudiante o el ID del curso' }, { status: 400 });
+    if (!studentId) {
+      return NextResponse.json({ message: 'Falta el ID del estudiante' }, { status: 400 });
     }
 
     // 1. Verificar si el estudiante existe
@@ -16,16 +16,26 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: `Estudiante con ID ${studentId} no encontrado` }, { status: 404 });
     }
 
-    // 2. Verificar si ya hay un registro de asistencia para hoy
-    const existingAttendance = await getAttendanceForToday(studentId, courseId);
+    // 2. Obtener cursos y asumir el primero.
+    // Esta es una solución temporal. Lo ideal sería que el QR contuviera el ID del curso
+    // o que hubiera una lógica más compleja para determinar el curso (ej: el curso actual por horario).
+    const courses = await getCourses();
+    if (!courses || courses.length === 0) {
+        return NextResponse.json({ message: 'No hay cursos configurados en el sistema.' }, { status: 500 });
+    }
+    const courseId = courses[0].id;
+    const courseName = courses[0].name;
+
+    // 3. Verificar si ya hay un registro de asistencia para hoy en ese curso
+    const existingAttendance = await getAttendanceForToday(studentId, String(courseId));
     if (existingAttendance) {
-      return NextResponse.json({ message: `El estudiante ${student.name} ya tiene la asistencia registrada para hoy` }, { status: 409 }); // 409 Conflict
+      return NextResponse.json({ message: `El estudiante ${student.name} ya tiene la asistencia registrada para hoy en el curso ${courseName}` }, { status: 409 }); // 409 Conflict
     }
 
-    // 3. Insertar el registro de asistencia
-    await recordAttendance(studentId, courseId, 'Presente');
+    // 4. Insertar el registro de asistencia
+    await recordAttendance(studentId, String(courseId), 'Presente');
 
-    return NextResponse.json({ message: `Asistencia registrada para ${student.name}` });
+    return NextResponse.json({ message: `Asistencia registrada para ${student.name} en ${courseName}` });
 
   } catch (error) {
     console.error(error);
