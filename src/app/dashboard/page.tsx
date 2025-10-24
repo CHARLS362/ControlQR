@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts';
@@ -144,24 +145,24 @@ export default function Dashboard() {
             <p className="text-xs text-white/70">+1 desde el último semestre</p>
           </CardContent>
         </Card>
-        <Card className="shadow-subtle">
+        <Card className="shadow-subtle bg-emerald-500/10 text-emerald-900 dark:bg-emerald-500/10 dark:text-emerald-100">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total de Presentes</CardTitle>
-            <CheckCircle className="h-6 w-6 text-emerald-500" />
+            <CardTitle className="text-sm font-medium text-emerald-800 dark:text-emerald-200">Total de Presentes</CardTitle>
+            <CheckCircle className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold">{stats.totalPresent}</div>
-            <p className="text-xs text-muted-foreground">en los últimos 30 días</p>
+            <p className="text-xs text-emerald-700 dark:text-emerald-300">en los últimos 30 días</p>
           </CardContent>
         </Card>
-        <Card className="shadow-subtle">
+        <Card className="shadow-subtle bg-rose-500/10 text-rose-900 dark:bg-rose-500/10 dark:text-rose-100">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total de Ausentes</CardTitle>
-            <XCircle className="h-6 w-6 text-rose-500" />
+            <CardTitle className="text-sm font-medium text-rose-800 dark:text-rose-200">Total de Ausentes</CardTitle>
+            <XCircle className="h-6 w-6 text-rose-600 dark:text-rose-400" />
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold">{stats.totalAbsent}</div>
-            <p className="text-xs text-muted-foreground">en los últimos 30 días</p>
+            <p className="text-xs text-rose-700 dark:text-rose-300">en los últimos 30 días</p>
           </CardContent>
         </Card>
       </div>
