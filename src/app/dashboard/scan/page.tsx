@@ -8,7 +8,6 @@ import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { BrowserMultiFormatReader, BarcodeFormat } from '@zxing/browser';
-import { DecodeHintType } from '@zxing/library/cjs/core/DecodeHintType';
 
 
 // --- Tipos y Constantes ---
@@ -101,6 +100,8 @@ export default function ScanPage() {
     if (!videoRef.current) return;
 
     try {
+       const codeReader = new BrowserMultiFormatReader();
+       codeReaderRef.current = codeReader;
       // Configuración de hints para ZXing
       const hints = new Map();
       const formats = [
@@ -109,11 +110,8 @@ export default function ScanPage() {
         BarcodeFormat.CODE_128,
         BarcodeFormat.CODE_39,
       ];
-      hints.set(DecodeHintType.POSSIBLE_FORMATS, formats);
+      hints.set(codeReader.hints.get('POSSIBLE_FORMATS'), formats);
       
-      const codeReader = new BrowserMultiFormatReader(hints);
-      codeReaderRef.current = codeReader;
-
       setStatus('searching');
       setStatusMessage('Iniciando cámara y pidiendo permisos...');
       
