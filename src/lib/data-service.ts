@@ -1,6 +1,6 @@
 
 import pool from './db';
-import type { Student, Course, Attendance, User, StudentFormValues, CourseFormValues, AttendanceReport, DashboardStats, TopCourse, RecentAttendance } from './types';
+import type { Student, Course, Attendance, User, StudentFormValues, CourseFormValues, AttendanceReport, DashboardStats, ChartDataPoint } from './types';
 import { RowDataPacket } from 'mysql2';
 import crypto from 'crypto';
 
@@ -325,7 +325,7 @@ export async function generateReportForCourse(courseId: string, reportDate: stri
 
 // === Funciones para Estadísticas (Dashboard) ===
 
-export async function getDashboardStats(): Promise<DashboardStats> {
+export async function getDashboardStats(range: 'monthly' | 'weekly'): Promise<DashboardStats> {
   // Queries for the 4 main stat cards
   const [[studentsCount]]: any = await pool.query("SELECT COUNT(*) as count FROM students");
   const [[coursesCount]]: any = await pool.query("SELECT COUNT(*) as count FROM courses");
@@ -334,66 +334,50 @@ export async function getDashboardStats(): Promise<DashboardStats> {
   const [[presentCount]]: any = await pool.query("SELECT COUNT(*) as count FROM attendance WHERE status = 'Presente' AND date >= ?", [thirtyDaysAgo]);
   const [[absentCount]]: any = await pool.query("SELECT COUNT(*) as count FROM attendance WHERE status = 'Ausente' AND date >= ?", [thirtyDaysAgo]);
 
-  // Query for the monthly bar chart
-  const sixMonthsAgo = new Date();
-  sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
-  const [chartDataRows]: any = await pool.query(`
-    SELECT 
-        DATE_FORMAT(date, '%Y-%m') as month,
-        SUM(CASE WHEN status = 'Presente' THEN 1 ELSE 0 END) as present,
-        SUM(CASE WHEN status = 'Ausente' THEN 1 ELSE 0 END) as absent
-    FROM attendance
-    WHERE date >= ?
-    GROUP BY month
-    ORDER BY month ASC;
-  `, [sixMonthsAgo]);
+  // Query for the chart data
+  let chartData: ChartDataPoint[] = [];
+  if (range === 'monthly') {
+    const sixMonthsAgo = new Date();
+    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+    const [monthlyRows]: any = await pool.query(`
+      SELECT 
+          DATE_FORMAT(date, '%Y-%m') as time,
+          SUM(CASE WHEN status = 'Presente' THEN 1 ELSE 0 END) as presentes,
+          SUM(CASE WHEN status = 'Ausente' THEN 1 ELSE 0 END) as ausentes
+      FROM attendance
+      WHERE date >= ?
+      GROUP BY time
+      ORDER BY time ASC;
+    `, [sixMonthsAgo]);
 
-  const monthNames = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
-  const chartData = chartDataRows.map((row: any) => ({
-    month: monthNames[new Date(row.month + '-02').getMonth()],
-    Presentes: Number(row.present),
-    Ausentes: Number(row.absent)
-  }));
-  
-  // Query for Top Courses by attendance
-  const [topCoursesRows] = await pool.query<RowDataPacket[]>(`
-    SELECT 
-        c.id,
-        c.name,
-        (
-            SUM(CASE WHEN a.status = 'Presente' THEN 1 ELSE 0 END) / 
-            NULLIF(COUNT(a.id), 0)
-        ) * 100 AS attendancePercentage
-    FROM courses c
-    LEFT JOIN attendance a ON c.id = a.course_id
-    GROUP BY c.id, c.name
-    HAVING COUNT(a.id) > 0
-    ORDER BY attendancePercentage DESC
-    LIMIT 4;
-  `);
+    const monthNames = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
+    chartData = monthlyRows.map((row: any) => ({
+      time: monthNames[new Date(row.time + '-02').getMonth()],
+      presentes: Number(row.presentes),
+      ausentes: Number(row.ausentes)
+    }));
 
-  const topCourses: TopCourse[] = topCoursesRows.map(row => ({
-    id: row.id,
-    name: row.name,
-    attendancePercentage: parseFloat(row.attendancePercentage)
-  }));
+  } else { // weekly
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    const [weeklyRows]: any = await pool.query(`
+        SELECT 
+            DATE_FORMAT(date, '%Y-%m-%d') as time,
+            SUM(CASE WHEN status = 'Presente' THEN 1 ELSE 0 END) as presentes,
+            SUM(CASE WHEN status = 'Ausente' THEN 1 ELSE 0 END) as ausentes
+        FROM attendance
+        WHERE date >= ?
+        GROUP BY time
+        ORDER BY time ASC;
+    `, [sevenDaysAgo]);
 
-  // Query for Recent Attendance
-  const [recentAttendanceRows] = await pool.query<RowDataPacket[]>(`
-    SELECT
-        a.id,
-        a.date,
-        a.status,
-        s.name as studentName,
-        s.avatar as studentAvatar,
-        c.name as courseName
-    FROM attendance a
-    JOIN students s ON a.student_id = s.id
-    JOIN courses c ON a.course_id = c.id
-    ORDER BY a.date DESC
-    LIMIT 5;
-  `);
-  const recentAttendance: RecentAttendance[] = recentAttendanceRows.map(row => ({ ...row, id: String(row.id) } as RecentAttendance));
+    const dayNames = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
+    chartData = weeklyRows.map((row: any) => ({
+      time: dayNames[new Date(row.time).getUTCDay()],
+      presentes: Number(row.presentes),
+      ausentes: Number(row.ausentes)
+    }));
+  }
 
   return {
     totalStudents: studentsCount.count,
@@ -401,7 +385,5 @@ export async function getDashboardStats(): Promise<DashboardStats> {
     totalPresent: presentCount.count,
     totalAbsent: absentCount.count,
     chartData: chartData,
-    topCourses: topCourses,
-    recentAttendance: recentAttendance
   };
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import { AreaChart } from '@tremor/react';
+import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from 'recharts';
 import {
   Card,
   CardContent,
@@ -8,263 +8,231 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { BookCopy, Users, CheckCircle, XCircle, Clock } from 'lucide-react';
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from '@/components/ui/chart';
+import { Button } from '@/components/ui/button';
+import { BookCopy, Users, CheckCircle, XCircle, LoaderCircle } from 'lucide-react';
 import React from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useToast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
 import type { DashboardStats } from '@/lib/types';
-import Image from 'next/image';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
-import { Progress } from '@/components/ui/progress';
-import { Badge } from '@/components/ui/badge';
-import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 
-function LoadingSkeleton() {
-  return (
-    <div className="flex flex-col gap-8 py-8">
-      <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
-        {Array.from({ length: 4 }).map((_, i) => (
-          <Card key={i}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <Skeleton className="h-5 w-32" />
-              <Skeleton className="h-6 w-6" />
-            </CardHeader>
-            <CardContent>
-              <Skeleton className="h-8 w-16 mb-1" />
-              <Skeleton className="h-4 w-48" />
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
-        <div className="lg:col-span-3 space-y-8">
-          <Card className="shadow-subtle">
-            <CardHeader>
-              <Skeleton className="h-8 w-64" />
-              <Skeleton className="h-5 w-96 mt-2" />
-            </CardHeader>
-            <CardContent>
-              <Skeleton className="h-[250px] w-full" />
-            </CardContent>
-          </Card>
-        </div>
-        <div className="lg:col-span-2 space-y-8">
-          <Card>
-            <CardHeader>
-               <Skeleton className="h-8 w-48" />
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {Array.from({length: 3}).map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}
-            </CardContent>
-          </Card>
-           <Card>
-            <CardHeader>
-               <Skeleton className="h-8 w-56" />
-            </CardHeader>
-            <CardContent className="space-y-4">
-               {Array.from({length: 4}).map((_, i) => <Skeleton key={i} className="h-16 w-full" />)}
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    </div>
-  );
+function StatCard({ 
+    title, 
+    value, 
+    icon: Icon, 
+    changeText, 
+    gradientColors 
+}: { 
+    title: string, 
+    value: string, 
+    icon: React.ElementType, 
+    changeText: string,
+    gradientColors: string,
+}) {
+    return (
+        <Card className={cn("text-white p-6 relative overflow-hidden shadow-lg", gradientColors)}>
+            <div className="flex justify-between items-start">
+                <div>
+                    <p className="text-sm font-medium text-white/90">{title}</p>
+                    <p className="text-4xl font-bold mt-1">{value}</p>
+                </div>
+                <div className="p-3 rounded-lg bg-white/20">
+                    <Icon className="h-6 w-6 text-white" />
+                </div>
+            </div>
+            <div className="text-xs text-white/90 mt-4">{changeText}</div>
+        </Card>
+    );
 }
-
-const customTooltip = (props: any) => {
-  const { payload, active } = props;
-  if (!active || !payload) return null;
-  return (
-    <div className="w-56 rounded-tremor-default border border-tremor-border bg-tremor-background p-2 text-tremor-default shadow-tremor-dropdown">
-      {payload.map((category: any, idx: number) => (
-        <div key={idx} className="flex flex-1 space-x-2.5">
-          <div className={`flex w-1 flex-col bg-${category.color}-500 rounded`} />
-          <div className="space-y-1">
-            <p className="text-tremor-content">{category.dataKey}</p>
-            <p className="font-medium text-tremor-content-emphasis">{category.value} estudiantes</p>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-};
-
 
 export default function Dashboard() {
   const [stats, setStats] = React.useState<DashboardStats | null>(null);
   const [loading, setLoading] = React.useState(true);
+  const [filter, setFilter] = React.useState<'monthly' | 'weekly'>('monthly');
+  const [isChartLoading, setIsChartLoading] = React.useState(false);
+  const { toast } = useToast();
 
   React.useEffect(() => {
-    async function fetchStats() {
+    async function fetchStats(range: 'monthly' | 'weekly') {
+        if (range === 'monthly' && !stats) { // Only show main loading skeleton on first load
+            setLoading(true);
+        } else {
+            setIsChartLoading(true);
+        }
+
       try {
-        const response = await fetch('/api/stats/dashboard');
-        if (!response.ok) throw new Error('Failed to fetch stats');
+        const response = await fetch(`/api/stats/dashboard?range=${range}`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch stats');
+        }
         const data = await response.json();
         setStats(data);
       } catch (error) {
         console.error("Error fetching dashboard stats:", error);
+        toast({
+            variant: 'destructive',
+            title: 'Error',
+            description: 'No se pudieron cargar las estadísticas.',
+        });
       } finally {
         setLoading(false);
+        setIsChartLoading(false);
       }
     }
-    fetchStats();
-  }, []);
+    fetchStats(filter);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filter, toast]);
   
-  const getAvatar = (avatarId: string) => {
-    return PlaceHolderImages.find((img) => img.id === avatarId);
-  };
 
   if (loading || !stats) {
-    return <LoadingSkeleton />;
+    return (
+      <div className="flex flex-col gap-8 py-8">
+        <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
+          <Skeleton className="h-36 w-full" />
+          <Skeleton className="h-36 w-full" />
+          <Skeleton className="h-36 w-full" />
+          <Skeleton className="h-36 w-full" />
+        </div>
+        <Card className="shadow-subtle">
+          <CardHeader>
+            <Skeleton className="h-8 w-64" />
+            <Skeleton className="h-5 w-96 mt-2" />
+          </CardHeader>
+          <CardContent>
+            <Skeleton className="min-h-[200px] w-full" />
+          </CardContent>
+        </Card>
+      </div>
+    )
   }
+
+  const chartConfig = {
+    presentes: {
+      label: 'Presentes',
+      color: 'hsl(var(--chart-2))',
+    },
+    ausentes: {
+      label: 'Ausentes',
+      color: 'hsl(var(--chart-5))',
+    },
+  };
 
   return (
     <div className="flex flex-col gap-8 py-8">
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-            <Card className="bg-emerald-500 text-white shadow-lg">
-                <CardContent className="p-6 flex justify-between items-start">
-                    <div>
-                        <p className="text-sm font-medium text-emerald-100">Total de Estudiantes</p>
-                        <p className="text-4xl font-bold mt-1">{stats.totalStudents}</p>
-                        <p className="text-xs text-emerald-100 mt-2">Registrados en el sistema</p>
-                    </div>
-                    <div className="bg-white/20 p-2 rounded-lg">
-                        <Users className="h-6 w-6 text-white" />
-                    </div>
-                </CardContent>
-            </Card>
-            <Card className="bg-blue-500 text-white shadow-lg">
-                <CardContent className="p-6 flex justify-between items-start">
-                    <div>
-                        <p className="text-sm font-medium text-blue-100">Total de Cursos</p>
-                        <p className="text-4xl font-bold mt-1">{stats.totalCourses}</p>
-                        <p className="text-xs text-blue-100 mt-2">Activos actualmente</p>
-                    </div>
-                    <div className="bg-white/20 p-2 rounded-lg">
-                        <BookCopy className="h-6 w-6 text-white" />
-                    </div>
-                </CardContent>
-            </Card>
-            <Card className="bg-fuchsia-500 text-white shadow-lg">
-                <CardContent className="p-6 flex justify-between items-start">
-                    <div>
-                        <p className="text-sm font-medium text-fuchsia-100">Total de Presentes</p>
-                        <p className="text-4xl font-bold mt-1">{stats.totalPresent}</p>
-                        <p className="text-xs text-fuchsia-100 mt-2">en los últimos 30 días</p>
-                    </div>
-                    <div className="bg-white/20 p-2 rounded-lg">
-                        <CheckCircle className="h-6 w-6 text-white" />
-                    </div>
-                </CardContent>
-            </Card>
-            <Card className="bg-orange-500 text-white shadow-lg">
-                <CardContent className="p-6 flex justify-between items-start">
-                    <div>
-                        <p className="text-sm font-medium text-orange-100">Total de Ausentes</p>
-                        <p className="text-4xl font-bold mt-1">{stats.totalAbsent}</p>
-                        <p className="text-xs text-orange-100 mt-2">en los últimos 30 días</p>
-                    </div>
-                    <div className="bg-white/20 p-2 rounded-lg">
-                        <XCircle className="h-6 w-6 text-white" />
-                    </div>
-                </CardContent>
-            </Card>
-        </div>
-
-
-      <div className="grid grid-cols-1 gap-8">
-        <Card className="shadow-subtle">
-            <CardHeader>
-                 <div className="flex justify-between items-center">
-                    <div>
-                        <CardTitle className="font-headline">Resumen de Asistencia</CardTitle>
-                        <CardDescription>Un resumen de la asistencia en los últimos 6 meses.</CardDescription>
-                    </div>
-                    <Tabs defaultValue="mes" className="w-[180px]">
-                        <TabsList className="grid w-full grid-cols-2">
-                            <TabsTrigger value="mes">Mes</TabsTrigger>
-                            <TabsTrigger value="semana">Semana</TabsTrigger>
-                        </TabsList>
-                    </Tabs>
+      <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
+        <StatCard 
+            title="Total de Estudiantes"
+            value={stats.totalStudents.toString()}
+            icon={Users}
+            changeText="+2 desde el mes pasado"
+            gradientColors="bg-gradient-to-br from-green-400 to-green-600"
+        />
+        <StatCard 
+            title="Total de Cursos"
+            value={stats.totalCourses.toString()}
+            icon={BookCopy}
+            changeText="+1 desde el último semestre"
+            gradientColors="bg-gradient-to-br from-blue-400 to-blue-600"
+        />
+        <StatCard 
+            title="Total de Presentes"
+            value={stats.totalPresent.toString()}
+            icon={CheckCircle}
+            changeText="en los últimos 30 días"
+            gradientColors="bg-gradient-to-br from-purple-400 to-pink-600"
+        />
+        <StatCard 
+            title="Total de Ausentes"
+            value={stats.totalAbsent.toString()}
+            icon={XCircle}
+            changeText="en los últimos 30 días"
+            gradientColors="bg-gradient-to-br from-yellow-400 to-orange-500"
+        />
+      </div>
+      <Card className="shadow-subtle">
+        <CardHeader className="flex flex-row items-center justify-between">
+            <div>
+              <CardTitle className="font-headline">Resumen de Asistencia</CardTitle>
+              <CardDescription>
+                Un resumen de la asistencia en {filter === 'monthly' ? 'los últimos 6 meses' : 'la última semana'}.
+              </CardDescription>
+            </div>
+            <div className="flex gap-2">
+                <Button variant="outline" size="sm" className={cn(filter === 'monthly' && "bg-muted")} onClick={() => setFilter('monthly')}>Mes</Button>
+                <Button variant="outline" size="sm" className={cn(filter === 'weekly' && "bg-muted")} onClick={() => setFilter('weekly')}>Semana</Button>
+            </div>
+        </CardHeader>
+        <CardContent className="h-[350px] relative">
+            {isChartLoading && (
+                <div className="absolute inset-0 flex items-center justify-center bg-card/80 z-10 rounded-b-lg">
+                    <LoaderCircle className="h-10 w-10 animate-spin" />
                 </div>
-            </CardHeader>
-            <CardContent>
-               <AreaChart
-                    className="h-80"
-                    data={stats.chartData}
-                    index="month"
-                    categories={['Presentes', 'Ausentes']}
-                    colors={['emerald', 'rose']}
-                    yAxisWidth={60}
-                    curveType='monotone'
-                    customTooltip={customTooltip}
-                    showLegend={true}
-                    showGridLines={true}
-                 />
-            </CardContent>
-          </Card>
-      </div>
-
-       <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
-         <div className="lg:col-span-3 space-y-8">
-           <Card className="shadow-subtle">
-              <CardHeader>
-                  <CardTitle>Cursos con Mayor Asistencia</CardTitle>
-                  <CardDescription>Top 4 de cursos con mejor porcentaje de asistencia.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                  {stats.topCourses.length > 0 ? stats.topCourses.map(course => (
-                      <div key={course.id}>
-                          <div className="flex justify-between items-center mb-1">
-                              <span className="text-sm font-medium text-foreground">{course.name}</span>
-                              <span className="text-sm font-bold text-primary">{course.attendancePercentage.toFixed(1)}%</span>
-                          </div>
-                          <Progress value={course.attendancePercentage} className="h-2" />
-                      </div>
-                  )) : (
-                      <p className="text-sm text-muted-foreground text-center py-4">No hay datos de asistencia suficientes.</p>
-                  )}
-              </CardContent>
-          </Card>
-        </div>
-
-        <div className="lg:col-span-2 space-y-8">
-          <Card className="shadow-subtle">
-              <CardHeader>
-                  <CardTitle>Actividad Reciente</CardTitle>
-                  <CardDescription>Últimos 5 registros de asistencia.</CardDescription>
-              </CardHeader>
-              <CardContent>
-                  <ul className="space-y-4">
-                      {stats.recentAttendance.length > 0 ? stats.recentAttendance.map(att => {
-                          const avatar = getAvatar(att.studentAvatar);
-                          return (
-                              <li key={att.id} className="flex items-center gap-4">
-                                  {avatar ? (
-                                    <Image src={avatar.imageUrl} alt={att.studentName} width={40} height={40} className="rounded-full" data-ai-hint={avatar.imageHint} />
-                                  ) : (
-                                    <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center text-muted-foreground text-xs">?</div>
-                                  )}
-                                  <div className="flex-1">
-                                      <p className="font-medium text-sm">{att.studentName}</p>
-                                      <p className="text-xs text-muted-foreground">{att.courseName}</p>
-                                  </div>
-                                  <div className="text-right">
-                                    <Badge variant={att.status === 'Presente' ? 'default' : 'destructive'} className="capitalize bg-opacity-20 border-opacity-40 text-current">{att.status}</Badge>
-                                    <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1 justify-end"><Clock className="h-3 w-3" /> {format(new Date(att.date), 'HH:mm')}</p>
-                                  </div>
-                              </li>
-                          )
-                      }) : (
-                          <p className="text-sm text-muted-foreground text-center py-4">No hay registros de asistencia recientes.</p>
-                      )}
-                  </ul>
-              </CardContent>
-          </Card>
-        </div>
-      </div>
+            )}
+          <ChartContainer config={chartConfig} className="h-full w-full">
+            <AreaChart 
+                accessibilityLayer 
+                data={stats.chartData}
+                margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
+            >
+              <defs>
+                 <linearGradient id="fillPresentes" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="var(--color-presentes)" stopOpacity={0.8}/>
+                    <stop offset="95%" stopColor="var(--color-presentes)" stopOpacity={0.1}/>
+                 </linearGradient>
+                 <linearGradient id="fillAusentes" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="var(--color-ausentes)" stopOpacity={0.8}/>
+                    <stop offset="95%" stopColor="var(--color-ausentes)" stopOpacity={0.1}/>
+                 </linearGradient>
+              </defs>
+              <XAxis
+                dataKey="time"
+                stroke="hsl(var(--muted-foreground))"
+                axisLine={false}
+                tickLine={false}
+                tickFormatter={(value) => filter === 'monthly' ? value.slice(0, 3) : value}
+                tick={{ fill: 'hsl(var(--muted-foreground))' }}
+              />
+              <YAxis 
+                stroke="hsl(var(--muted-foreground))"
+                axisLine={false}
+                tickLine={false}
+                tick={{ fill: 'hsl(var(--muted-foreground))' }}
+              />
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+              <ChartTooltip
+                cursor={{ stroke: 'hsl(var(--border))', strokeWidth: 1 }}
+                content={<ChartTooltipContent 
+                    indicator="dot" 
+                />}
+              />
+              <Area
+                type="monotone"
+                dataKey="presentes"
+                stackId="1"
+                strokeWidth={2}
+                stroke="var(--color-presentes)"
+                fill="url(#fillPresentes)"
+                name="Presentes"
+              />
+              <Area
+                type="monotone"
+                dataKey="ausentes"
+                stackId="1"
+                strokeWidth={2}
+                stroke="var(--color-ausentes)"
+                fill="url(#fillAusentes)"
+                name="Ausentes"
+              />
+            </AreaChart>
+          </ChartContainer>
+        </CardContent>
+      </Card>
     </div>
   );
 }

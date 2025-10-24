@@ -51,29 +51,18 @@ export type AttendanceReport = {
 }
 
 // --- Tipos para el Dashboard ---
-export type TopCourse = {
-  id: string;
-  name: string;
-  attendancePercentage: number;
-};
-
-export type RecentAttendance = {
-  id: string;
-  date: string;
-  status: 'Presente' | 'Ausente';
-  studentName: string;
-  studentAvatar: string;
-  courseName: string;
-};
+export type ChartDataPoint = {
+  time: string;
+  presentes: number;
+  ausentes: number;
+}
 
 export type DashboardStats = {
   totalStudents: number;
   totalCourses: number;
   totalPresent: number;
   totalAbsent: number;
-  chartData: { month: string; Presentes: number; Ausentes: number }[];
-  topCourses: TopCourse[];
-  recentAttendance: RecentAttendance[];
+  chartData: ChartDataPoint[];
 };
 
 
