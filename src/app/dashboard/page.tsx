@@ -257,23 +257,13 @@ export default function Dashboard() {
                   <ChartContainer config={{}} className="min-h-[250px] w-full">
                       <ResponsiveContainer width="100%" height={250}>
                         <AreaChart data={stats.chartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
-                            <defs>
-                                <linearGradient id="colorPresent" x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.4}/>
-                                    <stop offset="95%" stopColor="#3B82F6" stopOpacity={0}/>
-                                </linearGradient>
-                                <linearGradient id="colorAbsent" x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="5%" stopColor="#F97316" stopOpacity={0.4}/>
-                                    <stop offset="95%" stopColor="#F97316" stopOpacity={0}/>
-                                </linearGradient>
-                            </defs>
                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border) / 0.5)" />
                             <XAxis dataKey="month" tickLine={false} axisLine={false} tickMargin={10} fontSize={12} />
                             <YAxis tickLine={false} axisLine={false} tickMargin={10} fontSize={12} allowDecimals={false} />
                             <Tooltip cursor={{fill: 'hsl(var(--accent) / 0.1)', stroke: 'hsl(var(--accent))', strokeWidth: 1}} content={<CustomAreaChartTooltip />} />
                             <Legend content={<CustomLegend />} />
-                            <Area type="monotone" dataKey="present" stroke="#3B82F6" fill="url(#colorPresent)" name="Presentes" strokeWidth={2} />
-                            <Area type="monotone" dataKey="absent" stroke="#F97316" fill="url(#colorAbsent)" name="Ausentes" strokeWidth={2} />
+                            <Area type="monotone" dataKey="present" stroke="#3B82F6" fill="#3B82F6" fillOpacity={0.3} name="Presentes" strokeWidth={2} />
+                            <Area type="monotone" dataKey="absent" stroke="#F97316" fill="#F97316" fillOpacity={0.3} name="Ausentes" strokeWidth={2} />
                         </AreaChart>
                     </ResponsiveContainer>
                   </ChartContainer>
@@ -336,5 +326,3 @@ export default function Dashboard() {
     </div>
   );
 }
-
-    
