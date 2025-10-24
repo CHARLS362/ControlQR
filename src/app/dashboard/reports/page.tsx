@@ -118,7 +118,7 @@ export default function ReportsPage() {
   const { toast } = useToast();
 
   const [date, setDate] = React.useState<Date | undefined>();
-  const [selectedCourse, setSelectedCourse] = React.useState<string>('');
+  const [selectedCourse, setSelectedCourse] = React.useState<string>('all');
 
   React.useEffect(() => {
     async function fetchData() {
@@ -159,7 +159,7 @@ export default function ReportsPage() {
   const filteredAttendance = React.useMemo(() => {
     return attendance
       .filter((record) => {
-        if (!selectedCourse) return true;
+        if (selectedCourse === 'all') return true;
         return record.courseId === selectedCourse;
       })
       .filter((record) => {
@@ -224,7 +224,7 @@ export default function ReportsPage() {
                 <SelectValue placeholder="Seleccionar un curso" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todos los cursos</SelectItem>
+                <SelectItem value="all">Todos los cursos</SelectItem>
                 {courses.map((course) => (
                   <SelectItem key={course.id} value={String(course.id)}>
                     {course.name}
