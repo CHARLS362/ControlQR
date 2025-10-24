@@ -7,7 +7,9 @@ import { Camera, CameraOff, CheckCircle, LoaderCircle, QrCode, XCircle, AlertTri
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { BrowserMultiFormatReader, BarcodeFormat, DecodeHintType } from '@zxing/browser';
+import { BrowserMultiFormatReader, BarcodeFormat } from '@zxing/browser';
+import { DecodeHintType } from '@zxing/library/cjs/core/DecodeHintType';
+
 
 // --- Tipos y Constantes ---
 type Status = 'searching' | 'success' | 'error' | 'permission' | 'stopped' | 'info';
