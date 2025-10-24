@@ -14,6 +14,7 @@ import {
   QrCode,
   Settings,
   Users,
+  Usb,
 } from 'lucide-react';
 
 import {
@@ -50,7 +51,7 @@ import { PlaceHolderImages } from '@/lib/placeholder-images';
 
 function DashboardSidebar() {
   const pathname = usePathname();
-  const isActive = (path: string) => pathname === path;
+  const isActive = (path: string) => pathname.startsWith(path);
 
   const userAvatar = PlaceHolderImages.find((img) => img.id === 'user-avatar');
 
@@ -71,7 +72,7 @@ function DashboardSidebar() {
           <SidebarMenuItem>
             <SidebarMenuButton
               asChild
-              isActive={isActive('/dashboard')}
+              isActive={pathname === '/dashboard'}
               tooltip="Panel de Control"
             >
               <Link href="/dashboard">
@@ -104,15 +105,27 @@ function DashboardSidebar() {
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
-          <SidebarMenuItem>
+           <SidebarMenuItem>
             <SidebarMenuButton
               asChild
               isActive={isActive('/dashboard/scan')}
-              tooltip="Escanear"
+              tooltip="Escanear (Cámara)"
             >
               <Link href="/dashboard/scan">
                 <QrCode />
-                <span>Escanear Asistencia</span>
+                <span>Escaner Cámara</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              asChild
+              isActive={isActive('/dashboard/keyboard-scan')}
+              tooltip="Escanear (USB)"
+            >
+              <Link href="/dashboard/keyboard-scan">
+                <Usb />
+                <span>Escaner USB</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
@@ -184,7 +197,8 @@ function DashboardBreadcrumb() {
     dashboard: 'Panel de Control',
     courses: 'Cursos',
     students: 'Estudiantes',
-    scan: 'Escanear Asistencia',
+    scan: 'Escaner Cámara',
+    'keyboard-scan': 'Escaner USB',
     reports: 'Reportes',
   };
 
@@ -274,7 +288,14 @@ export default function DashboardLayout({
                   className="flex items-center gap-4 px-2.5 text-sidebar-foreground/70 hover:text-sidebar-foreground"
                 >
                   <QrCode className="h-5 w-5" />
-                  Escanear Asistencia
+                  Escaner Cámara
+                </Link>
+                 <Link
+                  href="/dashboard/keyboard-scan"
+                  className="flex items-center gap-4 px-2.5 text-sidebar-foreground/70 hover:text-sidebar-foreground"
+                >
+                  <Usb className="h-5 w-5" />
+                  Escaner USB
                 </Link>
                 <Link
                   href="/dashboard/reports"
