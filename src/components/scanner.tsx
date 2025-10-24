@@ -74,12 +74,13 @@ export function Scanner() {
     }
 
     setTimeout(() => {
-        if (isCameraActive) {
-          setStatus('searching');
-          setStatusMessage('Apunte el código QR o de barras dentro del recuadro.');
-        }
-      }, 2000);
-  }, [lastScannedCode, toast, addToLog, isCameraActive]);
+      // Check camera status via ref to not depend on state in this callback
+      if (videoRef.current?.srcObject) {
+        setStatus('searching');
+        setStatusMessage('Apunte el código QR o de barras dentro del recuadro.');
+      }
+    }, 2000);
+  }, [lastScannedCode, toast, addToLog]);
 
   const stopCamera = useCallback(() => {
     if (controlsRef.current) {
@@ -98,8 +99,7 @@ export function Scanner() {
   }, []);
 
   const startCamera = useCallback(async () => {
-    if (!videoRef.current) return;
-    if (isCameraActive) return;
+    if (!videoRef.current || isCameraActive) return;
 
     try {
       const codeReader = new BrowserMultiFormatReader();
@@ -145,7 +145,7 @@ export function Scanner() {
     return () => {
       stopCamera();
     };
-  }, [startCamera, stopCamera]);
+  }, []);
 
 
   const StatusIcon = () => {
