@@ -1,12 +1,11 @@
 
 'use client';
 
-import { Pie, PieChart, Cell, Legend, Tooltip } from 'recharts';
+import { Pie, PieChart, Cell, Legend, Tooltip, Bar, BarChart, XAxis, YAxis } from 'recharts';
 import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
@@ -14,31 +13,90 @@ import {
   ChartContainer,
   ChartTooltipContent,
 } from '@/components/ui/chart';
-import { BookCopy, Users, CheckCircle, XCircle } from 'lucide-react';
+import { BookCopy, Users, CheckCircle, XCircle, Clock } from 'lucide-react';
 import React from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
+import type { DashboardStats } from '@/lib/types';
+import Image from 'next/image';
+import { PlaceHolderImages } from '@/lib/placeholder-images';
+import { Progress } from '@/components/ui/progress';
+import { Badge } from '@/components/ui/badge';
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
 
-type Stats = {
-    totalStudents: number;
-    totalCourses: number;
-    totalPresent: number;
-    totalAbsent: number;
-    chartData: { month: string, present: number, absent: number }[];
+const PIE_COLORS = ['#10B981', '#F43F5E']; // Verde Esmeralda y Rojo Rosa
+const BAR_COLORS = { present: '#3B82F6', absent: '#F97316' }; // Azul y Naranja
+
+function LoadingSkeleton() {
+  return (
+    <div className="flex flex-col gap-8 py-8">
+      <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <Card key={i}>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <Skeleton className="h-5 w-32" />
+              <Skeleton className="h-6 w-6" />
+            </CardHeader>
+            <CardContent>
+              <Skeleton className="h-8 w-16 mb-1" />
+              <Skeleton className="h-4 w-48" />
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
+        <div className="lg:col-span-3 space-y-8">
+          <Card className="shadow-subtle">
+            <CardHeader>
+              <Skeleton className="h-8 w-64" />
+              <Skeleton className="h-5 w-96 mt-2" />
+            </CardHeader>
+            <CardContent className="flex justify-center items-center">
+              <Skeleton className="h-[250px] w-[250px] rounded-full" />
+            </CardContent>
+          </Card>
+           <Card className="shadow-subtle">
+            <CardHeader>
+              <Skeleton className="h-8 w-72" />
+              <Skeleton className="h-5 w-80 mt-2" />
+            </CardHeader>
+            <CardContent>
+              <Skeleton className="h-[250px] w-full" />
+            </CardContent>
+          </Card>
+        </div>
+        <div className="lg:col-span-2 space-y-8">
+          <Card>
+            <CardHeader>
+               <Skeleton className="h-8 w-48" />
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {Array.from({length: 3}).map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}
+            </CardContent>
+          </Card>
+           <Card>
+            <CardHeader>
+               <Skeleton className="h-8 w-56" />
+            </CardHeader>
+            <CardContent className="space-y-4">
+               {Array.from({length: 4}).map((_, i) => <Skeleton key={i} className="h-16 w-full" />)}
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </div>
+  );
 }
 
-const COLORS = ['#10B981', '#F43F5E']; // Verde Esmeralda y Rojo Rosa
-
 export default function Dashboard() {
-  const [stats, setStats] = React.useState<Stats | null>(null);
+  const [stats, setStats] = React.useState<DashboardStats | null>(null);
   const [loading, setLoading] = React.useState(true);
 
   React.useEffect(() => {
     async function fetchStats() {
       try {
         const response = await fetch('/api/stats/dashboard');
-        if (!response.ok) {
-          throw new Error('Failed to fetch stats');
-        }
+        if (!response.ok) throw new Error('Failed to fetch stats');
         const data = await response.json();
         setStats(data);
       } catch (error) {
@@ -55,65 +113,12 @@ export default function Dashboard() {
       { name: 'Ausentes', value: stats.totalAbsent },
     ] : [];
 
+  const getAvatar = (avatarId: string) => {
+    return PlaceHolderImages.find((img) => img.id === avatarId);
+  };
+
   if (loading || !stats) {
-    return (
-      <div className="flex flex-col gap-8 py-8">
-        <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total de Estudiantes</CardTitle>
-              <Skeleton className="h-6 w-6" />
-            </CardHeader>
-            <CardContent>
-              <Skeleton className="h-8 w-16 mb-1" />
-              <Skeleton className="h-4 w-48" />
-            </CardContent>
-          </Card>
-           <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total de Cursos</CardTitle>
-              <Skeleton className="h-6 w-6" />
-            </CardHeader>
-            <CardContent>
-              <Skeleton className="h-8 w-16 mb-1" />
-              <Skeleton className="h-4 w-44" />
-            </CardContent>
-          </Card>
-           <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total de Presentes</CardTitle>
-              <Skeleton className="h-6 w-6" />
-            </CardHeader>
-            <CardContent>
-               <Skeleton className="h-8 w-16 mb-1" />
-               <Skeleton className="h-4 w-32" />
-            </CardContent>
-          </Card>
-           <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total de Ausentes</CardTitle>
-              <Skeleton className="h-6 w-6" />
-            </CardHeader>
-            <CardContent>
-                <Skeleton className="h-8 w-16 mb-1" />
-                <Skeleton className="h-4 w-32" />
-            </CardContent>
-          </Card>
-        </div>
-        <Card className="shadow-subtle">
-          <CardHeader>
-            <Skeleton className="h-8 w-64" />
-            <Skeleton className="h-5 w-96 mt-2" />
-          </CardHeader>
-          <CardContent className="flex justify-center items-center">
-            <Skeleton className="min-h-[250px] w-[250px] rounded-full" />
-          </CardContent>
-          <CardFooter>
-            <Skeleton className="h-4 w-80" />
-          </CardFooter>
-        </Card>
-      </div>
-    )
+    return <LoadingSkeleton />;
   }
 
   return (
@@ -126,7 +131,7 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold">{stats.totalStudents}</div>
-            <p className="text-xs text-white/70">+2 desde el mes pasado</p>
+            <p className="text-xs text-white/70">Registrados en el sistema</p>
           </CardContent>
         </Card>
         <Card className="shadow-subtle bg-gradient text-white">
@@ -136,73 +141,62 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold">{stats.totalCourses}</div>
-            <p className="text-xs text-white/70">+1 desde el último semestre</p>
+            <p className="text-xs text-white/70">Activos actualmente</p>
           </CardContent>
         </Card>
         <Card className="shadow-subtle bg-gradient text-white">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total de Presentes</CardTitle>
+            <CardTitle className="text-sm font-medium">Presentes (30 días)</CardTitle>
             <CheckCircle className="h-6 w-6 text-white/80" />
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold">{stats.totalPresent}</div>
-            <p className="text-xs text-white/70">en los últimos 30 días</p>
+            <p className="text-xs text-white/70">Registros de asistencia</p>
           </CardContent>
         </Card>
         <Card className="shadow-subtle bg-gradient text-white">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total de Ausentes</CardTitle>
+            <CardTitle className="text-sm font-medium">Ausentes (30 días)</CardTitle>
             <XCircle className="h-6 w-6 text-white/80" />
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold">{stats.totalAbsent}</div>
-            <p className="text-xs text-white/70">en los últimos 30 días</p>
+            <p className="text-xs text-white/70">Registros de asistencia</p>
           </CardContent>
         </Card>
       </div>
-      <Card className="shadow-subtle">
-        <CardHeader>
-          <CardTitle className="font-headline">Distribución General de Asistencia</CardTitle>
-          <CardDescription>
-            Proporción de asistencia registrada en los últimos 30 días.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="flex justify-center items-center">
-          <ChartContainer config={{}} className="min-h-[250px] w-full max-w-[250px]">
-            <PieChart>
-              <Tooltip
-                cursor={false}
-                content={
-                  <ChartTooltipContent
-                    hideLabel
-                    formatter={(value, name, props) => (
-                       <div className="flex items-center gap-2">
-                         <div className="w-2.5 h-2.5 rounded-full" style={{backgroundColor: props.fill}}></div>
-                         <span>{name}:</span>
-                         <span className="font-bold">{value} ({((value as number / (stats.totalPresent + stats.totalAbsent)) * 100).toFixed(1)}%)</span>
-                       </div>
-                    )}
+
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
+        <div className="lg:col-span-3 space-y-8">
+          <Card className="shadow-subtle">
+            <CardHeader>
+              <CardTitle className="font-headline">Distribución General de Asistencia</CardTitle>
+              <CardDescription>Proporción de asistencia (presentes vs. ausentes) en los últimos 30 días.</CardDescription>
+            </CardHeader>
+            <CardContent className="flex justify-center items-center">
+              <ChartContainer config={{}} className="min-h-[250px] w-full max-w-[250px]">
+                <PieChart>
+                  <Tooltip
+                    cursor={false}
+                    content={
+                      <ChartTooltipContent
+                        hideLabel
+                        formatter={(value, name, props) => (
+                           <div className="flex items-center gap-2">
+                             <div className="w-2.5 h-2.5 rounded-full" style={{backgroundColor: props.fill}}></div>
+                             <span>{name}:</span>
+                             <span className="font-bold">{value} ({((value as number / (stats.totalPresent + stats.totalAbsent)) * 100).toFixed(1)}%)</span>
+                           </div>
+                        )}
+                      />
+                    }
                   />
-                }
-              />
-              <Pie
-                data={pieData}
-                dataKey="value"
-                nameKey="name"
-                cx="50%"
-                cy="50%"
-                innerRadius={60}
-                outerRadius={80}
-                paddingAngle={5}
-                labelLine={false}
-              >
-                {pieData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                ))}
-              </Pie>
-               <Legend
-                  content={({ payload }) => {
-                    return (
+                  <Pie data={pieData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={60} outerRadius={80} paddingAngle={5} labelLine={false}>
+                    {pieData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
+                    ))}
+                  </Pie>
+                   <Legend content={({ payload }) => (
                       <ul className="flex flex-wrap gap-x-4 gap-y-1 justify-center mt-4">
                         {payload?.map((entry, index) => (
                           <li key={`item-${index}`} className="flex items-center gap-2">
@@ -211,18 +205,84 @@ export default function Dashboard() {
                           </li>
                         ))}
                       </ul>
-                    )
-                  }}
-                />
-            </PieChart>
-          </ChartContainer>
-        </CardContent>
-        <CardFooter>
-          <div className="text-xs text-muted-foreground">
-            Mostrando la distribución total de la asistencia.
-          </div>
-        </CardFooter>
-      </Card>
+                    )}
+                  />
+                </PieChart>
+              </ChartContainer>
+            </CardContent>
+          </Card>
+          <Card className="shadow-subtle">
+              <CardHeader>
+                  <CardTitle className="font-headline">Tendencia de Asistencia Mensual</CardTitle>
+                  <CardDescription>Resumen de asistencia de los últimos 6 meses.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                  <ChartContainer config={{}} className="min-h-[250px] w-full">
+                      <BarChart data={stats.chartData}>
+                          <XAxis dataKey="month" tickLine={false} axisLine={false} tickMargin={8} fontSize={12} />
+                          <YAxis tickLine={false} axisLine={false} tickMargin={8} fontSize={12} />
+                          <Tooltip cursor={false} content={<ChartTooltipContent indicator="dot" />} />
+                          <Legend />
+                          <Bar dataKey="present" fill={BAR_COLORS.present} name="Presentes" radius={4} />
+                          <Bar dataKey="absent" fill={BAR_COLORS.absent} name="Ausentes" radius={4} />
+                      </BarChart>
+                  </ChartContainer>
+              </CardContent>
+          </Card>
+        </div>
+
+        <div className="lg:col-span-2 space-y-8">
+            <Card className="shadow-subtle">
+              <CardHeader>
+                  <CardTitle>Cursos con Mayor Asistencia</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                  {stats.topCourses.length > 0 ? stats.topCourses.map(course => (
+                      <div key={course.id}>
+                          <div className="flex justify-between items-center mb-1">
+                              <span className="text-sm font-medium text-foreground">{course.name}</span>
+                              <span className="text-sm font-bold text-primary">{course.attendancePercentage.toFixed(1)}%</span>
+                          </div>
+                          <Progress value={course.attendancePercentage} className="h-2" />
+                      </div>
+                  )) : (
+                      <p className="text-sm text-muted-foreground text-center py-4">No hay datos de asistencia suficientes.</p>
+                  )}
+              </CardContent>
+          </Card>
+          <Card className="shadow-subtle">
+              <CardHeader>
+                  <CardTitle>Actividad Reciente</CardTitle>
+              </CardHeader>
+              <CardContent>
+                  <ul className="space-y-4">
+                      {stats.recentAttendance.length > 0 ? stats.recentAttendance.map(att => {
+                          const avatar = getAvatar(att.studentAvatar);
+                          return (
+                              <li key={att.id} className="flex items-center gap-4">
+                                  {avatar ? (
+                                    <Image src={avatar.imageUrl} alt={att.studentName} width={40} height={40} className="rounded-full" data-ai-hint={avatar.imageHint} />
+                                  ) : (
+                                    <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center text-muted-foreground text-xs">?</div>
+                                  )}
+                                  <div className="flex-1">
+                                      <p className="font-medium text-sm">{att.studentName}</p>
+                                      <p className="text-xs text-muted-foreground">{att.courseName}</p>
+                                  </div>
+                                  <div className="text-right">
+                                    <Badge variant={att.status === 'Presente' ? 'default' : 'destructive'} className="capitalize bg-opacity-20 border-opacity-40 text-current">{att.status}</Badge>
+                                    <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1 justify-end"><Clock className="h-3 w-3" /> {format(new Date(att.date), 'HH:mm')}</p>
+                                  </div>
+                              </li>
+                          )
+                      }) : (
+                          <p className="text-sm text-muted-foreground text-center py-4">No hay registros de asistencia recientes.</p>
+                      )}
+                  </ul>
+              </CardContent>
+          </Card>
+        </div>
+      </div>
     </div>
   );
 }

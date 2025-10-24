@@ -1,5 +1,4 @@
 
-
 export type Student = {
   id: string;
   name: string;
@@ -50,6 +49,32 @@ export type AttendanceReport = {
   generated_by: string | null;
   generated_at: string; // Timestamp
 }
+
+// --- Tipos para el Dashboard ---
+export type TopCourse = {
+  id: string;
+  name: string;
+  attendancePercentage: number;
+};
+
+export type RecentAttendance = {
+  id: string;
+  date: string;
+  status: 'Presente' | 'Ausente';
+  studentName: string;
+  studentAvatar: string;
+  courseName: string;
+};
+
+export type DashboardStats = {
+  totalStudents: number;
+  totalCourses: number;
+  totalPresent: number;
+  totalAbsent: number;
+  chartData: { month: string; present: number; absent: number }[];
+  topCourses: TopCourse[];
+  recentAttendance: RecentAttendance[];
+};
 
 
 // Tipos para validación de formularios
