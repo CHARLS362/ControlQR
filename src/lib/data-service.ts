@@ -351,8 +351,8 @@ export async function getDashboardStats(): Promise<DashboardStats> {
   const monthNames = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
   const chartData = chartDataRows.map((row: any) => ({
     month: monthNames[new Date(row.month + '-02').getMonth()],
-    present: Number(row.present),
-    absent: Number(row.absent)
+    Presentes: Number(row.present),
+    Ausentes: Number(row.absent)
   }));
   
   // Query for Top Courses by attendance
@@ -362,12 +362,12 @@ export async function getDashboardStats(): Promise<DashboardStats> {
         c.name,
         (
             SUM(CASE WHEN a.status = 'Presente' THEN 1 ELSE 0 END) / 
-            COUNT(a.id)
+            NULLIF(COUNT(a.id), 0)
         ) * 100 AS attendancePercentage
     FROM courses c
-    JOIN attendance a ON c.id = a.course_id
+    LEFT JOIN attendance a ON c.id = a.course_id
     GROUP BY c.id, c.name
-    HAVING COUNT(a.id) > 0 -- Ensure we don't divide by zero and only show courses with attendance
+    HAVING COUNT(a.id) > 0
     ORDER BY attendancePercentage DESC
     LIMIT 4;
   `);

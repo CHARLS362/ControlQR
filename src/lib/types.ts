@@ -71,7 +71,7 @@ export type DashboardStats = {
   totalCourses: number;
   totalPresent: number;
   totalAbsent: number;
-  chartData: { month: string; present: number; absent: number }[];
+  chartData: { month: string; Presentes: number; Ausentes: number }[];
   topCourses: TopCourse[];
   recentAttendance: RecentAttendance[];
 };

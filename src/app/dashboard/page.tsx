@@ -1,14 +1,6 @@
 'use client';
 
-import { 
-  Area, 
-  AreaChart, 
-  ResponsiveContainer, 
-  XAxis, 
-  YAxis, 
-  Tooltip, 
-  CartesianGrid 
-} from 'recharts';
+import { AreaChart } from '@tremor/react';
 import {
   Card,
   CardContent,
@@ -16,10 +8,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import {
-  ChartContainer,
-  ChartTooltipContent,
-} from '@/components/ui/chart';
 import { BookCopy, Users, CheckCircle, XCircle, Clock } from 'lucide-react';
 import React from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -85,6 +73,25 @@ function LoadingSkeleton() {
   );
 }
 
+const customTooltip = (props: any) => {
+  const { payload, active } = props;
+  if (!active || !payload) return null;
+  return (
+    <div className="w-56 rounded-tremor-default border border-tremor-border bg-tremor-background p-2 text-tremor-default shadow-tremor-dropdown">
+      {payload.map((category: any, idx: number) => (
+        <div key={idx} className="flex flex-1 space-x-2.5">
+          <div className={`flex w-1 flex-col bg-${category.color}-500 rounded`} />
+          <div className="space-y-1">
+            <p className="text-tremor-content">{category.dataKey}</p>
+            <p className="font-medium text-tremor-content-emphasis">{category.value} estudiantes</p>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+
 export default function Dashboard() {
   const [stats, setStats] = React.useState<DashboardStats | null>(null);
   const [loading, setLoading] = React.useState(true);
@@ -116,12 +123,12 @@ export default function Dashboard() {
   return (
     <div className="flex flex-col gap-8 py-8">
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-            <Card className="bg-green-500 text-white shadow-lg">
+            <Card className="bg-emerald-500 text-white shadow-lg">
                 <CardContent className="p-6 flex justify-between items-start">
                     <div>
-                        <p className="text-sm font-medium text-green-100">Total de Estudiantes</p>
+                        <p className="text-sm font-medium text-emerald-100">Total de Estudiantes</p>
                         <p className="text-4xl font-bold mt-1">{stats.totalStudents}</p>
-                        <p className="text-xs text-green-100 mt-2">Registrados en el sistema</p>
+                        <p className="text-xs text-emerald-100 mt-2">Registrados en el sistema</p>
                     </div>
                     <div className="bg-white/20 p-2 rounded-lg">
                         <Users className="h-6 w-6 text-white" />
@@ -140,12 +147,12 @@ export default function Dashboard() {
                     </div>
                 </CardContent>
             </Card>
-            <Card className="bg-pink-500 text-white shadow-lg">
+            <Card className="bg-fuchsia-500 text-white shadow-lg">
                 <CardContent className="p-6 flex justify-between items-start">
                     <div>
-                        <p className="text-sm font-medium text-pink-100">Total de Presentes</p>
+                        <p className="text-sm font-medium text-fuchsia-100">Total de Presentes</p>
                         <p className="text-4xl font-bold mt-1">{stats.totalPresent}</p>
-                        <p className="text-xs text-pink-100 mt-2">en los últimos 30 días</p>
+                        <p className="text-xs text-fuchsia-100 mt-2">en los últimos 30 días</p>
                     </div>
                     <div className="bg-white/20 p-2 rounded-lg">
                         <CheckCircle className="h-6 w-6 text-white" />
@@ -184,43 +191,18 @@ export default function Dashboard() {
                 </div>
             </CardHeader>
             <CardContent>
-              <ChartContainer config={{
-                  present: { label: 'Presentes', color: 'hsl(var(--chart-2))' },
-                  absent: { label: 'Ausentes', color: 'hsl(var(--chart-5))' },
-                }} className="min-h-[250px] w-full">
-                <AreaChart data={stats.chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                    <defs>
-                        <linearGradient id="fillPresent" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="var(--color-present)" stopOpacity={0.8}/>
-                            <stop offset="95%" stopColor="var(--color-present)" stopOpacity={0.1}/>
-                        </linearGradient>
-                        <linearGradient id="fillAbsent" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="var(--color-absent)" stopOpacity={0.8}/>
-                            <stop offset="95%" stopColor="var(--color-absent)" stopOpacity={0.1}/>
-                        </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border) / 0.5)" />
-                    <XAxis dataKey="month" tickLine={false} axisLine={false} tickMargin={10} fontSize={12} />
-                    <YAxis tickLine={false} axisLine={false} tickMargin={10} fontSize={12} allowDecimals={false} />
-                    <Tooltip content={<ChartTooltipContent indicator="line" />} />
-                    <Area 
-                        dataKey="present" 
-                        type="monotone" 
-                        stroke="var(--color-present)" 
-                        fill="url(#fillPresent)"
-                        strokeWidth={2}
-                        stackId="a"
-                    />
-                    <Area 
-                        dataKey="absent" 
-                        type="monotone" 
-                        stroke="var(--color-absent)"
-                        fill="url(#fillAbsent)"
-                        strokeWidth={2}
-                        stackId="a"
-                    />
-                </AreaChart>
-              </ChartContainer>
+               <AreaChart
+                    className="h-80"
+                    data={stats.chartData}
+                    index="month"
+                    categories={['Presentes', 'Ausentes']}
+                    colors={['emerald', 'rose']}
+                    yAxisWidth={60}
+                    curveType='monotone'
+                    customTooltip={customTooltip}
+                    showLegend={true}
+                    showGridLines={true}
+                 />
             </CardContent>
           </Card>
       </div>
