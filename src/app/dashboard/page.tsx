@@ -1,7 +1,7 @@
 
 'use client';
 
-import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts';
+import { Pie, PieChart, Cell, Legend, Tooltip } from 'recharts';
 import {
   Card,
   CardContent,
@@ -12,24 +12,11 @@ import {
 } from '@/components/ui/card';
 import {
   ChartContainer,
-  ChartTooltip,
   ChartTooltipContent,
 } from '@/components/ui/chart';
 import { BookCopy, Users, CheckCircle, XCircle } from 'lucide-react';
 import React from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
-import { cn } from '@/lib/utils';
-
-const chartConfig = {
-  present: {
-    label: 'Presente',
-    color: 'hsl(var(--chart-2))',
-  },
-  absent: {
-    label: 'Ausente',
-    color: 'hsl(var(--chart-5))',
-  },
-};
 
 type Stats = {
     totalStudents: number;
@@ -38,6 +25,8 @@ type Stats = {
     totalAbsent: number;
     chartData: { month: string, present: number, absent: number }[];
 }
+
+const COLORS = ['#10B981', '#F43F5E']; // Verde Esmeralda y Rojo Rosa
 
 export default function Dashboard() {
   const [stats, setStats] = React.useState<Stats | null>(null);
@@ -60,6 +49,11 @@ export default function Dashboard() {
     }
     fetchStats();
   }, []);
+  
+  const pieData = stats ? [
+      { name: 'Presentes', value: stats.totalPresent },
+      { name: 'Ausentes', value: stats.totalAbsent },
+    ] : [];
 
   if (loading || !stats) {
     return (
@@ -111,8 +105,8 @@ export default function Dashboard() {
             <Skeleton className="h-8 w-64" />
             <Skeleton className="h-5 w-96 mt-2" />
           </CardHeader>
-          <CardContent>
-            <Skeleton className="min-h-[200px] w-full" />
+          <CardContent className="flex justify-center items-center">
+            <Skeleton className="min-h-[250px] w-[250px] rounded-full" />
           </CardContent>
           <CardFooter>
             <Skeleton className="h-4 w-80" />
@@ -168,35 +162,64 @@ export default function Dashboard() {
       </div>
       <Card className="shadow-subtle">
         <CardHeader>
-          <CardTitle className="font-headline">Resumen de Asistencia</CardTitle>
+          <CardTitle className="font-headline">Distribución General de Asistencia</CardTitle>
           <CardDescription>
-            Un resumen de la asistencia de los estudiantes en los últimos 6 meses.
+            Proporción de asistencia registrada en los últimos 30 días.
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <ChartContainer config={chartConfig} className="min-h-[200px] w-full">
-            <BarChart accessibilityLayer data={stats.chartData}>
-              <CartesianGrid vertical={false} />
-              <XAxis
-                dataKey="month"
-                tickLine={false}
-                tickMargin={10}
-                axisLine={false}
-                tickFormatter={(value) => value.slice(0, 3)}
-              />
-              <YAxis />
-              <ChartTooltip
+        <CardContent className="flex justify-center items-center">
+          <ChartContainer config={{}} className="min-h-[250px] w-full max-w-[250px]">
+            <PieChart>
+              <Tooltip
                 cursor={false}
-                content={<ChartTooltipContent indicator="dot" />}
+                content={
+                  <ChartTooltipContent
+                    hideLabel
+                    formatter={(value, name, props) => (
+                       <div className="flex items-center gap-2">
+                         <div className="w-2.5 h-2.5 rounded-full" style={{backgroundColor: props.fill}}></div>
+                         <span>{name}:</span>
+                         <span className="font-bold">{value} ({((value as number / (stats.totalPresent + stats.totalAbsent)) * 100).toFixed(1)}%)</span>
+                       </div>
+                    )}
+                  />
+                }
               />
-              <Bar dataKey="present" fill="var(--color-present)" radius={4} />
-              <Bar dataKey="absent" fill="var(--color-absent)" radius={4} />
-            </BarChart>
+              <Pie
+                data={pieData}
+                dataKey="value"
+                nameKey="name"
+                cx="50%"
+                cy="50%"
+                innerRadius={60}
+                outerRadius={80}
+                paddingAngle={5}
+                labelLine={false}
+              >
+                {pieData.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                ))}
+              </Pie>
+               <Legend
+                  content={({ payload }) => {
+                    return (
+                      <ul className="flex flex-wrap gap-x-4 gap-y-1 justify-center mt-4">
+                        {payload?.map((entry, index) => (
+                          <li key={`item-${index}`} className="flex items-center gap-2">
+                            <span className="h-3 w-3 rounded-full" style={{ backgroundColor: entry.color }} />
+                            <span className="text-sm text-muted-foreground">{entry.value}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    )
+                  }}
+                />
+            </PieChart>
           </ChartContainer>
         </CardContent>
         <CardFooter>
           <div className="text-xs text-muted-foreground">
-            Mostrando la asistencia total de los últimos 6 meses.
+            Mostrando la distribución total de la asistencia.
           </div>
         </CardFooter>
       </Card>
