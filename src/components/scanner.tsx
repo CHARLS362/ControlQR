@@ -22,6 +22,7 @@ export function Scanner() {
   const { toast } = useToast();
   const videoRef = useRef<HTMLVideoElement>(null);
   const codeReaderRef = useRef<BrowserMultiFormatReader | null>(null);
+  const controlsRef = useRef<any>(null);
   const [isCameraActive, setIsCameraActive] = useState(false);
   const [status, setStatus] = useState<Status>('stopped');
   const [statusMessage, setStatusMessage] = useState('La cámara está desactivada.');
@@ -73,15 +74,32 @@ export function Scanner() {
     }
 
     setTimeout(() => {
-        if (status !== 'stopped') {
+        if (isCameraActive) {
           setStatus('searching');
           setStatusMessage('Apunte el código QR o de barras dentro del recuadro.');
         }
       }, 2000);
-  }, [lastScannedCode, toast, addToLog, status]);
+  }, [lastScannedCode, toast, addToLog, isCameraActive]);
+
+  const stopCamera = useCallback(() => {
+    if (controlsRef.current) {
+      controlsRef.current.stop();
+      controlsRef.current = null;
+    }
+    if (videoRef.current && videoRef.current.srcObject) {
+      const stream = videoRef.current.srcObject as MediaStream;
+      stream.getTracks().forEach(track => track.stop());
+      videoRef.current.srcObject = null;
+    }
+    setIsCameraActive(false);
+    setStatus('stopped');
+    setStatusMessage('La cámara está desactivada.');
+    codeReaderRef.current = null;
+  }, []);
 
   const startCamera = useCallback(async () => {
     if (!videoRef.current) return;
+    if (isCameraActive) return;
 
     try {
       const codeReader = new BrowserMultiFormatReader();
@@ -94,16 +112,17 @@ export function Scanner() {
         BarcodeFormat.CODE_128,
         BarcodeFormat.CODE_39,
       ];
-      hints.set(codeReader.hints.get('POSSIBLE_FORMATS'), formats);
+      hints.set(2, formats); // 2 is the key for POSSIBLE_FORMATS
       
       setStatus('searching');
       setStatusMessage('Iniciando cámara...');
       
-      await codeReader.decodeFromVideoDevice(undefined, videoRef.current, (result, err) => {
+      const controls = await codeReader.decodeFromVideoDevice(undefined, videoRef.current, (result, err) => {
         if (result) {
           registrarAsistencia(result.getText());
         }
       });
+      controlsRef.current = controls;
       
       setIsCameraActive(true);
       setStatus('searching');
@@ -119,16 +138,7 @@ export function Scanner() {
       }
       setIsCameraActive(false);
     }
-  }, [registrarAsistencia]);
-
-  const stopCamera = useCallback(() => {
-    if (codeReaderRef.current) {
-      codeReaderRef.current.reset();
-    }
-    setIsCameraActive(false);
-    setStatus('stopped');
-    setStatusMessage('La cámara está desactivada.');
-  }, []);
+  }, [registrarAsistencia, isCameraActive]);
 
   useEffect(() => {
     startCamera();
@@ -156,7 +166,7 @@ export function Scanner() {
           <CardHeader>
              <div className="flex items-center justify-between">
                 <CardTitle className="flex items-center gap-2"><QrCode />Visor del Escáner</CardTitle>
-                <Button onClick={stopCamera} variant="destructive">
+                <Button onClick={stopCamera} variant="destructive" disabled={!isCameraActive}>
                     <CameraOff className="mr-2" /> Desactivar Cámara
                 </Button>
             </div>
