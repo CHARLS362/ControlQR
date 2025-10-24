@@ -1,6 +1,14 @@
 'use client';
 
-import { Pie, PieChart, Cell, Legend, Tooltip, Bar, BarChart, XAxis, YAxis, CartesianGrid, ResponsiveContainer, LegendProps } from 'recharts';
+import { 
+  Area, 
+  AreaChart, 
+  ResponsiveContainer, 
+  XAxis, 
+  YAxis, 
+  Tooltip, 
+  CartesianGrid 
+} from 'recharts';
 import {
   Card,
   CardContent,
@@ -22,8 +30,8 @@ import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
-const PIE_COLORS = ['#10B981', '#F43F5E']; // Verde Esmeralda y Rojo Rosa
 
 function LoadingSkeleton() {
   return (
@@ -48,15 +56,6 @@ function LoadingSkeleton() {
             <CardHeader>
               <Skeleton className="h-8 w-64" />
               <Skeleton className="h-5 w-96 mt-2" />
-            </CardHeader>
-            <CardContent className="flex justify-center items-center">
-              <Skeleton className="h-[250px] w-[250px] rounded-full" />
-            </CardContent>
-          </Card>
-           <Card className="shadow-subtle">
-            <CardHeader>
-              <Skeleton className="h-8 w-72" />
-              <Skeleton className="h-5 w-80 mt-2" />
             </CardHeader>
             <CardContent>
               <Skeleton className="h-[250px] w-full" />
@@ -86,42 +85,6 @@ function LoadingSkeleton() {
   );
 }
 
-const CustomBarChartTooltip = ({ active, payload, label }: any) => {
-  if (active && payload && payload.length) {
-    return (
-      <div className="rounded-lg border bg-background p-2 shadow-sm">
-        <div className="flex flex-col space-y-1">
-          <p className="text-sm font-bold text-foreground">{label}</p>
-          {payload.map((entry: any) => (
-            <div key={entry.dataKey} className="flex items-center gap-2">
-              <div className="h-2 w-2 rounded-full" style={{ backgroundColor: entry.fill }} />
-              <span className="text-xs text-muted-foreground">{entry.name}:</span>
-              <span className="text-xs font-bold">{entry.value}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  }
-  return null;
-};
-
-const CustomLegend = (props: LegendProps) => {
-    const { payload } = props;
-    return (
-        <ul className="flex justify-center gap-6 pt-4">
-        {
-            payload?.map((entry, index) => (
-            <li key={`item-${index}`} className="flex items-center gap-2">
-                <span className="h-3 w-3 rounded-full" style={{backgroundColor: entry.color}} />
-                <span className="text-sm text-muted-foreground">{entry.value}</span>
-            </li>
-            ))
-        }
-        </ul>
-    );
-}
-
 export default function Dashboard() {
   const [stats, setStats] = React.useState<DashboardStats | null>(null);
   const [loading, setLoading] = React.useState(true);
@@ -142,11 +105,6 @@ export default function Dashboard() {
     fetchStats();
   }, []);
   
-  const pieData = stats ? [
-      { name: 'Presentes', value: stats.totalPresent },
-      { name: 'Ausentes', value: stats.totalAbsent },
-    ] : [];
-
   const getAvatar = (avatarId: string) => {
     return PlaceHolderImages.find((img) => img.id === avatarId);
   };
@@ -157,121 +115,122 @@ export default function Dashboard() {
 
   return (
     <div className="flex flex-col gap-8 py-8">
-      <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
-        <Card className="shadow-subtle bg-gradient text-white">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total de Estudiantes</CardTitle>
-            <Users className="h-6 w-6 text-white/80" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">{stats.totalStudents}</div>
-            <p className="text-xs text-white/70">Registrados en el sistema</p>
-          </CardContent>
-        </Card>
-        <Card className="shadow-subtle bg-gradient text-white">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total de Cursos</CardTitle>
-            <BookCopy className="h-6 w-6 text-white/80" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">{stats.totalCourses}</div>
-            <p className="text-xs text-white/70">Activos actualmente</p>
-          </CardContent>
-        </Card>
-        <Card className="shadow-subtle bg-gradient text-white">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Presentes (30 días)</CardTitle>
-            <CheckCircle className="h-6 w-6 text-white/80" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">{stats.totalPresent}</div>
-            <p className="text-xs text-white/70">Registros de asistencia</p>
-          </CardContent>
-        </Card>
-        <Card className="shadow-subtle bg-gradient text-white">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Ausentes (30 días)</CardTitle>
-            <XCircle className="h-6 w-6 text-white/80" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">{stats.totalAbsent}</div>
-            <p className="text-xs text-white/70">Registros de asistencia</p>
-          </CardContent>
-        </Card>
-      </div>
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+            <Card className="bg-green-500 text-white shadow-lg">
+                <CardContent className="p-6 flex justify-between items-start">
+                    <div>
+                        <p className="text-sm font-medium text-green-100">Total de Estudiantes</p>
+                        <p className="text-4xl font-bold mt-1">{stats.totalStudents}</p>
+                        <p className="text-xs text-green-100 mt-2">Registrados en el sistema</p>
+                    </div>
+                    <div className="bg-white/20 p-2 rounded-lg">
+                        <Users className="h-6 w-6 text-white" />
+                    </div>
+                </CardContent>
+            </Card>
+            <Card className="bg-blue-500 text-white shadow-lg">
+                <CardContent className="p-6 flex justify-between items-start">
+                    <div>
+                        <p className="text-sm font-medium text-blue-100">Total de Cursos</p>
+                        <p className="text-4xl font-bold mt-1">{stats.totalCourses}</p>
+                        <p className="text-xs text-blue-100 mt-2">Activos actualmente</p>
+                    </div>
+                    <div className="bg-white/20 p-2 rounded-lg">
+                        <BookCopy className="h-6 w-6 text-white" />
+                    </div>
+                </CardContent>
+            </Card>
+            <Card className="bg-pink-500 text-white shadow-lg">
+                <CardContent className="p-6 flex justify-between items-start">
+                    <div>
+                        <p className="text-sm font-medium text-pink-100">Total de Presentes</p>
+                        <p className="text-4xl font-bold mt-1">{stats.totalPresent}</p>
+                        <p className="text-xs text-pink-100 mt-2">en los últimos 30 días</p>
+                    </div>
+                    <div className="bg-white/20 p-2 rounded-lg">
+                        <CheckCircle className="h-6 w-6 text-white" />
+                    </div>
+                </CardContent>
+            </Card>
+            <Card className="bg-orange-500 text-white shadow-lg">
+                <CardContent className="p-6 flex justify-between items-start">
+                    <div>
+                        <p className="text-sm font-medium text-orange-100">Total de Ausentes</p>
+                        <p className="text-4xl font-bold mt-1">{stats.totalAbsent}</p>
+                        <p className="text-xs text-orange-100 mt-2">en los últimos 30 días</p>
+                    </div>
+                    <div className="bg-white/20 p-2 rounded-lg">
+                        <XCircle className="h-6 w-6 text-white" />
+                    </div>
+                </CardContent>
+            </Card>
+        </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
-        <div className="lg:col-span-3 space-y-8">
-          <Card className="shadow-subtle">
+
+      <div className="grid grid-cols-1 gap-8">
+        <Card className="shadow-subtle">
             <CardHeader>
-              <CardTitle className="font-headline">Distribución General de Asistencia</CardTitle>
-              <CardDescription>Proporción de asistencia (presentes vs. ausentes) en los últimos 30 días.</CardDescription>
-            </CardHeader>
-            <CardContent className="flex justify-center items-center">
-              <ChartContainer config={{}} className="min-h-[250px] w-full max-w-[250px]">
-                <PieChart>
-                  <Tooltip
-                    cursor={false}
-                    content={
-                      <ChartTooltipContent
-                        hideLabel
-                        formatter={(value, name, props) => (
-                           <div className="flex items-center gap-2">
-                             <div className="w-2.5 h-2.5 rounded-full" style={{backgroundColor: props.fill}}></div>
-                             <span>{name}:</span>
-                             <span className="font-bold">{value} ({((value as number / (stats.totalPresent + stats.totalAbsent)) * 100).toFixed(1)}%)</span>
-                           </div>
-                        )}
-                      />
-                    }
-                  />
-                  <Pie data={pieData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={60} outerRadius={80} paddingAngle={5} labelLine={false}>
-                    {pieData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
-                    ))}
-                  </Pie>
-                   <Legend content={({ payload }) => (
-                      <ul className="flex flex-wrap gap-x-4 gap-y-1 justify-center mt-4">
-                        {payload?.map((entry, index) => (
-                          <li key={`item-${index}`} className="flex items-center gap-2">
-                            <span className="h-3 w-3 rounded-full" style={{ backgroundColor: entry.color }} />
-                            <span className="text-sm text-muted-foreground">{entry.value}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  />
-                </PieChart>
-              </ChartContainer>
-            </CardContent>
-          </Card>
-          <Card className="shadow-subtle">
-            <CardHeader>
-              <CardTitle className="font-headline">Tendencia de Asistencia Mensual</CardTitle>
-              <CardDescription>Resumen de asistencia de los últimos 6 meses.</CardDescription>
+                 <div className="flex justify-between items-center">
+                    <div>
+                        <CardTitle className="font-headline">Resumen de Asistencia</CardTitle>
+                        <CardDescription>Un resumen de la asistencia en los últimos 6 meses.</CardDescription>
+                    </div>
+                    <Tabs defaultValue="mes" className="w-[180px]">
+                        <TabsList className="grid w-full grid-cols-2">
+                            <TabsTrigger value="mes">Mes</TabsTrigger>
+                            <TabsTrigger value="semana">Semana</TabsTrigger>
+                        </TabsList>
+                    </Tabs>
+                </div>
             </CardHeader>
             <CardContent>
-              <ChartContainer config={{}} className="min-h-[250px] w-full">
-                <ResponsiveContainer width="100%" height={250}>
-                  <BarChart data={stats.chartData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+              <ChartContainer config={{
+                  present: { label: 'Presentes', color: 'hsl(var(--chart-2))' },
+                  absent: { label: 'Ausentes', color: 'hsl(var(--chart-5))' },
+                }} className="min-h-[250px] w-full">
+                <AreaChart data={stats.chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                    <defs>
+                        <linearGradient id="fillPresent" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="var(--color-present)" stopOpacity={0.8}/>
+                            <stop offset="95%" stopColor="var(--color-present)" stopOpacity={0.1}/>
+                        </linearGradient>
+                        <linearGradient id="fillAbsent" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="var(--color-absent)" stopOpacity={0.8}/>
+                            <stop offset="95%" stopColor="var(--color-absent)" stopOpacity={0.1}/>
+                        </linearGradient>
+                    </defs>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border) / 0.5)" />
                     <XAxis dataKey="month" tickLine={false} axisLine={false} tickMargin={10} fontSize={12} />
                     <YAxis tickLine={false} axisLine={false} tickMargin={10} fontSize={12} allowDecimals={false} />
-                    <Tooltip cursor={{fill: 'hsl(var(--accent) / 0.1)', stroke: 'hsl(var(--accent))', strokeWidth: 1}} content={<CustomBarChartTooltip />} />
-                    <Legend content={<CustomLegend />} />
-                    <Bar dataKey="present" fill="#3B82F6" name="Presentes" radius={[4, 4, 0, 0]} />
-                    <Bar dataKey="absent" fill="#F97316" name="Ausentes" radius={[4, 4, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
+                    <Tooltip content={<ChartTooltipContent indicator="line" />} />
+                    <Area 
+                        dataKey="present" 
+                        type="monotone" 
+                        stroke="var(--color-present)" 
+                        fill="url(#fillPresent)"
+                        strokeWidth={2}
+                        stackId="a"
+                    />
+                    <Area 
+                        dataKey="absent" 
+                        type="monotone" 
+                        stroke="var(--color-absent)"
+                        fill="url(#fillAbsent)"
+                        strokeWidth={2}
+                        stackId="a"
+                    />
+                </AreaChart>
               </ChartContainer>
             </CardContent>
           </Card>
-        </div>
+      </div>
 
-        <div className="lg:col-span-2 space-y-8">
-            <Card className="shadow-subtle">
+       <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
+         <div className="lg:col-span-3 space-y-8">
+           <Card className="shadow-subtle">
               <CardHeader>
                   <CardTitle>Cursos con Mayor Asistencia</CardTitle>
+                  <CardDescription>Top 4 de cursos con mejor porcentaje de asistencia.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                   {stats.topCourses.length > 0 ? stats.topCourses.map(course => (
@@ -287,9 +246,13 @@ export default function Dashboard() {
                   )}
               </CardContent>
           </Card>
+        </div>
+
+        <div className="lg:col-span-2 space-y-8">
           <Card className="shadow-subtle">
               <CardHeader>
                   <CardTitle>Actividad Reciente</CardTitle>
+                  <CardDescription>Últimos 5 registros de asistencia.</CardDescription>
               </CardHeader>
               <CardContent>
                   <ul className="space-y-4">
