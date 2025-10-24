@@ -146,7 +146,9 @@ export default function ScanPage() {
   }, [registrarAsistencia]);
 
   const stopCamera = useCallback(() => {
-    codeReaderRef.current?.reset();
+    if (codeReaderRef.current) {
+      codeReaderRef.current.reset();
+    }
     setIsCameraActive(false);
     setStatus('stopped');
     setStatusMessage('La cámara está desactivada.');
@@ -164,7 +166,9 @@ export default function ScanPage() {
   // Limpieza al desmontar el componente
   useEffect(() => {
     return () => {
-       codeReaderRef.current?.reset();
+       if (codeReaderRef.current) {
+        codeReaderRef.current.reset();
+      }
     };
   }, []);
 
@@ -263,3 +267,5 @@ export default function ScanPage() {
     </>
   );
 }
+
+    
