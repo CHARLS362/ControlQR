@@ -32,157 +32,182 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { Calendar as CalendarIcon, Download, MoreHorizontal } from 'lucide-react';
-import type { Attendance, Course } from '@/lib/types';
-import { Badge } from '@/components/ui/badge';
+import { Calendar as CalendarIcon, Download, MoreHorizontal, FilePlus, LoaderCircle, BarChart } from 'lucide-react';
+import type { AttendanceReport, Course } from '@/lib/types';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Progress } from '@/components/ui/progress';
 
-
-function DeleteAttendanceDialog({ record, onRecordDeleted }: { record: Attendance, onRecordDeleted: (id: string) => void }) {
+function GenerateReportCard({
+  courses,
+  onReportGenerated,
+}: {
+  courses: Course[];
+  onReportGenerated: () => void;
+}) {
+  const [selectedCourse, setSelectedCourse] = React.useState<string | undefined>();
+  const [date, setDate] = React.useState<Date | undefined>(new Date());
+  const [isGenerating, setIsGenerating] = React.useState(false);
   const { toast } = useToast();
 
-  const handleDelete = async () => {
+  const handleGenerate = async () => {
+    if (!selectedCourse || !date) {
+      toast({
+        variant: 'destructive',
+        title: 'Datos incompletos',
+        description: 'Por favor, selecciona un curso y una fecha.',
+      });
+      return;
+    }
+    setIsGenerating(true);
     try {
-      const response = await fetch(`/api/attendance/${record.id}`, {
-        method: 'DELETE',
+      const response = await fetch('/api/reports/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          courseId: selectedCourse,
+          reportDate: format(date, 'yyyy-MM-dd'),
+        }),
       });
 
+      const result = await response.json();
+
       if (!response.ok) {
-        throw new Error('No se pudo eliminar el registro.');
+        throw new Error(result.message || 'No se pudo generar el reporte.');
       }
 
       toast({
-        title: 'Registro eliminado',
-        description: 'El registro de asistencia ha sido eliminado.',
+        title: 'Reporte Generado Exitosamente',
+        description: `El reporte para el curso seleccionado ha sido creado.`,
       });
-      onRecordDeleted(record.id);
+      onReportGenerated();
     } catch (error) {
-      console.error('Error deleting record:', error);
       toast({
         variant: 'destructive',
-        title: 'Error',
-        description: error instanceof Error ? error.message : 'Ocurrió un error al eliminar.',
+        title: 'Error al generar',
+        description: error instanceof Error ? error.message : 'Ocurrió un error inesperado.',
       });
+    } finally {
+      setIsGenerating(false);
     }
   };
 
   return (
-    <AlertDialog>
-      <AlertDialogTrigger asChild>
-        <DropdownMenuItem
-          onSelect={(e) => e.preventDefault()}
-          className="text-destructive"
-        >
-          Eliminar
-        </DropdownMenuItem>
-      </AlertDialogTrigger>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>¿Estás seguro de que quieres eliminar este registro?</AlertDialogTitle>
-          <AlertDialogDescription>
-            Esta acción no se puede deshacer. Esto eliminará permanentemente el registro de asistencia.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel>Cancelar</AlertDialogCancel>
-          <AlertDialogAction onClick={handleDelete} className={cn('bg-destructive text-destructive-foreground hover:bg-destructive/90')}>
-            Eliminar
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+    <Card className="shadow-subtle">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <FilePlus />
+          Generar Nuevo Reporte de Asistencia
+        </CardTitle>
+        <CardDescription>
+          Selecciona un curso y una fecha para compilar un nuevo reporte de asistencia.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="grid sm:grid-cols-3 gap-4">
+        <Select value={selectedCourse} onValueChange={setSelectedCourse}>
+          <SelectTrigger>
+            <SelectValue placeholder="Seleccionar un curso" />
+          </SelectTrigger>
+          <SelectContent>
+            {courses.map((course) => (
+              <SelectItem key={course.id} value={String(course.id)}>
+                {course.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button
+              variant={'outline'}
+              className={cn(
+                'justify-start text-left font-normal',
+                !date && 'text-muted-foreground'
+              )}
+            >
+              <CalendarIcon className="mr-2 h-4 w-4" />
+              {date ? format(date, 'PPP', { locale: es }) : <span>Elige una fecha</span>}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0">
+            <Calendar
+              mode="single"
+              selected={date}
+              onSelect={setDate}
+              initialFocus
+              disabled={(date) => date > new Date() || date < new Date('1900-01-01')}
+            />
+          </PopoverContent>
+        </Popover>
+        <Button onClick={handleGenerate} disabled={isGenerating}>
+          {isGenerating ? (
+            <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
+          ) : (
+            <BarChart className="mr-2 h-4 w-4" />
+          )}
+          Generar Reporte
+        </Button>
+      </CardContent>
+    </Card>
   );
 }
 
-
 export default function ReportsPage() {
-  const [attendance, setAttendance] = React.useState<Attendance[]>([]);
+  const [reports, setReports] = React.useState<AttendanceReport[]>([]);
   const [courses, setCourses] = React.useState<Course[]>([]);
   const [loading, setLoading] = React.useState(true);
   const { toast } = useToast();
 
-  const [date, setDate] = React.useState<Date | undefined>();
-  const [selectedCourse, setSelectedCourse] = React.useState<string>('all');
+  const fetchReportsAndCourses = React.useCallback(async () => {
+    setLoading(true);
+    try {
+      const [reportsRes, coursesRes] = await Promise.all([
+        fetch('/api/reports'),
+        fetch('/api/courses'),
+      ]);
 
-  React.useEffect(() => {
-    async function fetchData() {
-      setLoading(true);
-      try {
-        const [attendanceRes, coursesRes] = await Promise.all([
-          fetch('/api/attendance'),
-          fetch('/api/courses'),
-        ]);
-
-        if (!attendanceRes.ok || !coursesRes.ok) {
-          throw new Error('Error al cargar los datos');
-        }
-
-        const attendanceData = await attendanceRes.json();
-        const coursesData = await coursesRes.json();
-
-        setAttendance(attendanceData);
-        setCourses(coursesData);
-      } catch (error) {
-        console.error(error);
-        toast({
-          variant: 'destructive',
-          title: 'Error',
-          description: 'No se pudieron cargar los reportes.'
-        });
-      } finally {
-        setLoading(false);
+      if (!reportsRes.ok || !coursesRes.ok) {
+        throw new Error('Error al cargar los datos');
       }
+
+      const reportsData = await reportsRes.json();
+      const coursesData = await coursesRes.json();
+
+      setReports(reportsData);
+      setCourses(coursesData);
+    } catch (error) {
+      console.error(error);
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'No se pudieron cargar los reportes.',
+      });
+    } finally {
+      setLoading(false);
     }
-    fetchData();
   }, [toast]);
 
-  const handleRecordDeleted = (deletedId: string) => {
-    setAttendance(prev => prev.filter(record => record.id !== deletedId));
-  };
-  
-  const filteredAttendance = React.useMemo(() => {
-    return attendance
-      .filter((record) => {
-        if (selectedCourse === 'all') return true;
-        return record.courseId === selectedCourse;
-      })
-      .filter((record) => {
-        if (!date) return true;
-        // Compare only the date part, ignoring time
-        const recordDate = new Date(record.date);
-        recordDate.setUTCHours(0, 0, 0, 0);
-        const filterDate = new Date(date);
-        filterDate.setUTCHours(0, 0, 0, 0);
-        return recordDate.getTime() === filterDate.getTime();
-      });
-  }, [attendance, selectedCourse, date]);
+  React.useEffect(() => {
+    fetchReportsAndCourses();
+  }, [fetchReportsAndCourses]);
 
   const exportToCSV = () => {
-    const headers = ['ID Registro', 'Estudiante', 'ID Estudiante', 'Curso', 'ID Curso', 'Fecha', 'Estado'];
-    const rows = filteredAttendance.map(record => [
-      record.id,
-      record.studentName,
-      record.studentId,
-      record.courseName,
-      String(record.courseId),
-      new Date(record.date).toLocaleString(),
-      record.status,
+    const headers = ['ID', 'Curso', 'Estudiante', 'Fecha Reporte', 'Clases Totales', 'Asistidas', 'Ausentes', '% Asistencia', 'Generado'];
+    const rows = reports.map(r => [
+      r.id,
+      r.courseName,
+      r.studentName,
+      new Date(r.report_date).toLocaleDateString(),
+      r.total_classes,
+      r.attended_classes,
+      r.absent_classes,
+      r.attendance_percentage,
+      new Date(r.generated_at).toLocaleString(),
     ]);
 
     let csvContent = "data:text/csv;charset=utf-8," 
@@ -192,78 +217,43 @@ export default function ReportsPage() {
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "reporte_asistencia.csv");
+    link.setAttribute("download", "reportes_asistencia.csv");
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   };
 
-
   return (
-    <>
+    <div className="space-y-8">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight font-headline">Reportes de Asistencia</h1>
           <p className="text-muted-foreground mt-1">
-            Ver y exportar registros de asistencia.
+            Genera y exporta reportes de asistencia por curso.
           </p>
         </div>
-        <Button onClick={exportToCSV} disabled={filteredAttendance.length === 0}>
-          <Download className="mr-2 h-4 w-4" /> Exportar Reporte
+        <Button onClick={exportToCSV} disabled={reports.length === 0}>
+          <Download className="mr-2 h-4 w-4" /> Exportar Todo
         </Button>
       </div>
+
+      <GenerateReportCard courses={courses} onReportGenerated={fetchReportsAndCourses} />
+
       <Card className="shadow-subtle">
         <CardHeader>
-          <CardTitle>Filtrar Registros</CardTitle>
+          <CardTitle>Reportes Generados</CardTitle>
           <CardDescription>
-            Selecciona filtros para acotar los registros de asistencia.
+            Lista de todos los reportes de asistencia generados.
           </CardDescription>
-          <div className="flex flex-wrap items-center gap-4 pt-4">
-            <Select value={selectedCourse} onValueChange={setSelectedCourse}>
-              <SelectTrigger className="w-full sm:w-[280px]">
-                <SelectValue placeholder="Seleccionar un curso" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos los cursos</SelectItem>
-                {courses.map((course) => (
-                  <SelectItem key={course.id} value={String(course.id)}>
-                    {course.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant={'outline'}
-                  className={cn(
-                    'w-full sm:w-[280px] justify-start text-left font-normal',
-                    !date && 'text-muted-foreground'
-                  )}
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {date ? format(date, 'PPP') : <span>Elige una fecha</span>}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0">
-                <Calendar
-                  mode="single"
-                  selected={date}
-                  onSelect={setDate}
-                  initialFocus
-                />
-              </PopoverContent>
-            </Popover>
-          </div>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Estudiante</TableHead>
-                <TableHead>Curso</TableHead>
-                <TableHead>Fecha</TableHead>
-                <TableHead>Estado</TableHead>
+                <TableHead>Curso / Estudiante</TableHead>
+                <TableHead>Fecha del Reporte</TableHead>
+                <TableHead className="text-center">Resumen</TableHead>
+                <TableHead className="text-right">Porcentaje Asistencia</TableHead>
                 <TableHead>
                   <span className="sr-only">Acciones</span>
                 </TableHead>
@@ -273,53 +263,46 @@ export default function ReportsPage() {
               {loading ? (
                 Array.from({ length: 5 }).map((_, index) => (
                    <TableRow key={index}>
-                    <TableCell><Skeleton className="h-5 w-32" /></TableCell>
-                    <TableCell><Skeleton className="h-5 w-48" /></TableCell>
+                    <TableCell><Skeleton className="h-5 w-40" /></TableCell>
                     <TableCell><Skeleton className="h-5 w-24" /></TableCell>
-                    <TableCell><Skeleton className="h-6 w-20 rounded-full" /></TableCell>
+                    <TableCell><Skeleton className="h-5 w-48" /></TableCell>
+                    <TableCell><Skeleton className="h-8 w-24" /></TableCell>
                     <TableCell><Skeleton className="h-8 w-8" /></TableCell>
                   </TableRow>
                 ))
-              ) : filteredAttendance.length > 0 ? (
-                filteredAttendance.map((record: Attendance) => (
-                  <TableRow key={record.id}>
+              ) : reports.length > 0 ? (
+                reports.map((report: AttendanceReport) => (
+                  <TableRow key={report.id}>
                     <TableCell className="font-medium">
-                      {record.studentName}
+                      <div>{report.courseName}</div>
+                      <div className="text-xs text-muted-foreground">{report.studentName}</div>
                     </TableCell>
                     <TableCell className="text-muted-foreground">
-                      {record.courseName}
+                      {format(new Date(report.report_date), 'dd MMM, yyyy', { locale: es })}
                     </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {new Date(record.date).toLocaleDateString()}
+                    <TableCell className="text-center text-xs">
+                        <span className="text-green-600 font-medium">{report.attended_classes}</span> / {' '}
+                        <span className="font-bold">{report.total_classes}</span>
+                        <span className="text-red-600 font-medium ml-2">{report.absent_classes} aus.</span>
                     </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={
-                          record.status === 'Presente' ? 'default' : 'destructive'
-                        }
-                        className={
-                          record.status === 'Presente' ? 'bg-emerald-500/80 hover:bg-emerald-500 text-white' : ''
-                        }
-                      >
-                        {record.status}
-                      </Badge>
+                    <TableCell className="text-right">
+                      <div className="flex items-center justify-end gap-2">
+                         <span className="font-bold text-lg">{report.attendance_percentage}%</span>
+                         <Progress value={report.attendance_percentage} className="w-24 h-2" />
+                      </div>
                     </TableCell>
                     <TableCell>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button
-                            aria-haspopup="true"
-                            size="icon"
-                            variant="ghost"
-                          >
+                          <Button aria-haspopup="true" size="icon" variant="ghost">
                             <MoreHorizontal className="h-4 w-4" />
                             <span className="sr-only">Alternar menú</span>
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-                          <DropdownMenuItem>Ver Detalles</DropdownMenuItem>
-                          <DeleteAttendanceDialog record={record} onRecordDeleted={handleRecordDeleted} />
+                          <DropdownMenuItem disabled>Ver Detalles</DropdownMenuItem>
+                          <DropdownMenuItem disabled className="text-destructive">Eliminar Reporte</DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>
@@ -328,7 +311,7 @@ export default function ReportsPage() {
               ) : (
                 <TableRow>
                   <TableCell colSpan={5} className="h-24 text-center">
-                    No se encontraron resultados.
+                    No se han generado reportes.
                   </TableCell>
                 </TableRow>
               )}
@@ -336,6 +319,6 @@ export default function ReportsPage() {
           </Table>
         </CardContent>
       </Card>
-    </>
+    </div>
   );
 }

@@ -1,6 +1,6 @@
 
 import pool from './db';
-import type { Student, Course, Attendance, User, StudentFormValues, CourseFormValues } from './types';
+import type { Student, Course, Attendance, User, StudentFormValues, CourseFormValues, AttendanceReport } from './types';
 import { RowDataPacket } from 'mysql2';
 import crypto from 'crypto';
 
@@ -236,6 +236,91 @@ export async function deleteAttendanceRecord(id: string): Promise<void> {
     }
     await pool.query("DELETE FROM attendance WHERE id = ?", [numericId]);
 }
+
+
+// === Funciones para Reportes de Asistencia ===
+
+export async function getAttendanceReports(): Promise<AttendanceReport[]> {
+  const [rows] = await pool.query<RowDataPacket[]>(`
+    SELECT 
+        ar.id,
+        s.id AS student_id,
+        s.name AS studentName,
+        c.id AS course_id,
+        c.name AS courseName,
+        ar.report_date,
+        ar.total_classes,
+        ar.attended_classes,
+        ar.absent_classes,
+        ar.attendance_percentage,
+        ar.generated_at,
+        ar.generated_by
+    FROM attendance_reports ar
+    JOIN students s ON ar.student_id = s.id
+    JOIN courses c ON ar.course_id = c.id
+    ORDER BY ar.generated_at DESC
+  `);
+  return rows.map(row => ({ ...row, id: String(row.id) })) as AttendanceReport[];
+}
+
+
+export async function generateReportForCourse(courseId: string, reportDate: string, generatedBy: string): Promise<any> {
+    const connection = await pool.getConnection();
+    await connection.beginTransaction();
+
+    try {
+        // 1. Obtener todos los estudiantes del curso
+        const [students] = await connection.query<RowDataPacket[]>(
+            "SELECT student_id FROM student_courses WHERE course_id = ?",
+            [courseId]
+        );
+
+        if (students.length === 0) {
+            throw new Error("No hay estudiantes en este curso para generar un reporte.");
+        }
+
+        const reportDateObj = new Date(reportDate);
+
+        // 2. Para cada estudiante, calcular estadísticas y crear el reporte
+        for (const student of students) {
+            const studentId = student.student_id;
+
+            // Calcular total_classes hasta la fecha del reporte
+            const [[totalClassesResult]]: any = await connection.query(
+                `SELECT COUNT(DISTINCT DATE(date)) as count FROM attendance WHERE course_id = ? AND DATE(date) <= ?`,
+                [courseId, reportDateObj]
+            );
+            const total_classes = totalClassesResult.count;
+
+            // Calcular attended_classes
+            const [[attendedClassesResult]]: any = await connection.query(
+                `SELECT COUNT(*) as count FROM attendance WHERE student_id = ? AND course_id = ? AND status = 'Presente' AND DATE(date) <= ?`,
+                [studentId, courseId, reportDateObj]
+            );
+            const attended_classes = attendedClassesResult.count;
+
+            // Calcular absent_classes
+            const absent_classes = total_classes - attended_classes;
+
+            // 3. Insertar en la tabla de reportes
+            await connection.query(
+                `INSERT INTO attendance_reports (student_id, course_id, report_date, total_classes, attended_classes, absent_classes, generated_by)
+                 VALUES (?, ?, ?, ?, ?, ?, ?)`,
+                [studentId, courseId, reportDateObj, total_classes, attended_classes, absent_classes, generatedBy]
+            );
+        }
+
+        await connection.commit();
+        return { message: `${students.length} reportes de estudiante generados para el curso.` };
+
+    } catch (error) {
+        await connection.rollback();
+        throw error;
+    } finally {
+        connection.release();
+    }
+}
+
 
 
 // === Funciones para Estadísticas (Dashboard) ===

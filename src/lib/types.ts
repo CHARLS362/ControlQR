@@ -36,6 +36,22 @@ export type User = {
     created_at?: string;
 }
 
+export type AttendanceReport = {
+  id: number;
+  student_id: string;
+  studentName: string;
+  course_id: string;
+  courseName: string;
+  report_date: string; // Date
+  total_classes: number;
+  attended_classes: number;
+  absent_classes: number;
+  attendance_percentage: number;
+  generated_by: string | null;
+  generated_at: string; // Timestamp
+}
+
+
 // Tipos para validación de formularios
 import { z } from 'zod';
 
