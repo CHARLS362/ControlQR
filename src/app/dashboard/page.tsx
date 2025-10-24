@@ -1,7 +1,6 @@
-
 'use client';
 
-import { Pie, PieChart, Cell, Legend, Tooltip, Area, AreaChart, XAxis, YAxis, CartesianGrid, ResponsiveContainer, LegendProps } from 'recharts';
+import { Pie, PieChart, Cell, Legend, Tooltip, Bar, BarChart, XAxis, YAxis, CartesianGrid, ResponsiveContainer, LegendProps } from 'recharts';
 import {
   Card,
   CardContent,
@@ -87,21 +86,19 @@ function LoadingSkeleton() {
   );
 }
 
-const CustomAreaChartTooltip = ({ active, payload, label }: any) => {
+const CustomBarChartTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     return (
       <div className="rounded-lg border bg-background p-2 shadow-sm">
-        <div className="grid grid-cols-2 gap-2">
-          <div className="flex flex-col space-y-1">
-            <span className="text-[0.70rem] uppercase text-muted-foreground">
-              {label}
-            </span>
-            {payload.map((entry: any) => (
-               <span key={entry.name} className="font-bold" style={{ color: entry.stroke }}>
-                {entry.name}: {entry.value}
-              </span>
-            ))}
-          </div>
+        <div className="flex flex-col space-y-1">
+          <p className="text-sm font-bold text-foreground">{label}</p>
+          {payload.map((entry: any) => (
+            <div key={entry.dataKey} className="flex items-center gap-2">
+              <div className="h-2 w-2 rounded-full" style={{ backgroundColor: entry.fill }} />
+              <span className="text-xs text-muted-foreground">{entry.name}:</span>
+              <span className="text-xs font-bold">{entry.value}</span>
+            </div>
+          ))}
         </div>
       </div>
     );
@@ -249,25 +246,25 @@ export default function Dashboard() {
             </CardContent>
           </Card>
           <Card className="shadow-subtle">
-              <CardHeader>
-                  <CardTitle className="font-headline">Tendencia de Asistencia Mensual</CardTitle>
-                  <CardDescription>Resumen de asistencia de los últimos 6 meses.</CardDescription>
-              </CardHeader>
-              <CardContent>
-                  <ChartContainer config={{}} className="min-h-[250px] w-full">
-                      <ResponsiveContainer width="100%" height={250}>
-                        <AreaChart data={stats.chartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
-                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border) / 0.5)" />
-                            <XAxis dataKey="month" tickLine={false} axisLine={false} tickMargin={10} fontSize={12} />
-                            <YAxis tickLine={false} axisLine={false} tickMargin={10} fontSize={12} allowDecimals={false} />
-                            <Tooltip cursor={{fill: 'hsl(var(--accent) / 0.1)', stroke: 'hsl(var(--accent))', strokeWidth: 1}} content={<CustomAreaChartTooltip />} />
-                            <Legend content={<CustomLegend />} />
-                            <Area type="monotone" dataKey="present" stroke="#3B82F6" fill="#3B82F6" fillOpacity={0.3} name="Presentes" strokeWidth={2} />
-                            <Area type="monotone" dataKey="absent" stroke="#F97316" fill="#F97316" fillOpacity={0.3} name="Ausentes" strokeWidth={2} />
-                        </AreaChart>
-                    </ResponsiveContainer>
-                  </ChartContainer>
-              </CardContent>
+            <CardHeader>
+              <CardTitle className="font-headline">Tendencia de Asistencia Mensual</CardTitle>
+              <CardDescription>Resumen de asistencia de los últimos 6 meses.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ChartContainer config={{}} className="min-h-[250px] w-full">
+                <ResponsiveContainer width="100%" height={250}>
+                  <BarChart data={stats.chartData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border) / 0.5)" />
+                    <XAxis dataKey="month" tickLine={false} axisLine={false} tickMargin={10} fontSize={12} />
+                    <YAxis tickLine={false} axisLine={false} tickMargin={10} fontSize={12} allowDecimals={false} />
+                    <Tooltip cursor={{fill: 'hsl(var(--accent) / 0.1)', stroke: 'hsl(var(--accent))', strokeWidth: 1}} content={<CustomBarChartTooltip />} />
+                    <Legend content={<CustomLegend />} />
+                    <Bar dataKey="present" fill="#3B82F6" name="Presentes" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="absent" fill="#F97316" name="Ausentes" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </ChartContainer>
+            </CardContent>
           </Card>
         </div>
 
