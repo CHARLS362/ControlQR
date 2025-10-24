@@ -1,6 +1,6 @@
 'use client';
 
-import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from 'recharts';
+import { BarChart, Bar, CartesianGrid, XAxis, YAxis, Legend } from 'recharts';
 import {
   Card,
   CardContent,
@@ -175,21 +175,11 @@ export default function Dashboard() {
                 </div>
             )}
           <ChartContainer config={chartConfig} className="h-full w-full">
-            <AreaChart 
+            <BarChart 
                 accessibilityLayer 
                 data={stats.chartData}
                 margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
             >
-              <defs>
-                 <linearGradient id="fillPresentes" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="var(--color-presentes)" stopOpacity={0.8}/>
-                    <stop offset="95%" stopColor="var(--color-presentes)" stopOpacity={0.1}/>
-                 </linearGradient>
-                 <linearGradient id="fillAusentes" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="var(--color-ausentes)" stopOpacity={0.8}/>
-                    <stop offset="95%" stopColor="var(--color-ausentes)" stopOpacity={0.1}/>
-                 </linearGradient>
-              </defs>
               <XAxis
                 dataKey="time"
                 stroke="hsl(var(--muted-foreground))"
@@ -204,32 +194,38 @@ export default function Dashboard() {
                 tickLine={false}
                 tick={{ fill: 'hsl(var(--muted-foreground))' }}
               />
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
               <ChartTooltip
-                cursor={{ stroke: 'hsl(var(--border))', strokeWidth: 1 }}
+                cursor={{ fill: 'hsl(var(--muted))', opacity: 0.5 }}
                 content={<ChartTooltipContent 
                     indicator="dot" 
                 />}
               />
-              <Area
-                type="monotone"
-                dataKey="presentes"
-                stackId="1"
-                strokeWidth={2}
-                stroke="var(--color-presentes)"
-                fill="url(#fillPresentes)"
+              <Legend content={({ payload }) => (
+                <div className="flex justify-center gap-4 pt-4">
+                  {payload?.map((entry, index) => (
+                    <div key={`item-${index}`} className="flex items-center gap-1.5">
+                      <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: entry.color }} />
+                      <span className="text-sm text-muted-foreground">{entry.value}</span>
+                    </div>
+                  ))}
+                </div>
+              )}/>
+              <Bar 
+                dataKey="presentes" 
+                fill="var(--color-presentes)" 
                 name="Presentes"
+                radius={[4, 4, 0, 0]} 
+                barSize={20}
               />
-              <Area
-                type="monotone"
-                dataKey="ausentes"
-                stackId="1"
-                strokeWidth={2}
-                stroke="var(--color-ausentes)"
-                fill="url(#fillAusentes)"
+              <Bar 
+                dataKey="ausentes" 
+                fill="var(--color-ausentes)" 
                 name="Ausentes"
+                radius={[4, 4, 0, 0]}
+                barSize={20}
               />
-            </AreaChart>
+            </BarChart>
           </ChartContainer>
         </CardContent>
       </Card>
