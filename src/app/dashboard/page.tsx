@@ -1,7 +1,7 @@
 
 'use client';
 
-import { Pie, PieChart, Cell, Legend, Tooltip, Bar, BarChart, XAxis, YAxis } from 'recharts';
+import { Pie, PieChart, Cell, Legend, Tooltip, Bar, BarChart, XAxis, YAxis, CartesianGrid, ResponsiveContainer, LegendProps } from 'recharts';
 import {
   Card,
   CardContent,
@@ -25,7 +25,6 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
 const PIE_COLORS = ['#10B981', '#F43F5E']; // Verde Esmeralda y Rojo Rosa
-const BAR_COLORS = { present: '#3B82F6', absent: '#F97316' }; // Azul y Naranja
 
 function LoadingSkeleton() {
   return (
@@ -86,6 +85,44 @@ function LoadingSkeleton() {
       </div>
     </div>
   );
+}
+
+const CustomBarChartTooltip = ({ active, payload, label }: any) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="rounded-lg border bg-background p-2 shadow-sm">
+        <div className="grid grid-cols-2 gap-2">
+          <div className="flex flex-col space-y-1">
+            <span className="text-[0.70rem] uppercase text-muted-foreground">
+              {label}
+            </span>
+            {payload.map((entry: any) => (
+               <span key={entry.name} className="font-bold" style={{ color: entry.color }}>
+                {entry.name}: {entry.value}
+              </span>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+  return null;
+};
+
+const CustomLegend = (props: LegendProps) => {
+    const { payload } = props;
+    return (
+        <ul className="flex justify-center gap-6 pt-4">
+        {
+            payload?.map((entry, index) => (
+            <li key={`item-${index}`} className="flex items-center gap-2">
+                <span className="h-3 w-3 rounded-full" style={{backgroundColor: entry.color}} />
+                <span className="text-sm text-muted-foreground">{entry.value}</span>
+            </li>
+            ))
+        }
+        </ul>
+    );
 }
 
 export default function Dashboard() {
@@ -218,14 +255,27 @@ export default function Dashboard() {
               </CardHeader>
               <CardContent>
                   <ChartContainer config={{}} className="min-h-[250px] w-full">
-                      <BarChart data={stats.chartData}>
-                          <XAxis dataKey="month" tickLine={false} axisLine={false} tickMargin={8} fontSize={12} />
-                          <YAxis tickLine={false} axisLine={false} tickMargin={8} fontSize={12} />
-                          <Tooltip cursor={false} content={<ChartTooltipContent indicator="dot" />} />
-                          <Legend />
-                          <Bar dataKey="present" fill={BAR_COLORS.present} name="Presentes" radius={4} />
-                          <Bar dataKey="absent" fill={BAR_COLORS.absent} name="Ausentes" radius={4} />
-                      </BarChart>
+                      <ResponsiveContainer width="100%" height={250}>
+                        <BarChart data={stats.chartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                            <defs>
+                                <linearGradient id="colorPresent" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.8}/>
+                                    <stop offset="95%" stopColor="#3B82F6" stopOpacity={0.2}/>
+                                </linearGradient>
+                                <linearGradient id="colorAbsent" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="5%" stopColor="#F97316" stopOpacity={0.8}/>
+                                    <stop offset="95%" stopColor="#F97316" stopOpacity={0.2}/>
+                                </linearGradient>
+                            </defs>
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border) / 0.5)" />
+                            <XAxis dataKey="month" tickLine={false} axisLine={false} tickMargin={10} fontSize={12} />
+                            <YAxis tickLine={false} axisLine={false} tickMargin={10} fontSize={12} allowDecimals={false} />
+                            <Tooltip cursor={{fill: 'hsl(var(--accent) / 0.2)'}} content={<CustomBarChartTooltip />} />
+                            <Legend content={<CustomLegend />} />
+                            <Bar dataKey="present" fill="url(#colorPresent)" name="Presentes" radius={[4, 4, 0, 0]} />
+                            <Bar dataKey="absent" fill="url(#colorAbsent)" name="Ausentes" radius={[4, 4, 0, 0]} />
+                        </BarChart>
+                    </ResponsiveContainer>
                   </ChartContainer>
               </CardContent>
           </Card>
