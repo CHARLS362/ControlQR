@@ -53,17 +53,7 @@ export default function LoginPage() {
   };
 
   return (
-    <main className="relative flex min-h-screen w-full flex-col items-center justify-center bg-[#0A0A0A] p-4 overflow-hidden">
-        {/* Grid and gradient background */}
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-blue-900/40 to-transparent to-70% bg-no-repeat z-0"></div>
-        <div 
-            className="absolute inset-0 z-0"
-            style={{
-                backgroundImage: 'linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px)',
-                backgroundSize: '2rem 2rem',
-            }}
-        ></div>
-
+    <main className="relative flex min-h-screen w-full flex-col items-center justify-center p-4 overflow-hidden bg-animated-gradient">
       <Card className={cn(
           "relative z-10 mx-auto w-full max-w-sm rounded-2xl border border-white/10 shadow-2xl shadow-black/50",
           "bg-black/30 backdrop-blur-lg"
