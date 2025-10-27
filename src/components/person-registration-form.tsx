@@ -1,10 +1,9 @@
-
 'use client';
 
 import * as React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { personaCompletaSchema, type PersonaCompletaFormValues, type FoundPerson } from '@/lib/types';
+import { personaCompletaSchema, type PersonaCompletaFormValues, type FoundPerson, type Gender } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -22,7 +21,28 @@ interface PersonRegistrationFormProps {
 export default function PersonRegistrationForm({ person, onSuccess }: PersonRegistrationFormProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [genders, setGenders] = React.useState<Gender[]>([]);
   const isEditMode = !!person;
+
+  React.useEffect(() => {
+    async function fetchGenders() {
+      try {
+        const response = await fetch('/api/genders');
+        if (!response.ok) {
+          throw new Error('No se pudieron cargar los géneros.');
+        }
+        const data = await response.json();
+        setGenders(data);
+      } catch (error) {
+        toast({
+          variant: 'destructive',
+          title: 'Error',
+          description: error instanceof Error ? error.message : 'No se pudieron cargar los géneros.',
+        });
+      }
+    }
+    fetchGenders();
+  }, [toast]);
 
   const form = useForm<PersonaCompletaFormValues>({
     resolver: zodResolver(personaCompletaSchema),
@@ -123,7 +143,13 @@ export default function PersonRegistrationForm({ person, onSuccess }: PersonRegi
                   <FormLabel>Género</FormLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl><SelectTrigger><SelectValue placeholder="Seleccionar..." /></SelectTrigger></FormControl>
-                    <SelectContent><SelectItem value="1">Masculino</SelectItem><SelectItem value="2">Femenino</SelectItem></SelectContent>
+                    <SelectContent>
+                      {genders.map((gender) => (
+                        <SelectItem key={gender.id} value={String(gender.id)}>
+                          {gender.descripcion}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
                   </Select>
                   <FormMessage />
                 </FormItem>

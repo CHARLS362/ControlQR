@@ -127,3 +127,10 @@ export type FoundPerson = {
   fecha_nacimiento: string; // ISO String
   persona_estado_id: number;
 }
+
+export type Gender = {
+  id: number;
+  nombre: string;
+  descripcion: string;
+  vigente: boolean;
+};
