@@ -28,20 +28,10 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogTrigger,
-} from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { MoreHorizontal, Upload, LoaderCircle, Search, Filter } from 'lucide-react';
-import type { Student, Grado, Section } from '@/lib/types';
+import type { Student } from '@/lib/types';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
-import { QRCodeSVG } from 'qrcode.react';
-import Barcode from 'react-barcode';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -52,15 +42,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { StudentDetailsModal } from '@/components/student-details-modal';
-import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
@@ -412,3 +394,5 @@ export default function StudentsPage() {
     </>
   );
 }
+
+    
