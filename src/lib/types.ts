@@ -116,6 +116,7 @@ export const personaCompletaSchema = z.object({
   id: z.number().optional(),
   documento_tipo_id: z.coerce.number({invalid_type_error: 'Seleccione un tipo de documento'}).min(1, 'Seleccione un tipo de documento'),
   genero_id: z.coerce.number({invalid_type_error: 'Seleccione un género'}).min(1, 'Seleccione un género'),
+  grado_id: z.coerce.number({invalid_type_error: 'Seleccione un grado'}).min(1, 'Seleccione un grado'),
   ubigeo_nacimiento_id: z.coerce.number({invalid_type_error: 'Seleccione un ubigeo de nacimiento'}).min(1, 'Seleccione un ubigeo de nacimiento'),
   domicilio_ubigeo_id: z.coerce.number({invalid_type_error: 'Seleccione un ubigeo de domicilio'}).min(1, 'Seleccione un ubigeo de domicilio'),
   documento_numero: z.string().min(8, 'El número de documento es requerido'),
@@ -152,6 +153,8 @@ export type FoundPerson = {
   domicilio: string;
   fecha_nacimiento: string; // ISO String
   persona_estado_id: number;
+  grado_id: number;
+  grado: string | null;
 }
 
 export type Gender = {
@@ -160,6 +163,12 @@ export type Gender = {
   descripcion: string;
   vigente: boolean;
 };
+
+export type Grado = {
+  id: number;
+  nombre: string;
+  asignado: number;
+}
 
 // Re-export Zod for use in other files
 export { z };

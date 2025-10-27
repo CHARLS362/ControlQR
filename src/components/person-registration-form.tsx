@@ -1,9 +1,10 @@
+
 'use client';
 
 import * as React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { personaCompletaSchema, type PersonaCompletaFormValues, type FoundPerson, type Gender } from '@/lib/types';
+import { personaCompletaSchema, type PersonaCompletaFormValues, type FoundPerson, type Gender, type Grado } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -22,6 +23,7 @@ export default function PersonRegistrationForm({ person, onSuccess }: PersonRegi
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [genders, setGenders] = React.useState<Gender[]>([]);
+  const [grades, setGrades] = React.useState<Grado[]>([]);
   const isEditMode = !!person;
 
   React.useEffect(() => {
@@ -41,7 +43,24 @@ export default function PersonRegistrationForm({ person, onSuccess }: PersonRegi
         });
       }
     }
+    async function fetchGrades() {
+        try {
+            const response = await fetch('/api/grades');
+            if (!response.ok) {
+                throw new Error('No se pudieron cargar los grados.');
+            }
+            const data = await response.json();
+            setGrades(data);
+        } catch (error) {
+            toast({
+                variant: 'destructive',
+                title: 'Error',
+                description: error instanceof Error ? error.message : 'No se pudieron cargar los grados.',
+            });
+        }
+    }
     fetchGenders();
+    fetchGrades();
   }, [toast]);
 
   const form = useForm<PersonaCompletaFormValues>({
@@ -55,6 +74,7 @@ export default function PersonRegistrationForm({ person, onSuccess }: PersonRegi
       persona_estado_id: String(person.persona_estado_id),
       celular_secundario: person.celular_secundario || '',
       correo_secundario: person.correo_secundario || '',
+      grado_id: String(person.grado_id) || '',
     } : {
       documento_numero: '',
       apellido_paterno: '',
@@ -71,6 +91,7 @@ export default function PersonRegistrationForm({ person, onSuccess }: PersonRegi
       ubigeo_nacimiento_id: '',
       domicilio_ubigeo_id: '',
       persona_estado_id: '',
+      grado_id: '',
     },
   });
 
@@ -166,6 +187,22 @@ export default function PersonRegistrationForm({ person, onSuccess }: PersonRegi
                <FormField control={form.control} name="fecha_nacimiento" render={({ field }) => (
                  <FormItem><FormLabel>Fecha de Nacimiento</FormLabel><FormControl><Input placeholder="YYYY-MM-DD" {...field} /></FormControl><FormMessage /></FormItem>
                )}/>
+               <FormField control={form.control} name="grado_id" render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Grado</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl><SelectTrigger><SelectValue placeholder="Seleccionar..." /></SelectTrigger></FormControl>
+                    <SelectContent>
+                      {grades.map((grade) => (
+                        <SelectItem key={grade.id} value={String(grade.id)}>
+                          {grade.nombre}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}/>
                 <FormField control={form.control} name="ubigeo_nacimiento_id" render={({ field }) => (
                     <FormItem><FormLabel>Ubigeo Nacimiento</FormLabel>
                         <Select onValueChange={field.onChange} value={field.value}>

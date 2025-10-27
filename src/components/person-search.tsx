@@ -15,7 +15,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Separator } from '@/components/ui/separator';
-import { LoaderCircle, Search, User, Calendar, Phone, Hash, Fingerprint, Edit } from 'lucide-react';
+import { LoaderCircle, Search, User, Calendar, Phone, Hash, Fingerprint, Edit, GraduationCap } from 'lucide-react';
 import type { FoundPerson } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -59,6 +59,10 @@ function PersonResultCard({ person, onEditSuccess }: { person: FoundPerson, onEd
            <div className="flex items-center gap-2">
               <Phone className="text-muted-foreground w-4 h-4" />
               <strong>Celular:</strong> {person.celular_primario}
+          </div>
+           <div className="flex items-center gap-2">
+              <GraduationCap className="text-muted-foreground w-4 h-4" />
+              <strong>Grado:</strong> {person.grado || 'No asignado'}
           </div>
       </CardContent>
        <CardFooter>
