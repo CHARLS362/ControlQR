@@ -7,14 +7,19 @@ export async function GET(request: NextRequest) {
     const externalApiUrl = `http://31.97.169.107:8093/api/grado/listar`;
     const response = await fetch(externalApiUrl);
 
+    if (!response.ok) {
+        console.error('Error fetching from external API:', response.statusText);
+        return NextResponse.json([], { status: 200 }); // Return empty array on external error
+    }
+
     const responseData = await response.json();
 
-    if (!response.ok || responseData.success !== 1) {
-      return NextResponse.json({ message: 'Error desde la API externa de grados', details: responseData }, { status: response.status });
+    if (responseData.success === 1 && Array.isArray(responseData.data)) {
+        return NextResponse.json(responseData.data);
     }
     
-    // La API externa envuelve los datos en un objeto "data", lo extraemos.
-    return NextResponse.json(responseData.data || []);
+    console.warn('External API did not return a successful array:', responseData);
+    return NextResponse.json([], { status: 200 });
 
   } catch (error) {
     console.error('Error en /api/grades:', error);
