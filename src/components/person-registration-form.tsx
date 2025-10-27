@@ -122,7 +122,7 @@ export default function PersonRegistrationForm() {
                    )}/>
                     <FormField control={form.control} name="ubigeo_nacimiento_id" render={({ field }) => (
                         <FormItem><FormLabel>Ubigeo Nacimiento</FormLabel>
-                            <Select onValuechaange={field.onChange} defaultValue={String(field.value)}>
+                            <Select onValueChange={field.onChange} defaultValue={String(field.value)}>
                                 <FormControl><SelectTrigger><SelectValue placeholder="Seleccionar Ubigeo..." /></SelectTrigger></FormControl>
                                 <SelectContent><SelectItem value="140101">Lima</SelectItem><SelectItem value="040101">Arequipa</SelectItem></SelectContent>
                             </Select>
