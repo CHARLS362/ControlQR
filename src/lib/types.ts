@@ -66,6 +66,31 @@ export type DashboardStats = {
   chartData: ChartDataPoint[];
 };
 
+// --- Tipos de la API Externa ---
+
+export type StudentDetails = {
+  id: number;
+  persona_id: number;
+  anio_academico_id: number;
+  periodo_id: number;
+  grado_id: number;
+  seccion_id: number;
+  padre_id: number;
+  madre_id: number;
+  apoderado_id: number;
+  seguro_id: number;
+  celular_emergencia: string;
+  codigo: string;
+  observacion: string;
+  nombres: string;
+  anio_academico: number;
+  periodo: string;
+  grado: string;
+  seccion: string;
+  seguro: string;
+  codigo_hash: string;
+}
+
 
 // Tipos para validación de formularios
 import { z } from 'zod';

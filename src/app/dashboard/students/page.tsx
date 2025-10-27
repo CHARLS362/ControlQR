@@ -77,6 +77,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
+import { StudentDetailsModal } from '@/components/student-details-modal';
 
 // --- Formulario de Búsqueda ---
 const searchSchema = z.object({
@@ -370,6 +371,7 @@ export default function StudentsPage() {
   const [students, setStudents] = React.useState<Student[]>([]);
   const [loading, setLoading] = React.useState(true);
   const { toast } = useToast();
+  const [selectedStudentId, setSelectedStudentId] = React.useState<string | null>(null);
 
   const fetchStudents = React.useCallback(async () => {
     setLoading(true);
@@ -502,7 +504,7 @@ export default function StudentsPage() {
                               data-ai-hint={avatar.imageHint}
                             />
                           ) : (
-                            <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center text-muted-foreground text-xs">
+                            <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center text-xs">
                               ?
                             </div>
                           )}
@@ -533,6 +535,9 @@ export default function StudentsPage() {
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                               <DropdownMenuLabel>Acciones</DropdownMenuLabel>
+                               <DropdownMenuItem onSelect={() => setSelectedStudentId(String(student.id))}>
+                                  Ver Detalles
+                               </DropdownMenuItem>
                                <StudentDialog student={student} onSuccess={fetchStudents}>
                                 <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
                                   Editar
@@ -589,6 +594,18 @@ export default function StudentsPage() {
           </Table>
         </CardContent>
       </Card>
+      
+      {selectedStudentId && (
+        <StudentDetailsModal 
+          studentId={selectedStudentId} 
+          open={!!selectedStudentId}
+          onOpenChange={(isOpen) => {
+            if (!isOpen) {
+              setSelectedStudentId(null);
+            }
+          }}
+        />
+      )}
     </>
   );
 }
