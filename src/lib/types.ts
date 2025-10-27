@@ -105,3 +105,19 @@ export const personaCompletaSchema = z.object({
 });
 
 export type PersonaCompletaFormValues = z.infer<typeof personaCompletaSchema>;
+
+
+export type FoundPerson = {
+  id: number;
+  documento_tipo_id: number;
+  genero_id: number;
+  ubigeo_nacimiento_id: number;
+  domicilio_ubigeo_id: number;
+  documento_numero: string;
+  apellido_paterno: string;
+  apellido_materno: string;
+  nombres: string;
+  genero: string;
+  celular_primario: string;
+  fecha_nacimiento: string; // ISO String
+}
