@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -152,7 +153,7 @@ export function StudentDetailsModal({ studentId, open, onOpenChange }: StudentDe
                 <div className="flex flex-col items-center justify-center p-4 bg-white rounded-md mt-4">
                     <Barcode 
                         value={details.codigo_hash}
-                        width={1}
+                        width={0.5}
                         height={50}
                         fontSize={12}
                         text={getBarcodeValue()}
