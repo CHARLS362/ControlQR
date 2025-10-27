@@ -359,7 +359,6 @@ export default function StudentsPage() {
                                 {student.celular_primario}
                             </TableCell>
                             <TableCell>
-                                <Dialog>
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
                                     <Button
@@ -376,46 +375,11 @@ export default function StudentsPage() {
                                     <DropdownMenuItem onSelect={() => setSelectedStudentId(String(student.id))}>
                                         Ver Detalles
                                     </DropdownMenuItem>
-                                    <DialogTrigger asChild>
-                                        <DropdownMenuItem>Ver Códigos</DropdownMenuItem>
-                                    </DialogTrigger>
+                                     <DropdownMenuItem onSelect={() => setSelectedStudentId(String(student.id))}>
+                                        Ver Códigos
+                                    </DropdownMenuItem>
                                     </DropdownMenuContent>
                                 </DropdownMenu>
-                                <DialogContent className="sm:max-w-md">
-                                    <DialogHeader>
-                                    <DialogTitle>Códigos para {student.nombres}</DialogTitle>
-                                    <DialogDescription>
-                                        Usa cualquiera de estos códigos para escanear la asistencia.
-                                    </DialogDescription>
-                                    </DialogHeader>
-                                    <Tabs defaultValue="qr" className="w-full">
-                                    <TabsList className="grid w-full grid-cols-2">
-                                        <TabsTrigger value="qr">Código QR</TabsTrigger>
-                                        <TabsTrigger value="barcode">Código de Barras</TabsTrigger>
-                                    </TabsList>
-                                    <TabsContent value="qr">
-                                        <div className="flex flex-col items-center justify-center p-4 bg-white rounded-md mt-4">
-                                        <QRCodeSVG
-                                            value={String(student.id)} // Usar el ID para el QR
-                                            size={256}
-                                            bgColor={"#ffffff"}
-                                            fgColor={"#000000"}
-                                            level={"L"}
-                                            includeMargin={false}
-                                        />
-                                        </div>
-                                    </TabsContent>
-                                    <TabsContent value="barcode">
-                                        <div className="flex flex-col items-center justify-center p-4 bg-white rounded-md mt-4">
-                                        <Barcode value={String(student.id)} />
-                                        </div>
-                                    </TabsContent>
-                                    </Tabs>
-                                    <div className="text-center text-sm text-muted-foreground pt-4">
-                                    ID de Estudiante: <Badge variant="secondary">{student.id}</Badge>
-                                    </div>
-                                </DialogContent>
-                                </Dialog>
                             </TableCell>
                             </TableRow>
                         );
@@ -448,5 +412,3 @@ export default function StudentsPage() {
     </>
   );
 }
-
-    
