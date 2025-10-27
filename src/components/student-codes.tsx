@@ -4,8 +4,6 @@
 import * as React from 'react';
 import Barcode from 'react-barcode';
 import { QRCodeSVG } from 'qrcode.react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { QrCode, BarChart2 } from 'lucide-react';
 import type { StudentDetails } from '@/lib/types';
 
 interface StudentCodesProps {
@@ -14,48 +12,45 @@ interface StudentCodesProps {
 
 export function StudentCodes({ details }: StudentCodesProps) {
 
-  const getBarcodeValue = () => {
+  const getDisplayName = () => {
     if (!details || typeof details.nombres !== 'string') {
         return '';
     }
     const nameParts = details.nombres.split(' ');
+    // Toma el primer nombre y el primer apellido
     const firstName = nameParts[0] || '';
-    const lastName = nameParts.length > 1 ? nameParts[1] : '';
+    const lastName = nameParts.length > 2 ? nameParts[2] : (nameParts[1] || '');
     return `${firstName} ${lastName}`.trim();
   }
 
   return (
-    <Tabs defaultValue="qr" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
-        <TabsTrigger value="qr"><QrCode className="mr-2" />Código QR</TabsTrigger>
-        <TabsTrigger value="barcode"><BarChart2 className="mr-2" />Código de Barras</TabsTrigger>
-        </TabsList>
-        <TabsContent value="qr">
-        <div className="flex flex-col items-center justify-center p-4 bg-white rounded-md mt-4">
+    <div className="flex justify-around items-center p-4 bg-white rounded-md mt-4 w-full">
+        {/* QR Code Section */}
+        <div className="flex flex-col items-center justify-center">
             <QRCodeSVG
-            value={details.codigo_hash || ''}
-            size={200}
-            bgColor={"#ffffff"}
-            fgColor={"#000000"}
-            level={"L"}
-            includeMargin={false}
+                value={details.codigo_hash || ''}
+                size={128}
+                bgColor={"#ffffff"}
+                fgColor={"#000000"}
+                level={"L"}
+                includeMargin={false}
             />
-            <p className="mt-2 text-sm font-semibold">{getBarcodeValue()}</p>
+            <p className="mt-2 text-xs font-semibold tracking-wider">{getDisplayName()}</p>
         </div>
-        </TabsContent>
-        <TabsContent value="barcode">
-        <div className="flex flex-col items-center justify-center p-4 bg-white rounded-md mt-4">
+
+        {/* Barcode Section */}
+        <div className="flex flex-col items-center justify-center">
             {details.codigo && (
               <Barcode 
                   value={details.codigo}
-                  width={1}
-                  height={50}
+                  width={1.5}
+                  height={60}
                   fontSize={12}
-                  text={getBarcodeValue()}
+                  text={getDisplayName()}
+                  margin={10}
               />
             )}
         </div>
-        </TabsContent>
-    </Tabs>
+    </div>
   );
 }

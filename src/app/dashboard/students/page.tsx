@@ -268,14 +268,14 @@ export default function StudentsPage() {
       const finalImgWidth = pdfWidth * 0.9;
       const finalImgHeight = finalImgWidth / ratio;
       
-      const x = (pdfWidth - finalImgWidth) / 2;
+      // Add two cards per page
       const y = (i % 2 === 0) ? 20 : pdfHeight / 2 + 10;
       
       if (i > 0 && i % 2 === 0) {
         pdf.addPage();
       }
       
-      pdf.addImage(imgData, 'PNG', x, y, finalImgWidth, finalImgHeight);
+      pdf.addImage(imgData, 'PNG', (pdfWidth - finalImgWidth) / 2, y, finalImgWidth, finalImgHeight);
     }
     
     pdf.save(`codigos-estudiantes-${new Date().toISOString().slice(0,10)}.pdf`);
@@ -463,10 +463,10 @@ export default function StudentsPage() {
       {/* Hidden container for PDF export */}
       {isExporting && exportStudentDetails.length > 0 && (
         <div className="absolute -left-[9999px] top-0 opacity-0" aria-hidden="true">
-           <div className="p-4 space-y-4">
+           <div className="p-4 grid grid-cols-1 gap-4">
               {exportStudentDetails.map(detail => (
-                  <div key={detail.id} className="pdf-student-card page-break-after p-4 border rounded-lg bg-white" style={{ width: '400px' }}>
-                    <h3 className="text-lg font-bold text-center mb-2">{detail.nombres}</h3>
+                  <div key={detail.id} className="pdf-student-card page-break-after p-4 border rounded-lg bg-white" style={{ width: '500px' }}>
+                    <h3 className="text-xl font-bold text-center mb-2">{detail.nombres}</h3>
                     <StudentCodes details={detail} />
                   </div>
               ))}
