@@ -26,12 +26,9 @@ export async function GET(request: NextRequest) {
       externalApiUrl.searchParams.append('nombres', nombres);
     }
 
-    // Si no se proporciona ningún parámetro, quizás queramos devolver un error o una lista vacía
     if (!documento_tipo_id && !documento_numero && !nombres) {
-        // Por ahora, simplemente llamamos al endpoint sin parámetros,
-        // asumiendo que podría devolver todos los estudiantes o una lista vacía.
-        // O podríamos devolver un error:
-        // return NextResponse.json({ message: 'Se requiere al menos un parámetro de búsqueda' }, { status: 400 });
+        // No se proporcionan parámetros, devolvemos un array vacío para no sobrecargar la API externa
+        return NextResponse.json([]);
     }
 
     const response = await fetch(externalApiUrl.toString(), {
@@ -46,8 +43,12 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ message: 'Error desde la API externa de estudiantes', details: responseData }, { status: response.status });
     }
     
-    // La API externa podría envolver los datos en un objeto "data"
-    return NextResponse.json(responseData.data || responseData || []);
+    // Devolver siempre un array. Si la API devuelve { data: [...] }, usamos data.
+    // Si la API devuelve [...] directamente, lo usamos.
+    // En cualquier otro caso, devolvemos un array vacío para evitar errores en el frontend.
+    const results = Array.isArray(responseData.data) ? responseData.data : (Array.isArray(responseData) ? responseData : []);
+    
+    return NextResponse.json(results);
 
   } catch (error) {
     console.error('Error en /api/students/search:', error);
