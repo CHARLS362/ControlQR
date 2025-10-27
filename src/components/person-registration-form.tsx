@@ -46,11 +46,11 @@ export default function PersonRegistrationForm({ person, onSuccess }: PersonRegi
       correo_primario: '',
       correo_secundario: '',
       domicilio: '',
-      documento_tipo_id: undefined,
-      genero_id: undefined,
-      ubigeo_nacimiento_id: undefined,
-      domicilio_ubigeo_id: undefined,
-      persona_estado_id: undefined,
+      documento_tipo_id: '',
+      genero_id: '',
+      ubigeo_nacimiento_id: '',
+      domicilio_ubigeo_id: '',
+      persona_estado_id: '',
     },
   });
 
@@ -218,5 +218,3 @@ export default function PersonRegistrationForm({ person, onSuccess }: PersonRegi
     </Form>
   );
 }
-
-    

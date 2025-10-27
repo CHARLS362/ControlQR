@@ -120,11 +120,10 @@ export type FoundPerson = {
   nombres: string;
   genero: string;
   celular_primario: string;
-  fecha_nacimiento: string; // ISO String
+  celular_secundario: string | null;
   correo_primario: string;
   correo_secundario: string | null;
   domicilio: string;
+  fecha_nacimiento: string; // ISO String
   persona_estado_id: number;
 }
-
-    
