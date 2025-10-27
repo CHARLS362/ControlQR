@@ -1,28 +1,20 @@
 
 import { NextResponse } from 'next/server';
-import { personaCompletaSchema } from '@/lib/types';
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
     
-    // Validar los datos con Zod
-    const validationResult = personaCompletaSchema.safeParse(body);
-    
-    if (!validationResult.success) {
-      return NextResponse.json({ message: 'Datos de formulario inválidos', errors: validationResult.error.flatten().fieldErrors }, { status: 400 });
-    }
+    // El frontend ya ha validado los datos con Zod.
+    // Este endpoint ahora actúa puramente como un proxy.
 
-    const validatedData = validationResult.data;
-
-    // Llamar al endpoint externo
     const externalApiUrl = 'http://31.97.169.107:8093/api/persona/registrar-datos-completos';
     const response = await fetch(externalApiUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(validatedData),
+      body: JSON.stringify(body),
     });
 
     const responseData = await response.json();
