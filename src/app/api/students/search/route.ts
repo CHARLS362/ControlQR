@@ -8,26 +8,15 @@ const EXTERNAL_API_BASE_URL = 'http://31.97.169.107:8093';
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
-    const documento_tipo_id = searchParams.get('documento_tipo_id');
-    const documento_numero = searchParams.get('documento_numero');
     const nombres = searchParams.get('nombres');
 
     // Construir la URL para la API externa
     const externalApiUrl = new URL(`${EXTERNAL_API_BASE_URL}/api/estudiante/buscar`);
     
-    // Añadir solo los parámetros que tienen valor
-    if (documento_tipo_id) {
-      externalApiUrl.searchParams.append('documento_tipo_id', documento_tipo_id);
-    }
-    if (documento_numero) {
-      externalApiUrl.searchParams.append('documento_numero', documento_numero);
-    }
     if (nombres) {
       externalApiUrl.searchParams.append('nombres', nombres);
-    }
-
-    if (!documento_tipo_id && !documento_numero && !nombres) {
-        // No se proporcionan parámetros, devolvemos un array vacío para no sobrecargar la API externa
+    } else {
+        // No se proporcionan parámetros, devolvemos un array vacío
         return NextResponse.json([]);
     }
 
@@ -56,3 +45,5 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ message: 'Error interno del servidor', error: errorMessage }, { status: 500 });
   }
 }
+
+    

@@ -80,9 +80,7 @@ import { cn } from '@/lib/utils';
 
 // --- Formulario de Búsqueda ---
 const searchSchema = z.object({
-  documento_tipo_id: z.string().optional(),
-  documento_numero: z.string().optional(),
-  nombres: z.string().optional(),
+  nombres: z.string().min(2, { message: 'El nombre debe tener al menos 2 caracteres.' }),
 });
 type SearchFormValues = z.infer<typeof searchSchema>;
 
@@ -90,8 +88,6 @@ function StudentSearch({ onSearch, onClear, isSearching }: { onSearch: (data: Se
   const form = useForm<SearchFormValues>({
     resolver: zodResolver(searchSchema),
     defaultValues: {
-      documento_tipo_id: '',
-      documento_numero: '',
       nombres: '',
     },
   });
@@ -105,59 +101,26 @@ function StudentSearch({ onSearch, onClear, isSearching }: { onSearch: (data: Se
     <Card className="shadow-subtle mb-6">
       <CardHeader>
         <CardTitle>Buscar Estudiantes</CardTitle>
-        <CardDescription>Filtra estudiantes por tipo y número de documento o por nombre.</CardDescription>
+        <CardDescription>Filtra estudiantes por nombre.</CardDescription>
       </CardHeader>
       <CardContent>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSearch)}>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
-              <FormField
-                control={form.control}
-                name="documento_tipo_id"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Tipo de Documento</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Todos" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="1">DNI</SelectItem>
-                        <SelectItem value="2">Pasaporte</SelectItem>
-                        <SelectItem value="4">Carnet de Extranjería</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="documento_numero"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>N° de Documento</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Ej: 71234567" {...field} />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
+          <form onSubmit={form.handleSubmit(onSearch)} className="flex items-start gap-4">
               <FormField
                 control={form.control}
                 name="nombres"
                 render={({ field }) => (
-                  <FormItem>
+                  <FormItem className="flex-grow">
                     <FormLabel>Nombres</FormLabel>
                     <FormControl>
                       <Input placeholder="Ej: Juan Pérez" {...field} />
                     </FormControl>
+                    <FormMessage />
                   </FormItem>
                 )}
               />
-              <div className="flex gap-2">
-                 <Button type="submit" disabled={isSearching} className="w-full">
+              <div className="flex gap-2 pt-8">
+                 <Button type="submit" disabled={isSearching}>
                     {isSearching ? <LoaderCircle className="animate-spin" /> : <Search />}
                     <span className="ml-2">Buscar</span>
                 </Button>
@@ -165,7 +128,6 @@ function StudentSearch({ onSearch, onClear, isSearching }: { onSearch: (data: Se
                     <X />
                 </Button>
               </div>
-            </div>
           </form>
         </Form>
       </CardContent>
@@ -438,8 +400,6 @@ export default function StudentsPage() {
     setLoading(true);
     try {
       const query = new URLSearchParams();
-      if (searchData.documento_tipo_id) query.append('documento_tipo_id', searchData.documento_tipo_id);
-      if (searchData.documento_numero) query.append('documento_numero', searchData.documento_numero);
       if (searchData.nombres) query.append('nombres', searchData.nombres);
 
       const response = await fetch(`/api/students/search?${query.toString()}`);
@@ -632,3 +592,5 @@ export default function StudentsPage() {
     </>
   );
 }
+
+    
