@@ -81,7 +81,7 @@ import { StudentDetailsModal } from '@/components/student-details-modal';
 
 // --- Formulario de Búsqueda ---
 const searchSchema = z.object({
-  nombres: z.string().min(2, { message: 'El nombre debe tener al menos 2 caracteres.' }),
+  id: z.string().regex(/^[0-9]+$/, "Por favor, introduce un ID numérico."),
 });
 type SearchFormValues = z.infer<typeof searchSchema>;
 
@@ -89,7 +89,7 @@ function StudentSearch({ onSearch, onClear, isSearching }: { onSearch: (data: Se
   const form = useForm<SearchFormValues>({
     resolver: zodResolver(searchSchema),
     defaultValues: {
-      nombres: '',
+      id: '',
     },
   });
 
@@ -101,20 +101,20 @@ function StudentSearch({ onSearch, onClear, isSearching }: { onSearch: (data: Se
   return (
     <Card className="shadow-subtle mb-6">
       <CardHeader>
-        <CardTitle>Buscar Estudiantes</CardTitle>
-        <CardDescription>Filtra estudiantes por nombre.</CardDescription>
+        <CardTitle>Buscar Estudiante por ID</CardTitle>
+        <CardDescription>Introduce el ID numérico del estudiante para ver sus detalles.</CardDescription>
       </CardHeader>
       <CardContent>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSearch)} className="flex items-start gap-4">
               <FormField
                 control={form.control}
-                name="nombres"
+                name="id"
                 render={({ field }) => (
                   <FormItem className="flex-grow">
-                    <FormLabel>Nombres</FormLabel>
+                    <FormLabel>ID de Estudiante</FormLabel>
                     <FormControl>
-                      <Input placeholder="Ej: Juan Pérez" {...field} />
+                      <Input placeholder="Ej: 191" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -370,6 +370,7 @@ function DeleteStudentDialog({ student, onSuccess }: { student: Student; onSucce
 export default function StudentsPage() {
   const [students, setStudents] = React.useState<Student[]>([]);
   const [loading, setLoading] = React.useState(true);
+  const [isSearching, setIsSearching] = React.useState(false);
   const { toast } = useToast();
   const [selectedStudentId, setSelectedStudentId] = React.useState<string | null>(null);
 
@@ -399,29 +400,26 @@ export default function StudentsPage() {
   }, [fetchStudents]);
   
   const handleSearch = async (searchData: SearchFormValues) => {
-    setLoading(true);
+    setIsSearching(true);
     try {
-      const query = new URLSearchParams();
-      if (searchData.nombres) query.append('nombres', searchData.nombres);
-
-      const response = await fetch(`/api/students/search?${query.toString()}`);
+      const response = await fetch(`/api/students/details/${searchData.id}`);
        if (!response.ok) {
-        throw new Error('Error en la búsqueda de estudiantes');
+        throw new Error('Estudiante no encontrado con ese ID.');
       }
       const data = await response.json();
-      setStudents(data);
-      if (data.length === 0) {
-        toast({ title: 'Sin Resultados', description: 'No se encontraron estudiantes con esos criterios.' });
+      if (data) {
+        setSelectedStudentId(searchData.id);
+        toast({ title: 'Estudiante Encontrado', description: `Mostrando detalles para ${data.nombres}` });
       }
     } catch (error) {
-      console.error('Error searching students:', error);
+      console.error('Error searching student:', error);
       toast({
         variant: 'destructive',
         title: 'Error de Búsqueda',
         description: error instanceof Error ? error.message : 'No se pudo completar la búsqueda.',
       });
     } finally {
-      setLoading(false);
+      setIsSearching(false);
     }
   };
 
@@ -448,7 +446,7 @@ export default function StudentsPage() {
         </div>
       </div>
       
-      <StudentSearch onSearch={handleSearch} onClear={fetchStudents} isSearching={loading} />
+      <StudentSearch onSearch={handleSearch} onClear={fetchStudents} isSearching={isSearching} />
 
       <Card className="shadow-subtle">
         <CardHeader>
@@ -609,5 +607,3 @@ export default function StudentsPage() {
     </>
   );
 }
-
-    
