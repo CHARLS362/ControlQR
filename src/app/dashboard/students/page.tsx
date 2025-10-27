@@ -3,9 +3,6 @@
 
 import * as React from 'react';
 import Image from 'next/image';
-import { z } from 'zod';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
 import {
   Card,
   CardContent,
@@ -34,37 +31,31 @@ import type { Student } from '@/lib/types';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormMessage,
-} from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { StudentDetailsModal } from '@/components/student-details-modal';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 
-const searchSchema = z.object({
-  id: z.string().regex(/^[0-9]+$/, 'El ID debe ser un número.'),
-});
-type SearchFormValues = z.infer<typeof searchSchema>;
-
 function StudentIdSearch({ onStudentFound }: { onStudentFound: (id: string) => void }) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [studentId, setStudentId] = React.useState('');
 
-  const form = useForm<SearchFormValues>({
-    resolver: zodResolver(searchSchema),
-    defaultValues: { id: '' },
-  });
-
-  const onSubmit = async (values: SearchFormValues) => {
+  const handleSearch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!studentId) {
+       toast({
+        variant: 'destructive',
+        title: 'ID Requerido',
+        description: 'Por favor, introduce el ID del estudiante para buscar.',
+      });
+      return;
+    }
+    
     setIsSubmitting(true);
     try {
-      const response = await fetch(`/api/students/search?id=${values.id}`);
+      const response = await fetch(`/api/students/search?id=${studentId}`);
       const data = await response.json();
 
       if (!response.ok) {
@@ -72,7 +63,7 @@ function StudentIdSearch({ onStudentFound }: { onStudentFound: (id: string) => v
       }
 
       onStudentFound(String(data.id));
-      form.reset();
+      setStudentId('');
 
     } catch (error) {
       toast({
@@ -92,27 +83,20 @@ function StudentIdSearch({ onStudentFound }: { onStudentFound: (id: string) => v
             <CardDescription>Introduce el ID numérico del estudiante para ver sus detalles.</CardDescription>
         </CardHeader>
         <CardContent>
-            <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="flex items-start gap-4">
-                <FormField
-                control={form.control}
-                name="id"
-                render={({ field }) => (
-                    <FormItem className="flex-grow">
-                    <FormControl>
-                        <Input type="text" inputMode="numeric" placeholder="Ej: 191" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                    </FormItem>
-                )}
+            <form onSubmit={handleSearch} className="flex items-start gap-4">
+                <Input 
+                    type="text" 
+                    inputMode="numeric" 
+                    placeholder="Ej: 191" 
+                    value={studentId}
+                    onChange={(e) => setStudentId(e.target.value)}
                 />
                 <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
-                <Search className="mr-2 h-4 w-4" />
-                Buscar
+                    {isSubmitting && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
+                    <Search className="mr-2 h-4 w-4" />
+                    Buscar
                 </Button>
             </form>
-            </Form>
         </CardContent>
     </Card>
   );
@@ -357,9 +341,6 @@ export default function StudentsPage() {
                                     <DropdownMenuItem onSelect={() => setSelectedStudentId(String(student.id))}>
                                         Ver Detalles
                                     </DropdownMenuItem>
-                                     <DropdownMenuItem onSelect={() => setSelectedStudentId(String(student.id))}>
-                                        Ver Códigos
-                                    </DropdownMenuItem>
                                     </DropdownMenuContent>
                                 </DropdownMenu>
                             </TableCell>
@@ -394,5 +375,3 @@ export default function StudentsPage() {
     </>
   );
 }
-
-    
