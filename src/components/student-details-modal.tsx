@@ -71,7 +71,9 @@ export function StudentDetailsModal({ studentId, open, onOpenChange }: StudentDe
   }, [studentId, open, onOpenChange, toast]);
 
   const getBarcodeValue = () => {
-    if (!details || typeof details.nombres !== 'string') return '';
+    if (!details || typeof details.nombres !== 'string') {
+        return '';
+    }
     const nameParts = details.nombres.split(' ');
     const firstName = nameParts[0] || '';
     const lastName = nameParts.length > 1 ? nameParts[1] : '';
