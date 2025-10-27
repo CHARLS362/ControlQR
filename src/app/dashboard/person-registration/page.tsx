@@ -20,12 +20,12 @@ export default function PersonRegistrationPage() {
       </div>
       
       <Tabs defaultValue="register" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 max-w-lg mx-auto">
-          <TabsTrigger value="register">
+        <TabsList className="grid w-full grid-cols-2 max-w-lg mx-auto bg-transparent p-0">
+          <TabsTrigger value="register" className="data-[state=active]:bg-card data-[state=active]:text-card-foreground data-[state=active]:shadow-sm data-[state=inactive]:bg-transparent text-muted-foreground">
             <UserPlus className="mr-2" />
             Registrar Persona
           </TabsTrigger>
-          <TabsTrigger value="search">
+          <TabsTrigger value="search" className="data-[state=active]:bg-card data-[state=active]:text-card-foreground data-[state=active]:shadow-sm data-[state=inactive]:bg-transparent text-muted-foreground">
             <Search className="mr-2" />
             Buscar Persona
           </TabsTrigger>
