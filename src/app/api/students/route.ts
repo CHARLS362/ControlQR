@@ -13,12 +13,15 @@ export async function GET() {
         }
     });
 
-    const responseData = await response.json();
-
     if (!response.ok) {
-      return NextResponse.json({ message: 'Error desde la API externa de estudiantes', details: responseData }, { status: response.status });
+      // Si la API externa falla, no propagamos el error al cliente.
+      // Simplemente registramos el error en el servidor y devolvemos un array vacío.
+      console.error('Error desde la API externa de estudiantes:', await response.text());
+      return NextResponse.json([]);
     }
     
+    const responseData = await response.json();
+
     // Devolver siempre un array. Si la API devuelve { data: [...] }, usamos data.
     // Si la API devuelve [...] directamente, lo usamos.
     // En cualquier otro caso, devolvemos un array vacío para evitar errores en el frontend.
