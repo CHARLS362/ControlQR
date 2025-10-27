@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -33,33 +32,18 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-  DialogFooter,
-  DialogClose,
 } from '@/components/ui/dialog';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
-import { MoreHorizontal, PlusCircle, Upload, LoaderCircle, Search, X } from 'lucide-react';
-import type { Student, StudentFormValues, Course } from '@/lib/types';
+import { MoreHorizontal, PlusCircle, Upload, LoaderCircle, Search } from 'lucide-react';
+import type { Student, StudentFormValues, Grado, Section } from '@/lib/types';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { QRCodeSVG } from 'qrcode.react';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Barcode from 'react-barcode';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { studentSchema, z } from '@/lib/types';
+import { studentSchema } from '@/lib/types';
 import {
   Form,
   FormControl,
@@ -76,134 +60,151 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { cn } from '@/lib/utils';
 import { StudentDetailsModal } from '@/components/student-details-modal';
+import { Badge } from '@/components/ui/badge';
 
-// --- Formulario de Búsqueda ---
-const searchSchema = z.object({
-  id: z.string().regex(/^[0-9]+$/, "Por favor, introduce un ID numérico."),
-});
-type SearchFormValues = z.infer<typeof searchSchema>;
+// --- Formulario de Filtro ---
+function StudentFilter({
+  onFilter,
+  isLoading,
+}: {
+  onFilter: (gradeId: string, sectionId: string) => void;
+  isLoading: boolean;
+}) {
+  const { toast } = useToast();
+  const [grades, setGrades] = React.useState<Grado[]>([]);
+  const [sections, setSections] = React.useState<Section[]>([]);
+  const [selectedGrade, setSelectedGrade] = React.useState<string>('');
+  const [selectedSection, setSelectedSection] = React.useState<string>('');
+  const [isFetchingSections, setIsFetchingSections] = React.useState(false);
 
-function StudentSearch({ onSearch, onClear, isSearching }: { onSearch: (data: SearchFormValues) => void; onClear: () => void; isSearching: boolean; }) {
-  const form = useForm<SearchFormValues>({
-    resolver: zodResolver(searchSchema),
-    defaultValues: {
-      id: '',
-    },
-  });
+  React.useEffect(() => {
+    async function fetchGrades() {
+      try {
+        const response = await fetch('/api/grades');
+        const data = await response.json();
+        setGrades(data);
+      } catch (error) {
+        toast({
+          variant: 'destructive',
+          title: 'Error',
+          description: 'No se pudieron cargar los grados.',
+        });
+      }
+    }
+    fetchGrades();
+  }, [toast]);
 
-  const handleClear = () => {
-    form.reset();
-    onClear();
+  const handleGradeChange = async (gradeId: string) => {
+    setSelectedGrade(gradeId);
+    setSelectedSection('');
+    setSections([]);
+    if (!gradeId) return;
+
+    setIsFetchingSections(true);
+    try {
+      const response = await fetch(`/api/sections/${gradeId}`);
+      const data = await response.json();
+      setSections(data);
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'No se pudieron cargar las secciones para este grado.',
+      });
+    } finally {
+      setIsFetchingSections(false);
+    }
   };
+  
+  const handleFilterSubmit = (e: React.FormEvent) => {
+      e.preventDefault();
+      if (!selectedGrade || !selectedSection) {
+          toast({
+              variant: 'destructive',
+              title: 'Selección incompleta',
+              description: 'Por favor, selecciona un grado y una sección para filtrar.'
+          });
+          return;
+      }
+      onFilter(selectedGrade, selectedSection);
+  }
 
   return (
     <Card className="shadow-subtle mb-6">
       <CardHeader>
-        <CardTitle>Buscar Estudiante por ID</CardTitle>
-        <CardDescription>Introduce el ID numérico del estudiante para ver sus detalles.</CardDescription>
+        <CardTitle>Filtrar Estudiantes</CardTitle>
+        <CardDescription>
+          Selecciona un grado y una sección para ver la lista de estudiantes.
+        </CardDescription>
       </CardHeader>
       <CardContent>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSearch)} className="flex items-start gap-4">
-              <FormField
-                control={form.control}
-                name="id"
-                render={({ field }) => (
-                  <FormItem className="flex-grow">
-                    <FormLabel>ID de Estudiante</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Ej: 191" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <div className="flex gap-2 pt-8">
-                 <Button type="submit" disabled={isSearching}>
-                    {isSearching ? <LoaderCircle className="animate-spin" /> : <Search />}
-                    <span className="ml-2">Buscar</span>
-                </Button>
-                 <Button type="button" variant="outline" onClick={handleClear} disabled={isSearching}>
-                    <X />
-                </Button>
-              </div>
-          </form>
-        </Form>
+        <form onSubmit={handleFilterSubmit} className="flex flex-col sm:flex-row items-end gap-4">
+          <div className="w-full sm:w-1/3">
+            <FormLabel>Grado</FormLabel>
+            <Select value={selectedGrade} onValueChange={handleGradeChange}>
+              <SelectTrigger>
+                <SelectValue placeholder="Seleccionar grado..." />
+              </SelectTrigger>
+              <SelectContent>
+                {grades.map((grade) => (
+                  <SelectItem key={grade.id} value={String(grade.id)}>
+                    {grade.nombre}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="w-full sm:w-1/3">
+            <FormLabel>Sección</FormLabel>
+             <Select value={selectedSection} onValueChange={setSelectedSection} disabled={!selectedGrade || isFetchingSections}>
+              <SelectTrigger>
+                <SelectValue placeholder={isFetchingSections ? "Cargando..." : "Seleccionar sección..."} />
+              </SelectTrigger>
+              <SelectContent>
+                 {sections.map((section) => (
+                  <SelectItem key={section.id} value={String(section.id)}>
+                    {section.nombre} ({section.turno})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <Button type="submit" disabled={isLoading} className="w-full sm:w-auto">
+            {isLoading ? (
+              <LoaderCircle className="animate-spin" />
+            ) : (
+              <Search />
+            )}
+            <span className="ml-2">Buscar</span>
+          </Button>
+        </form>
       </CardContent>
     </Card>
   );
 }
 
-
 // --- Formulario de Estudiante ---
 function StudentForm({ student, onSuccess }: { student?: Student; onSuccess: () => void; }) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
-  const [courses, setCourses] = React.useState<Course[]>([]);
-  
-  React.useEffect(() => {
-    async function fetchCourses() {
-      try {
-        const response = await fetch('/api/courses');
-        if (!response.ok) {
-          throw new Error('No se pudieron cargar los cursos.');
-        }
-        const data = await response.json();
-        setCourses(data);
-      } catch (error) {
-         toast({
-          variant: 'destructive',
-          title: 'Error',
-          description: 'No se pudieron cargar los cursos para la selección.',
-        });
-      }
-    }
-    fetchCourses();
-  }, [toast]);
   
   const form = useForm<StudentFormValues>({
     resolver: zodResolver(studentSchema),
     defaultValues: {
-      name: student?.name || '',
-      email: student?.email || '',
-      courseId: student?.courseId || '',
+      name: student?.nombres || '',
+      email: student?.correo_primario || '',
+      courseId: '' // Este campo ya no se usa como antes
     },
   });
 
-  const onSubmit = async (values: StudentFormValues) => {
-    setIsSubmitting(true);
-    try {
-      const method = student ? 'PUT' : 'POST';
-      const url = student ? `/api/students/${student.id}` : '/api/students';
-      const response = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(values),
+  const onSubmit = async (values: any) => {
+    // La lógica de creación/edición necesitaría ser adaptada a los nuevos endpoints
+    // Por ahora, esta función está deshabilitada para evitar errores.
+     toast({
+        title: 'Función no implementada',
+        description: 'La creación y edición desde esta pantalla necesita ser actualizada.',
       });
-
-      if (!response.ok) {
-        throw new Error(`Error al ${student ? 'actualizar' : 'crear'} el estudiante.`);
-      }
-
-      const responseData = await response.json();
-      
-      toast({
-        title: `Estudiante ${student ? 'actualizado' : 'creado'}`,
-        description: `El estudiante "${responseData.name}" ha sido ${student ? 'actualizado' : 'creado'} correctamente.`,
-      });
-      onSuccess();
-    } catch (error) {
-      console.error(error);
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: error instanceof Error ? error.message : 'Ocurrió un error inesperado.',
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
   };
 
   return (
@@ -235,34 +236,6 @@ function StudentForm({ student, onSuccess }: { student?: Student; onSuccess: () 
             </FormItem>
           )}
         />
-         <FormField
-          control={form.control}
-          name="courseId"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Asignar Curso</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecciona un curso para el estudiante" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {courses.length === 0 ? (
-                    <SelectItem value="loading" disabled>Cargando cursos...</SelectItem>
-                  ) : (
-                    courses.map(course => (
-                      <SelectItem key={course.id} value={course.id}>
-                        {course.name}
-                      </SelectItem>
-                    ))
-                  )}
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
         <DialogFooter>
           <DialogClose asChild>
             <Button type="button" variant="outline">
@@ -278,7 +251,6 @@ function StudentForm({ student, onSuccess }: { student?: Student; onSuccess: () 
     </Form>
   );
 }
-
 
 // --- Diálogo de Estudiante ---
 function StudentDialog({
@@ -304,7 +276,7 @@ function StudentDialog({
         <DialogHeader>
           <DialogTitle>{student ? 'Editar Estudiante' : 'Añadir Nuevo Estudiante'}</DialogTitle>
           <DialogDescription>
-            {student ? 'Edita los detalles y la asignación del curso del estudiante.' : 'Completa el formulario para añadir un nuevo estudiante y asignarlo a un curso.'}
+            {student ? 'Edita los detalles del estudiante.' : 'Completa el formulario para añadir un nuevo estudiante.'}
           </DialogDescription>
         </DialogHeader>
         <StudentForm student={student} onSuccess={handleSuccess} />
@@ -313,76 +285,31 @@ function StudentDialog({
   );
 }
 
-// --- Diálogo de Eliminación ---
-function DeleteStudentDialog({ student, onSuccess }: { student: Student; onSuccess: () => void; }) {
-  const { toast } = useToast();
-  
-  const handleDelete = async () => {
-     try {
-      const response = await fetch(`/api/students/${student.id}`, {
-        method: 'DELETE',
-      });
-
-      if (!response.ok) {
-        throw new Error('No se pudo eliminar al estudiante.');
-      }
-      toast({
-        title: 'Estudiante eliminado',
-        description: `El estudiante "${student.name}" ha sido eliminado.`,
-      });
-      onSuccess();
-    } catch (error) {
-      console.error(error);
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: 'Este estudiante podría tener registros de asistencia. No se puede eliminar.',
-      });
-    }
-  }
-
-  return (
-    <AlertDialog>
-      <AlertDialogTrigger asChild>
-        <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive">
-          Eliminar
-        </DropdownMenuItem>
-      </AlertDialogTrigger>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
-          <AlertDialogDescription>
-            Esta acción no se puede deshacer. Esto eliminará permanentemente al estudiante <span className="font-bold">"{student.name}"</span> y todos sus registros de asistencia.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel>Cancelar</AlertDialogCancel>
-          <AlertDialogAction onClick={handleDelete} className={cn('bg-destructive text-destructive-foreground hover:bg-destructive/90')}>
-            Eliminar
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
-  );
-}
-
 
 export default function StudentsPage() {
   const [students, setStudents] = React.useState<Student[]>([]);
-  const [loading, setLoading] = React.useState(true);
-  const [isSearching, setIsSearching] = React.useState(false);
+  const [loading, setLoading] = React.useState(false);
   const { toast } = useToast();
   const [selectedStudentId, setSelectedStudentId] = React.useState<string | null>(null);
+  const [hasSearched, setHasSearched] = React.useState(false);
 
-  const fetchStudents = React.useCallback(async () => {
+  const handleFilter = React.useCallback(async (gradeId: string, sectionId: string) => {
     setLoading(true);
+    setHasSearched(true);
+    setStudents([]);
     try {
-      const response = await fetch('/api/students');
+      const response = await fetch(`/api/students?sectionId=${sectionId}`);
       if (!response.ok) {
         throw new Error('Error al cargar los estudiantes');
       }
       const data = await response.json();
       setStudents(data);
+       if (data.length === 0) {
+        toast({
+            title: 'Sin resultados',
+            description: 'No se encontraron estudiantes para la sección seleccionada.',
+        });
+      }
     } catch (error) {
       console.error('Error fetching students:', error);
       toast({
@@ -395,36 +322,9 @@ export default function StudentsPage() {
     }
   }, [toast]);
 
-  React.useEffect(() => {
-    fetchStudents();
-  }, [fetchStudents]);
-  
-  const handleSearch = async (searchData: SearchFormValues) => {
-    setIsSearching(true);
-    try {
-      const response = await fetch(`/api/students/details/${searchData.id}`);
-       if (!response.ok) {
-        throw new Error('Estudiante no encontrado con ese ID.');
-      }
-      const data = await response.json();
-      if (data) {
-        setSelectedStudentId(searchData.id);
-        toast({ title: 'Estudiante Encontrado', description: `Mostrando detalles para ${data.nombres}` });
-      }
-    } catch (error) {
-      console.error('Error searching student:', error);
-      toast({
-        variant: 'destructive',
-        title: 'Error de Búsqueda',
-        description: error instanceof Error ? error.message : 'No se pudo completar la búsqueda.',
-      });
-    } finally {
-      setIsSearching(false);
-    }
-  };
-
-  const getAvatar = (avatarId: string) => {
-    return PlaceHolderImages.find((img) => img.id === avatarId);
+  const getAvatar = (gender: string) => {
+      const avatarId = gender === 'Femenino' ? 'student-2' : 'student-1';
+      return PlaceHolderImages.find((img) => img.id === avatarId);
   };
 
   return (
@@ -435,24 +335,24 @@ export default function StudentsPage() {
           <p className="text-muted-foreground mt-1">Gestionar el registro y la información de los estudiantes.</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => toast({ title: 'Función no implementada', description: 'La carga masiva de estudiantes estará disponible pronto.'})}>
+          <Button variant="outline" disabled onClick={() => toast({ title: 'Función no implementada', description: 'La carga masiva de estudiantes estará disponible pronto.'})}>
             <Upload className="mr-2 h-4 w-4" /> Carga Masiva
           </Button>
-          <StudentDialog onSuccess={fetchStudents}>
-             <Button>
+          <StudentDialog onSuccess={() => {}}>
+             <Button disabled>
               <PlusCircle className="mr-2 h-4 w-4" /> Añadir Estudiante
             </Button>
           </StudentDialog>
         </div>
       </div>
       
-      <StudentSearch onSearch={handleSearch} onClear={fetchStudents} isSearching={isSearching} />
+      <StudentFilter onFilter={handleFilter} isLoading={loading} />
 
       <Card className="shadow-subtle">
         <CardHeader>
           <CardTitle>Lista de Estudiantes</CardTitle>
           <CardDescription>
-            Lista de todos los estudiantes registrados y el curso al que pertenecen.
+            {hasSearched ? 'Resultados de la búsqueda.' : 'Selecciona un grado y sección para ver a los estudiantes.'}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -460,8 +360,9 @@ export default function StudentsPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>Nombre</TableHead>
-                <TableHead>Correo Electrónico</TableHead>
-                <TableHead>Curso Asignado</TableHead>
+                <TableHead>N° Documento</TableHead>
+                <TableHead>Género</TableHead>
+                <TableHead>Celular</TableHead>
                 <TableHead>
                   <span className="sr-only">Acciones</span>
                 </TableHead>
@@ -480,14 +381,27 @@ export default function StudentsPage() {
                         </div>
                       </div>
                     </TableCell>
-                    <TableCell><Skeleton className="h-5 w-48" /></TableCell>
-                    <TableCell><Skeleton className="h-5 w-40" /></TableCell>
+                    <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                    <TableCell><Skeleton className="h-5 w-20" /></TableCell>
+                    <TableCell><Skeleton className="h-5 w-24" /></TableCell>
                     <TableCell><Skeleton className="h-8 w-8" /></TableCell>
                   </TableRow>
                 ))
+              ) : hasSearched && students.length === 0 ? (
+                 <TableRow>
+                    <TableCell colSpan={5} className="h-24 text-center">
+                        No se encontraron estudiantes para los filtros seleccionados.
+                    </TableCell>
+                 </TableRow>
+              ) : !hasSearched && students.length === 0 ? (
+                 <TableRow>
+                    <TableCell colSpan={5} className="h-24 text-center">
+                        Usa los filtros de arriba para buscar estudiantes.
+                    </TableCell>
+                 </TableRow>
               ) : (
                 students.map((student: Student) => {
-                  const avatar = getAvatar(student.avatar);
+                  const avatar = getAvatar(student.genero);
                   return (
                     <TableRow key={student.id}>
                       <TableCell className="font-medium">
@@ -495,7 +409,7 @@ export default function StudentsPage() {
                           {avatar ? (
                             <Image
                               src={avatar.imageUrl}
-                              alt={student.name}
+                              alt={student.nombres}
                               width={40}
                               height={40}
                               className="rounded-full"
@@ -507,16 +421,19 @@ export default function StudentsPage() {
                             </div>
                           )}
                           <div>
-                            {student.name}
-                            <div className="text-sm text-muted-foreground">{student.id}</div>
+                            {student.nombres}
+                            <div className="text-sm text-muted-foreground">{student.correo_primario || 'Sin correo'}</div>
                           </div>
                         </div>
                       </TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {student.email}
+                       <TableCell className="text-muted-foreground">
+                        {student.documento_numero}
                       </TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {student.courseName || 'No asignado'}
+                       <TableCell className="text-muted-foreground">
+                        {student.genero}
+                      </TableCell>
+                       <TableCell className="text-muted-foreground">
+                        {student.celular_primario}
                       </TableCell>
                       <TableCell>
                         <Dialog>
@@ -536,21 +453,19 @@ export default function StudentsPage() {
                                <DropdownMenuItem onSelect={() => setSelectedStudentId(String(student.id))}>
                                   Ver Detalles
                                </DropdownMenuItem>
-                               <StudentDialog student={student} onSuccess={fetchStudents}>
-                                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                               <StudentDialog student={student} onSuccess={() => {}}>
+                                <DropdownMenuItem onSelect={(e) => e.preventDefault()} disabled>
                                   Editar
                                 </DropdownMenuItem>
                               </StudentDialog>
                               <DialogTrigger asChild>
                                 <DropdownMenuItem>Ver Códigos</DropdownMenuItem>
                               </DialogTrigger>
-                              <DropdownMenuSeparator />
-                              <DeleteStudentDialog student={student} onSuccess={fetchStudents} />
                             </DropdownMenuContent>
                           </DropdownMenu>
                           <DialogContent className="sm:max-w-md">
                             <DialogHeader>
-                              <DialogTitle>Códigos para {student.name}</DialogTitle>
+                              <DialogTitle>Códigos para {student.nombres}</DialogTitle>
                               <DialogDescription>
                                 Usa cualquiera de estos códigos para escanear la asistencia.
                               </DialogDescription>
@@ -563,7 +478,7 @@ export default function StudentsPage() {
                               <TabsContent value="qr">
                                 <div className="flex flex-col items-center justify-center p-4 bg-white rounded-md mt-4">
                                   <QRCodeSVG
-                                    value={student.id}
+                                    value={String(student.id)}
                                     size={256}
                                     bgColor={"#ffffff"}
                                     fgColor={"#000000"}
@@ -574,7 +489,7 @@ export default function StudentsPage() {
                               </TabsContent>
                               <TabsContent value="barcode">
                                 <div className="flex flex-col items-center justify-center p-4 bg-white rounded-md mt-4">
-                                  <Barcode value={student.id} />
+                                  <Barcode value={String(student.id)} />
                                 </div>
                               </TabsContent>
                             </Tabs>

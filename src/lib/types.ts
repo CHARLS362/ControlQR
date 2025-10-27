@@ -1,13 +1,13 @@
 
 
 export type Student = {
-  id: string;
-  name: string;
-  email: string;
-  avatar: string;
-  registrationDate: string; // Should be ISO 8601 string date
-  courseId?: string;
-  courseName?: string;
+  id: number;
+  persona_id: number;
+  documento_numero: string;
+  nombres: string;
+  genero: string;
+  celular_primario: string;
+  correo_primario: string;
 };
 
 export type Course = {
@@ -90,6 +90,20 @@ export type StudentDetails = {
   seguro: string;
   codigo_hash: string;
 }
+
+export type Section = {
+  id: number;
+  grado_id: number;
+  turno_id: number;
+  tutor_personal_id: number;
+  seccion_tipo_id: number;
+  nombre: string;
+  vacantes_total: number;
+  vacantes_faltantes: number;
+  aula: string;
+  grado: string;
+  turno: string;
+};
 
 
 // Tipos para validación de formularios
