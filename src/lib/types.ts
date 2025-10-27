@@ -102,7 +102,7 @@ export const personaCompletaSchema = z.object({
   correo_primario: z.string().email('El correo es inválido'),
   correo_secundario: z.string().email('El correo secundario es inválido').optional().or(z.literal('')),
   domicilio: z.string().min(5, 'El domicilio es requerido'),
-  persona_estado_id: z.coerce.number({invalid_type_error: 'Seleccione un estado'}).min(0, 'Seleccione un estado'),
+  persona_estado_id: z.coerce.number({invalid_type_error: 'Seleccione un estado'}).min(0, { message: 'Seleccione un estado' }),
 });
 
 export type PersonaCompletaFormValues = z.infer<typeof personaCompletaSchema>;
@@ -122,7 +122,9 @@ export type FoundPerson = {
   celular_primario: string;
   fecha_nacimiento: string; // ISO String
   correo_primario: string;
-  correo_secundario: string;
+  correo_secundario: string | null;
   domicilio: string;
   persona_estado_id: number;
 }
+
+    

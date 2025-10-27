@@ -28,6 +28,11 @@ export default function PersonRegistrationForm({ person, onSuccess }: PersonRegi
     resolver: zodResolver(personaCompletaSchema),
     defaultValues: isEditMode ? {
       ...person,
+      documento_tipo_id: String(person.documento_tipo_id),
+      genero_id: String(person.genero_id),
+      ubigeo_nacimiento_id: String(person.ubigeo_nacimiento_id),
+      domicilio_ubigeo_id: String(person.domicilio_ubigeo_id),
+      persona_estado_id: String(person.persona_estado_id),
       // Los campos opcionales podrían ser null, los convertimos a string vacío
       celular_secundario: person.celular_secundario || '',
       correo_secundario: person.correo_secundario || '',
@@ -94,11 +99,12 @@ export default function PersonRegistrationForm({ person, onSuccess }: PersonRegi
           
           <AccordionItem value="item-1">
             <AccordionTrigger>Información Personal y Documentación</AccordionTrigger>
-            <AccordionContent className="grid md:grid-cols-3 gap-4 pt-4">
+            <AccordionContent>
+                <div className="grid md:grid-cols-3 gap-4 pt-4">
               <FormField control={form.control} name="documento_tipo_id" render={({ field }) => (
                 <FormItem>
                   <FormLabel>Tipo de Documento</FormLabel>
-                  <Select onValueChange={field.onChange} value={String(field.value)}>
+                  <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl><SelectTrigger><SelectValue placeholder="Seleccionar..." /></SelectTrigger></FormControl>
                     <SelectContent><SelectItem value="1">DNI</SelectItem><SelectItem value="2">Pasaporte</SelectItem></SelectContent>
                   </Select>
@@ -111,7 +117,7 @@ export default function PersonRegistrationForm({ person, onSuccess }: PersonRegi
                <FormField control={form.control} name="genero_id" render={({ field }) => (
                 <FormItem>
                   <FormLabel>Género</FormLabel>
-                  <Select onValueChange={field.onChange} value={String(field.value)}>
+                  <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl><SelectTrigger><SelectValue placeholder="Seleccionar..." /></SelectTrigger></FormControl>
                     <SelectContent><SelectItem value="1">Masculino</SelectItem><SelectItem value="2">Femenino</SelectItem></SelectContent>
                   </Select>
@@ -132,18 +138,20 @@ export default function PersonRegistrationForm({ person, onSuccess }: PersonRegi
                )}/>
                 <FormField control={form.control} name="ubigeo_nacimiento_id" render={({ field }) => (
                     <FormItem><FormLabel>Ubigeo Nacimiento</FormLabel>
-                        <Select onValueChange={field.onChange} value={String(field.value)}>
+                        <Select onValueChange={field.onChange} value={field.value}>
                             <FormControl><SelectTrigger><SelectValue placeholder="Seleccionar Ubigeo..." /></SelectTrigger></FormControl>
                             <SelectContent><SelectItem value="140101">Lima</SelectItem><SelectItem value="040101">Arequipa</SelectItem></SelectContent>
                         </Select>
                     <FormMessage /></FormItem>
                 )}/>
+                </div>
             </AccordionContent>
           </AccordionItem>
 
           <AccordionItem value="item-2">
             <AccordionTrigger>Información de Contacto</AccordionTrigger>
-            <AccordionContent className="grid md:grid-cols-2 gap-4 pt-4">
+            <AccordionContent>
+                <div className="grid md:grid-cols-2 gap-4 pt-4">
                <FormField control={form.control} name="celular_primario" render={({ field }) => (
                 <FormItem><FormLabel>Celular Principal</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
               )}/>
@@ -156,15 +164,17 @@ export default function PersonRegistrationForm({ person, onSuccess }: PersonRegi
                <FormField control={form.control} name="correo_secundario" render={({ field }) => (
                 <FormItem><FormLabel>Correo Secundario (Opcional)</FormLabel><FormControl><Input type="email" {...field} /></FormControl><FormMessage /></FormItem>
               )}/>
+                </div>
             </AccordionContent>
           </AccordionItem>
 
           <AccordionItem value="item-3">
             <AccordionTrigger>Información de Domicilio</AccordionTrigger>
-            <AccordionContent className="grid md:grid-cols-2 gap-4 pt-4">
+            <AccordionContent>
+                <div className="grid md:grid-cols-2 gap-4 pt-4">
                 <FormField control={form.control} name="domicilio_ubigeo_id" render={({ field }) => (
                     <FormItem><FormLabel>Ubigeo Domicilio</FormLabel>
-                        <Select onValueChange={field.onChange} value={String(field.value)}>
+                        <Select onValueChange={field.onChange} value={field.value}>
                             <FormControl><SelectTrigger><SelectValue placeholder="Seleccionar Ubigeo..." /></SelectTrigger></FormControl>
                             <SelectContent><SelectItem value="140101">Lima</SelectItem><SelectItem value="040101">Arequipa</SelectItem></SelectContent>
                         </Select>
@@ -173,20 +183,23 @@ export default function PersonRegistrationForm({ person, onSuccess }: PersonRegi
                 <FormField control={form.control} name="domicilio" render={({ field }) => (
                     <FormItem><FormLabel>Dirección de Domicilio</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                 )}/>
+                </div>
             </AccordionContent>
           </AccordionItem>
 
           <AccordionItem value="item-4">
             <AccordionTrigger>Estado de la Persona</AccordionTrigger>
-            <AccordionContent className="grid md:grid-cols-2 gap-4 pt-4">
+            <AccordionContent>
+                <div className="grid md:grid-cols-2 gap-4 pt-4">
                 <FormField control={form.control} name="persona_estado_id" render={({ field }) => (
                     <FormItem><FormLabel>Estado</FormLabel>
-                        <Select onValueChange={field.onChange} value={String(field.value)}>
+                        <Select onValueChange={field.onChange} value={field.value}>
                             <FormControl><SelectTrigger><SelectValue placeholder="Seleccionar Estado..." /></SelectTrigger></FormControl>
                             <SelectContent><SelectItem value="1">Activo</SelectItem><SelectItem value="0">Inactivo</SelectItem></SelectContent>
                         </Select>
                     <FormMessage /></FormItem>
                 )}/>
+                </div>
             </AccordionContent>
           </AccordionItem>
         </Accordion>
@@ -201,3 +214,5 @@ export default function PersonRegistrationForm({ person, onSuccess }: PersonRegi
     </Form>
   );
 }
+
+    
