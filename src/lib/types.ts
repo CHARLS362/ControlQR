@@ -1,4 +1,5 @@
 
+
 export type Student = {
   id: string;
   name: string;
@@ -134,3 +135,6 @@ export type Gender = {
   descripcion: string;
   vigente: boolean;
 };
+
+// Re-export Zod for use in other files
+export { z };

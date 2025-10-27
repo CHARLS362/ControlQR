@@ -48,7 +48,7 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
-import { MoreHorizontal, PlusCircle, Upload, LoaderCircle } from 'lucide-react';
+import { MoreHorizontal, PlusCircle, Upload, LoaderCircle, Search, X } from 'lucide-react';
 import type { Student, StudentFormValues, Course } from '@/lib/types';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { QRCodeSVG } from 'qrcode.react';
@@ -59,7 +59,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { studentSchema } from '@/lib/types';
+import { studentSchema, z } from '@/lib/types';
 import {
   Form,
   FormControl,
@@ -77,6 +77,102 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
+
+// --- Formulario de Búsqueda ---
+const searchSchema = z.object({
+  documento_tipo_id: z.string().optional(),
+  documento_numero: z.string().optional(),
+  nombres: z.string().optional(),
+});
+type SearchFormValues = z.infer<typeof searchSchema>;
+
+function StudentSearch({ onSearch, onClear, isSearching }: { onSearch: (data: SearchFormValues) => void; onClear: () => void; isSearching: boolean; }) {
+  const form = useForm<SearchFormValues>({
+    resolver: zodResolver(searchSchema),
+    defaultValues: {
+      documento_tipo_id: '',
+      documento_numero: '',
+      nombres: '',
+    },
+  });
+
+  const handleClear = () => {
+    form.reset();
+    onClear();
+  };
+
+  return (
+    <Card className="shadow-subtle mb-6">
+      <CardHeader>
+        <CardTitle>Buscar Estudiantes</CardTitle>
+        <CardDescription>Filtra estudiantes por tipo y número de documento o por nombre.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSearch)}>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+              <FormField
+                control={form.control}
+                name="documento_tipo_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Tipo de Documento</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Todos" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="1">DNI</SelectItem>
+                        <SelectItem value="2">Pasaporte</SelectItem>
+                        <SelectItem value="4">Carnet de Extranjería</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="documento_numero"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>N° de Documento</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Ej: 71234567" {...field} />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="nombres"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Nombres</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Ej: Juan Pérez" {...field} />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              <div className="flex gap-2">
+                 <Button type="submit" disabled={isSearching} className="w-full">
+                    {isSearching ? <LoaderCircle className="animate-spin" /> : <Search />}
+                    <span className="ml-2">Buscar</span>
+                </Button>
+                 <Button type="button" variant="outline" onClick={handleClear} disabled={isSearching}>
+                    <X />
+                </Button>
+              </div>
+            </div>
+          </form>
+        </Form>
+      </CardContent>
+    </Card>
+  );
+}
+
 
 // --- Formulario de Estudiante ---
 function StudentForm({ student, onSuccess }: { student?: Student; onSuccess: () => void; }) {
@@ -337,6 +433,35 @@ export default function StudentsPage() {
   React.useEffect(() => {
     fetchStudents();
   }, [fetchStudents]);
+  
+  const handleSearch = async (searchData: SearchFormValues) => {
+    setLoading(true);
+    try {
+      const query = new URLSearchParams();
+      if (searchData.documento_tipo_id) query.append('documento_tipo_id', searchData.documento_tipo_id);
+      if (searchData.documento_numero) query.append('documento_numero', searchData.documento_numero);
+      if (searchData.nombres) query.append('nombres', searchData.nombres);
+
+      const response = await fetch(`/api/students/search?${query.toString()}`);
+       if (!response.ok) {
+        throw new Error('Error en la búsqueda de estudiantes');
+      }
+      const data = await response.json();
+      setStudents(data);
+      if (data.length === 0) {
+        toast({ title: 'Sin Resultados', description: 'No se encontraron estudiantes con esos criterios.' });
+      }
+    } catch (error) {
+      console.error('Error searching students:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Error de Búsqueda',
+        description: error instanceof Error ? error.message : 'No se pudo completar la búsqueda.',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const getAvatar = (avatarId: string) => {
     return PlaceHolderImages.find((img) => img.id === avatarId);
@@ -360,6 +485,9 @@ export default function StudentsPage() {
           </StudentDialog>
         </div>
       </div>
+      
+      <StudentSearch onSearch={handleSearch} onClear={fetchStudents} isSearching={loading} />
+
       <Card className="shadow-subtle">
         <CardHeader>
           <CardTitle>Lista de Estudiantes</CardTitle>
