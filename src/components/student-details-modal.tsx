@@ -2,8 +2,6 @@
 'use client';
 
 import * as React from 'react';
-import Barcode from 'react-barcode';
-import { QRCodeSVG } from 'qrcode.react';
 import {
   Dialog,
   DialogContent,
@@ -16,8 +14,8 @@ import { useToast } from '@/hooks/use-toast';
 import type { StudentDetails } from '@/lib/types';
 import { Badge } from './ui/badge';
 import { Separator } from './ui/separator';
-import { User, GraduationCap, Phone, Hash, ShieldCheck, Calendar, BookOpen, AlertCircle, QrCode, BarChart2 } from 'lucide-react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { User, GraduationCap, Phone, Hash, ShieldCheck, Calendar, BookOpen, AlertCircle } from 'lucide-react';
+import { StudentCodes } from './student-codes';
 
 
 interface StudentDetailsModalProps {
@@ -70,16 +68,6 @@ export function StudentDetailsModal({ studentId, open, onOpenChange }: StudentDe
     fetchDetails();
   }, [studentId, open, onOpenChange, toast]);
 
-  const getBarcodeValue = () => {
-    if (!details || typeof details.nombres !== 'string') {
-        return '';
-    }
-    const nameParts = details.nombres.split(' ');
-    const firstName = nameParts[0] || '';
-    const lastName = nameParts.length > 1 ? nameParts[1] : '';
-    return `${firstName} ${lastName}`.trim();
-  }
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl">
@@ -103,7 +91,7 @@ export function StudentDetailsModal({ studentId, open, onOpenChange }: StudentDe
                     <Skeleton className="h-10 w-full" />
                 </div>
                 <div className="flex justify-center pt-4">
-                    <Skeleton className="h-20 w-full max-w-sm" />
+                    <Skeleton className="h-48 w-full" />
                 </div>
             </div>
         ) : details ? (
@@ -132,37 +120,9 @@ export function StudentDetailsModal({ studentId, open, onOpenChange }: StudentDe
             )}
             
             <Separator className="my-4"/>
+
+            <StudentCodes details={details} />
             
-            <Tabs defaultValue="qr" className="w-full">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="qr"><QrCode className="mr-2" />Código QR</TabsTrigger>
-                <TabsTrigger value="barcode"><BarChart2 className="mr-2" />Código de Barras</TabsTrigger>
-              </TabsList>
-              <TabsContent value="qr">
-                <div className="flex flex-col items-center justify-center p-4 bg-white rounded-md mt-4">
-                  <QRCodeSVG
-                    value={details.codigo_hash}
-                    size={200}
-                    bgColor={"#ffffff"}
-                    fgColor={"#000000"}
-                    level={"L"}
-                    includeMargin={false}
-                  />
-                  <p className="mt-2 text-sm font-semibold">{getBarcodeValue()}</p>
-                </div>
-              </TabsContent>
-              <TabsContent value="barcode">
-                <div className="flex flex-col items-center justify-center p-4 bg-white rounded-md mt-4">
-                    <Barcode 
-                        value={details.codigo}
-                        width={1}
-                        height={50}
-                        fontSize={12}
-                        text={getBarcodeValue()}
-                    />
-                </div>
-              </TabsContent>
-            </Tabs>
           </div>
         ) : (
           <div className="text-center py-10">

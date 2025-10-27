@@ -3,6 +3,9 @@
 
 import * as React from 'react';
 import Image from 'next/image';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
+
 import {
   Card,
   CardContent,
@@ -26,8 +29,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { MoreHorizontal, Upload, LoaderCircle, Search, Filter } from 'lucide-react';
-import type { Student } from '@/lib/types';
+import { MoreHorizontal, Upload, LoaderCircle, Search, Filter, FileDown } from 'lucide-react';
+import type { Student, StudentDetails } from '@/lib/types';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
@@ -35,6 +38,7 @@ import { Input } from '@/components/ui/input';
 import { StudentDetailsModal } from '@/components/student-details-modal';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { StudentCodes } from '@/components/student-codes';
 
 
 function StudentIdSearch({ onStudentFound }: { onStudentFound: (id: string) => void }) {
@@ -173,6 +177,8 @@ export default function StudentsPage() {
   const { toast } = useToast();
   const [selectedStudentId, setSelectedStudentId] = React.useState<string | null>(null);
   const [hasFiltered, setHasFiltered] = React.useState(false);
+  const [isExporting, setIsExporting] = React.useState(false);
+  const [exportStudentDetails, setExportStudentDetails] = React.useState<StudentDetails[]>([]);
 
   const handleFilter = React.useCallback(async (gradeId: string, sectionId: string) => {
     setLoading(true);
@@ -207,6 +213,79 @@ export default function StudentsPage() {
       setSelectedStudentId(id);
   }
 
+  const handleExportPDF = async () => {
+    if (students.length === 0) return;
+    setIsExporting(true);
+    toast({
+      title: 'Iniciando exportación',
+      description: `Preparando los datos de ${students.length} estudiantes. Esto puede tardar un momento...`
+    });
+
+    try {
+      const studentDetailsPromises = students.map(s =>
+        fetch(`/api/students/details/${s.id}`).then(res => {
+          if (!res.ok) throw new Error(`Failed to fetch details for student ${s.id}`);
+          return res.json();
+        })
+      );
+      const details = await Promise.all(studentDetailsPromises);
+      setExportStudentDetails(details);
+      
+      // We need to wait for the state to update and the hidden elements to render
+      setTimeout(generatePdfFromDOM, 100);
+
+    } catch (error) {
+      console.error(error);
+      toast({ variant: 'destructive', title: 'Error de exportación', description: 'No se pudieron obtener todos los detalles de los estudiantes.'});
+      setIsExporting(false);
+    }
+  };
+
+  const generatePdfFromDOM = async () => {
+    const pdf = new jsPDF({
+      orientation: 'portrait',
+      unit: 'px',
+      format: 'a4'
+    });
+
+    const studentElements = document.querySelectorAll('.pdf-student-card');
+    if (studentElements.length === 0) {
+      toast({ variant: 'destructive', title: 'Error', description: 'No se encontraron elementos para exportar.'});
+      setIsExporting(false);
+      return;
+    }
+    
+    for (let i = 0; i < studentElements.length; i++) {
+      const element = studentElements[i] as HTMLElement;
+      const canvas = await html2canvas(element, { scale: 2 });
+      const imgData = canvas.toDataURL('image/png');
+      
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      const imgWidth = canvas.width;
+      const imgHeight = canvas.height;
+      const ratio = imgWidth / imgHeight;
+      const finalImgWidth = pdfWidth * 0.9;
+      const finalImgHeight = finalImgWidth / ratio;
+      
+      const x = (pdfWidth - finalImgWidth) / 2;
+      const y = (i % 2 === 0) ? 20 : pdfHeight / 2 + 10;
+      
+      if (i > 0 && i % 2 === 0) {
+        pdf.addPage();
+      }
+      
+      pdf.addImage(imgData, 'PNG', x, y, finalImgWidth, finalImgHeight);
+    }
+    
+    pdf.save(`codigos-estudiantes-${new Date().toISOString().slice(0,10)}.pdf`);
+    
+    setExportStudentDetails([]);
+    setIsExporting(false);
+    toast({ title: 'Exportación completada', description: 'El PDF con los códigos ha sido generado.' });
+  }
+
+
   const getAvatar = (gender: string) => {
       const avatarId = gender === 'Femenino' ? 'student-2' : 'student-1';
       return PlaceHolderImages.find((img) => img.id === avatarId);
@@ -239,10 +318,18 @@ export default function StudentsPage() {
             <StudentFilter onFilter={handleFilter} isLoading={loading} />
             <Card className="shadow-subtle mt-6">
                 <CardHeader>
-                <CardTitle>Lista de Estudiantes</CardTitle>
-                <CardDescription>
-                    {hasFiltered ? 'Resultados del filtro.' : 'Usa los filtros para ver una lista de estudiantes.'}
-                </CardDescription>
+                 <div className="flex justify-between items-center">
+                    <div>
+                        <CardTitle>Lista de Estudiantes</CardTitle>
+                        <CardDescription>
+                            {hasFiltered ? 'Resultados del filtro.' : 'Usa los filtros para ver una lista de estudiantes.'}
+                        </CardDescription>
+                    </div>
+                     <Button onClick={handleExportPDF} disabled={students.length === 0 || isExporting}>
+                        {isExporting ? <LoaderCircle className="mr-2 animate-spin" /> : <FileDown className="mr-2" />}
+                        Exportar Códigos a PDF
+                    </Button>
+                  </div>
                 </CardHeader>
                 <CardContent>
                 <Table>
@@ -372,6 +459,21 @@ export default function StudentsPage() {
           }}
         />
       )}
+
+      {/* Hidden container for PDF export */}
+      {isExporting && exportStudentDetails.length > 0 && (
+        <div className="absolute -left-[9999px] top-0 opacity-0" aria-hidden="true">
+           <div className="p-4 space-y-4">
+              {exportStudentDetails.map(detail => (
+                  <div key={detail.id} className="pdf-student-card page-break-after p-4 border rounded-lg bg-white" style={{ width: '400px' }}>
+                    <h3 className="text-lg font-bold text-center mb-2">{detail.nombres}</h3>
+                    <StudentCodes details={detail} />
+                  </div>
+              ))}
+            </div>
+        </div>
+      )}
+
     </>
   );
 }
