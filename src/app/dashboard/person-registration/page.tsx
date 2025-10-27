@@ -5,6 +5,7 @@ import PersonRegistrationForm from '@/components/person-registration-form';
 import PersonSearch from '@/components/person-search';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { UserPlus, Search } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 
 export default function PersonRegistrationPage() {
@@ -21,11 +22,11 @@ export default function PersonRegistrationPage() {
       
       <Tabs defaultValue="register" className="w-full">
         <TabsList className="grid w-full grid-cols-2 max-w-lg mx-auto bg-muted/50 p-1 h-auto rounded-lg">
-          <TabsTrigger value="register" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=inactive]:bg-transparent data-[state=inactive]:text-muted-foreground rounded-md">
+          <TabsTrigger value="register" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=inactive]:bg-primary/20 data-[state=inactive]:text-primary rounded-md">
             <UserPlus className="mr-2" />
             Registrar Persona
           </TabsTrigger>
-          <TabsTrigger value="search" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=inactive]:bg-transparent data-[state=inactive]:text-muted-foreground rounded-md">
+          <TabsTrigger value="search" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=inactive]:bg-primary/20 data-[state=inactive]:text-primary rounded-md">
             <Search className="mr-2" />
             Buscar Persona
           </TabsTrigger>
