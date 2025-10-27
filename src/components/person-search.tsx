@@ -64,11 +64,11 @@ function PersonResultCard({ person, onEditSuccess }: { person: FoundPerson, onEd
        <CardFooter>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button variant="outline" className="w-full">
+            <Button className="w-full">
               <Edit className="mr-2 h-4 w-4" /> Editar
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-4xl">
+          <DialogContent className="max-w-4xl w-[90vw] lg:w-full">
             <DialogHeader>
               <DialogTitle>Editar Persona</DialogTitle>
             </DialogHeader>
