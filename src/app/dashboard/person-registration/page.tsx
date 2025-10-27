@@ -20,18 +20,26 @@ export default function PersonRegistrationPage() {
       </div>
       
       <Tabs defaultValue="register" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 max-w-lg mx-auto bg-transparent p-0">
-          <TabsTrigger value="register" className="data-[state=active]:bg-card data-[state=active]:text-card-foreground data-[state=active]:shadow-sm data-[state=inactive]:bg-transparent text-muted-foreground">
+        <TabsList className="grid w-full grid-cols-2 max-w-lg mx-auto bg-muted/50 p-1 h-auto rounded-lg">
+          <TabsTrigger value="register" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=inactive]:bg-transparent data-[state=inactive]:text-muted-foreground rounded-md">
             <UserPlus className="mr-2" />
             Registrar Persona
           </TabsTrigger>
-          <TabsTrigger value="search" className="data-[state=active]:bg-card data-[state=active]:text-card-foreground data-[state=active]:shadow-sm data-[state=inactive]:bg-transparent text-muted-foreground">
+          <TabsTrigger value="search" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=inactive]:bg-transparent data-[state=inactive]:text-muted-foreground rounded-md">
             <Search className="mr-2" />
             Buscar Persona
           </TabsTrigger>
         </TabsList>
         <TabsContent value="register">
-          <PersonRegistrationForm />
+          <Card className="shadow-subtle">
+            <CardHeader>
+                <CardTitle>Formulario de Registro</CardTitle>
+                <CardDescription>Completa todos los campos para registrar una nueva persona en el sistema.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <PersonRegistrationForm />
+            </CardContent>
+          </Card>
         </TabsContent>
         <TabsContent value="search">
           <PersonSearch />
