@@ -1,3 +1,4 @@
+
 'use client';
 
 import PersonRegistrationForm from '@/components/person-registration-form';
