@@ -16,7 +16,7 @@ export async function GET(
 
     const externalApiUrl = `${EXTERNAL_API_BASE_URL}/api/estudiante/consultar/${id}`;
     
-    const response = await fetch(externalApiUrl.toString(), {
+    const response = await fetch(externalApiUrl, {
         headers: {
             'Accept': 'application/json',
         }
@@ -24,12 +24,12 @@ export async function GET(
 
     const responseData = await response.json();
 
-    if (!response.ok || responseData.success !== 1) {
-      return NextResponse.json({ message: 'Error desde la API externa de detalles del estudiante', details: responseData }, { status: response.status });
+    if (!response.ok || responseData.success !== 1 || !responseData.data) {
+      return NextResponse.json({ message: 'Error desde la API externa o estudiante no encontrado', details: responseData }, { status: response.status });
     }
     
     // La API externa envuelve los datos en un objeto "data", lo extraemos.
-    return NextResponse.json(responseData.data || null);
+    return NextResponse.json(responseData.data);
 
   } catch (error) {
     console.error('Error en /api/students/details/[id]:', error);

@@ -77,7 +77,7 @@ export function StudentDetailsModal({ studentId, open, onOpenChange }: StudentDe
     const nameParts = details.nombres.split(' ');
     const firstName = nameParts[0] || '';
     const lastName = nameParts.length > 1 ? nameParts[1] : '';
-    return `${firstName} ${lastName}`;
+    return `${firstName} ${lastName}`.trim();
   }
 
   return (
