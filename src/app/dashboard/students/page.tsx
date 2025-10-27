@@ -145,62 +145,20 @@ function StudentFilter({
   isLoading: boolean;
 }) {
   const { toast } = useToast();
-  const [grades, setGrades] = React.useState<Grado[]>([]);
-  const [sections, setSections] = React.useState<Section[]>([]);
-  const [selectedGrade, setSelectedGrade] = React.useState<string>('');
-  const [selectedSection, setSelectedSection] = React.useState<string>('');
-  const [isFetchingSections, setIsFetchingSections] = React.useState(false);
+  const [gradeId, setGradeId] = React.useState<string>('');
+  const [sectionId, setSectionId] = React.useState<string>('');
 
-  React.useEffect(() => {
-    async function fetchGrades() {
-      try {
-        const response = await fetch('/api/grades');
-        const data = await response.json();
-        setGrades(data);
-      } catch (error) {
-        toast({
-          variant: 'destructive',
-          title: 'Error',
-          description: 'No se pudieron cargar los grados.',
-        });
-      }
-    }
-    fetchGrades();
-  }, [toast]);
-
-  const handleGradeChange = async (gradeId: string) => {
-    setSelectedGrade(gradeId);
-    setSelectedSection('');
-    setSections([]);
-    if (!gradeId) return;
-
-    setIsFetchingSections(true);
-    try {
-      const response = await fetch(`/api/sections/${gradeId}`);
-      const data = await response.json();
-      setSections(data);
-    } catch (error) {
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: 'No se pudieron cargar las secciones para este grado.',
-      });
-    } finally {
-      setIsFetchingSections(false);
-    }
-  };
-  
   const handleFilterSubmit = (e: React.FormEvent) => {
       e.preventDefault();
-      if (!selectedGrade || !selectedSection) {
+      if (!gradeId || !sectionId) {
           toast({
               variant: 'destructive',
-              title: 'Selección incompleta',
-              description: 'Por favor, selecciona un grado y una sección para filtrar.'
+              title: 'Datos incompletos',
+              description: 'Por favor, introduce un ID de grado y un ID de sección para filtrar.'
           });
           return;
       }
-      onFilter(selectedGrade, selectedSection);
+      onFilter(gradeId, sectionId);
   }
 
   return (
@@ -208,40 +166,28 @@ function StudentFilter({
       <CardHeader>
         <CardTitle>Filtrar Estudiantes por Sección</CardTitle>
         <CardDescription>
-          Selecciona un grado y una sección para ver la lista de estudiantes.
+          Introduce el ID del grado y la sección para ver la lista de estudiantes.
         </CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleFilterSubmit} className="flex flex-col sm:flex-row items-end gap-4">
           <div className="w-full sm:w-1/3">
-            <Label>Grado</Label>
-            <Select value={selectedGrade} onValueChange={handleGradeChange}>
-              <SelectTrigger>
-                <SelectValue placeholder="Seleccionar grado..." />
-              </SelectTrigger>
-              <SelectContent>
-                {grades.map((grade) => (
-                  <SelectItem key={grade.id} value={String(grade.id)}>
-                    {grade.nombre}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Label htmlFor="grade-id">ID de Grado</Label>
+            <Input 
+              id="grade-id"
+              placeholder="Ej: 1"
+              value={gradeId}
+              onChange={(e) => setGradeId(e.target.value)}
+            />
           </div>
           <div className="w-full sm:w-1/3">
-            <Label>Sección</Label>
-             <Select value={selectedSection} onValueChange={setSelectedSection} disabled={!selectedGrade || isFetchingSections}>
-              <SelectTrigger>
-                <SelectValue placeholder={isFetchingSections ? "Cargando..." : "Seleccionar sección..."} />
-              </SelectTrigger>
-              <SelectContent>
-                 {sections.map((section) => (
-                  <SelectItem key={section.id} value={String(section.id)}>
-                    {section.nombre} ({section.turno})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Label htmlFor="section-id">ID de Sección</Label>
+            <Input
+                id="section-id"
+                placeholder="Ej: 21"
+                value={sectionId}
+                onChange={(e) => setSectionId(e.target.value)}
+            />
           </div>
           <Button type="submit" disabled={isLoading} className="w-full sm:w-auto">
             {isLoading ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : <Filter className="mr-2 h-4 w-4" />}
