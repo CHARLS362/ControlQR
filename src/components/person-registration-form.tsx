@@ -69,7 +69,7 @@ export default function PersonRegistrationForm({ person, onSuccess }: PersonRegi
       const responseData = await response.json();
 
       if (!response.ok) {
-        throw new Error(responseData.message || `Error al ${isEditMode ? 'actualizar' : 'registrar'} la persona.`);
+        throw new Error(responseData.details?.message || responseData.message || `Error al ${isEditMode ? 'actualizar' : 'registrar'} la persona.`);
       }
 
       toast({
