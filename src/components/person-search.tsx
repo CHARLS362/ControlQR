@@ -142,9 +142,9 @@ export default function PersonSearch() {
         <div className="space-y-4">
             <h3 className="text-lg font-semibold">Resultados de la Búsqueda</h3>
             {isSubmitting ? (
-                <div className="space-y-4">
-                    <Skeleton className="h-28 w-full" />
-                    <Skeleton className="h-28 w-full" />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <Skeleton className="h-40 w-full" />
+                    <Skeleton className="h-40 w-full" />
                 </div>
             ) : results.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
