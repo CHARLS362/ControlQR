@@ -85,3 +85,23 @@ export const courseSchema = z.object({
 });
 
 export type CourseFormValues = z.infer<typeof courseSchema>;
+
+export const personaCompletaSchema = z.object({
+  documento_tipo_id: z.coerce.number().min(1, 'Seleccione un tipo de documento'),
+  genero_id: z.coerce.number().min(1, 'Seleccione un género'),
+  ubigeo_nacimiento_id: z.coerce.number().min(1, 'Seleccione un ubigeo de nacimiento'),
+  domicilio_ubigeo_id: z.coerce.number().min(1, 'Seleccione un ubigeo de domicilio'),
+  documento_numero: z.string().min(8, 'El número de documento es requerido'),
+  apellido_paterno: z.string().min(2, 'El apellido paterno es requerido'),
+  apellido_materno: z.string().min(2, 'El apellido materno es requerido'),
+  nombres: z.string().min(2, 'El nombre es requerido'),
+  fecha_nacimiento: z.date({ required_error: 'La fecha de nacimiento es requerida' }),
+  celular_primario: z.string().min(9, 'El celular es requerido'),
+  celular_secundario: z.string().optional(),
+  correo_primario: z.string().email('El correo es inválido'),
+  correo_secundario: z.string().email('El correo secundario es inválido').optional(),
+  domicilio: z.string().min(5, 'El domicilio es requerido'),
+  persona_estado_id: z.coerce.number().min(1, 'Seleccione un estado'),
+});
+
+export type PersonaCompleta = z.infer<typeof personaCompletaSchema>;

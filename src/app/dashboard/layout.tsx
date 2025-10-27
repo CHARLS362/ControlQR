@@ -15,6 +15,7 @@ import {
   Settings,
   Users,
   Usb,
+  UserPlus,
 } from 'lucide-react';
 
 import {
@@ -102,6 +103,18 @@ function DashboardSidebar() {
               <Link href="/dashboard/students">
                 <Users />
                 <span>Estudiantes</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+           <SidebarMenuItem>
+            <SidebarMenuButton
+              asChild
+              isActive={isActive('/dashboard/person-registration')}
+              tooltip="Registro de Personas"
+            >
+              <Link href="/dashboard/person-registration">
+                <UserPlus />
+                <span>Registro Personas</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
@@ -200,6 +213,7 @@ function DashboardBreadcrumb() {
     scan: 'Escaner Cámara',
     'keyboard-scan': 'Escaner USB',
     reports: 'Reportes',
+    'person-registration': 'Registro de Personas',
   };
 
   return (
@@ -282,6 +296,13 @@ export default function DashboardLayout({
                 >
                   <Users className="h-5 w-5" />
                   Estudiantes
+                </Link>
+                 <Link
+                  href="/dashboard/person-registration"
+                  className="flex items-center gap-4 px-2.5 text-sidebar-foreground/70 hover:text-sidebar-foreground"
+                >
+                  <UserPlus className="h-5 w-5" />
+                  Registro Personas
                 </Link>
                 <Link
                   href="/dashboard/scan"
