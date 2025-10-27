@@ -1,7 +1,6 @@
 
 import { NextResponse } from 'next/server';
 import { personaCompletaSchema } from '@/lib/types';
-import { format } from 'date-fns';
 
 export async function POST(request: Request) {
   try {
@@ -16,12 +15,6 @@ export async function POST(request: Request) {
 
     const validatedData = validationResult.data;
 
-    // Formatear la fecha a 'YYYY-MM-DD'
-    const payload = {
-        ...validatedData,
-        fecha_nacimiento: format(validatedData.fecha_nacimiento, 'yyyy-MM-dd'),
-    };
-
     // Llamar al endpoint externo
     const externalApiUrl = 'http://31.97.169.107:8093/api/persona/registrar-datos-completos';
     const response = await fetch(externalApiUrl, {
@@ -29,7 +22,7 @@ export async function POST(request: Request) {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(payload),
+      body: JSON.stringify(validatedData),
     });
 
     const responseData = await response.json();

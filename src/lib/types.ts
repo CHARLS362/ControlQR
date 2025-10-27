@@ -95,7 +95,7 @@ export const personaCompletaSchema = z.object({
   apellido_paterno: z.string().min(2, 'El apellido paterno es requerido'),
   apellido_materno: z.string().min(2, 'El apellido materno es requerido'),
   nombres: z.string().min(2, 'El nombre es requerido'),
-  fecha_nacimiento: z.date({ required_error: 'La fecha de nacimiento es requerida' }),
+  fecha_nacimiento: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'El formato debe ser YYYY-MM-DD'),
   celular_primario: z.string().min(9, 'El celular es requerido'),
   celular_secundario: z.string().optional(),
   correo_primario: z.string().email('El correo es inválido'),
@@ -104,4 +104,4 @@ export const personaCompletaSchema = z.object({
   persona_estado_id: z.coerce.number().min(1, 'Seleccione un estado'),
 });
 
-export type PersonaCompleta = z.infer<typeof personaCompletaSchema>;
+export type PersonaCompletaFormValues = z.infer<typeof personaCompletaSchema>;

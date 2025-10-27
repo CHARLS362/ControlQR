@@ -3,10 +3,9 @@
 import * as React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { personaCompletaSchema, type PersonaCompleta } from '@/lib/types';
+import { personaCompletaSchema, type PersonaCompletaFormValues } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
 import { Button } from '@/components/ui/button';
@@ -23,13 +22,14 @@ export default function PersonRegistrationForm() {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
-  const form = useForm<PersonaCompleta>({
+  const form = useForm<PersonaCompletaFormValues>({
     resolver: zodResolver(personaCompletaSchema),
     defaultValues: {
       documento_numero: '',
       apellido_paterno: '',
       apellido_materno: '',
       nombres: '',
+      fecha_nacimiento: '',
       celular_primario: '',
       celular_secundario: '',
       correo_primario: '',
@@ -38,7 +38,7 @@ export default function PersonRegistrationForm() {
     },
   });
 
-  const onSubmit = async (values: PersonaCompleta) => {
+  const onSubmit = async (values: PersonaCompletaFormValues) => {
     setIsSubmitting(true);
     try {
       const response = await fetch('/api/person/register', {
@@ -118,21 +118,7 @@ export default function PersonRegistrationForm() {
                     <FormItem><FormLabel>Nombres</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                   )}/>
                    <FormField control={form.control} name="fecha_nacimiento" render={({ field }) => (
-                     <FormItem className="flex flex-col"><FormLabel>Fecha de Nacimiento</FormLabel>
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <FormControl>
-                              <Button variant="outline" className={cn('pl-3 text-left font-normal', !field.value && 'text-muted-foreground')}>
-                                {field.value ? format(field.value, 'PPP', { locale: es }) : <span>Elige una fecha</span>}
-                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                              </Button>
-                            </FormControl>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0" align="start">
-                            <Calendar mode="single" selected={field.value} onSelect={field.onChange} disabled={(date) => date > new Date() || date < new Date('1900-01-01')} initialFocus/>
-                          </PopoverContent>
-                        </Popover>
-                      <FormMessage /></FormItem>
+                     <FormItem><FormLabel>Fecha de Nacimiento</FormLabel><FormControl><Input placeholder="YYYY-MM-DD" {...field} /></FormControl><FormMessage /></FormItem>
                    )}/>
                     <FormField control={form.control} name="ubigeo_nacimiento_id" render={({ field }) => (
                         <FormItem><FormLabel>Ubigeo Nacimiento</FormLabel>
