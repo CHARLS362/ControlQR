@@ -33,7 +33,6 @@ export default function PersonRegistrationForm({ person, onSuccess }: PersonRegi
       ubigeo_nacimiento_id: String(person.ubigeo_nacimiento_id),
       domicilio_ubigeo_id: String(person.domicilio_ubigeo_id),
       persona_estado_id: String(person.persona_estado_id),
-      // Los campos opcionales podrían ser null, los convertimos a string vacío
       celular_secundario: person.celular_secundario || '',
       correo_secundario: person.correo_secundario || '',
     } : {
@@ -47,6 +46,11 @@ export default function PersonRegistrationForm({ person, onSuccess }: PersonRegi
       correo_primario: '',
       correo_secundario: '',
       domicilio: '',
+      documento_tipo_id: undefined,
+      genero_id: undefined,
+      ubigeo_nacimiento_id: undefined,
+      domicilio_ubigeo_id: undefined,
+      persona_estado_id: undefined,
     },
   });
 
