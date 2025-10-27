@@ -87,6 +87,7 @@ export const courseSchema = z.object({
 export type CourseFormValues = z.infer<typeof courseSchema>;
 
 export const personaCompletaSchema = z.object({
+  id: z.number().optional(),
   documento_tipo_id: z.coerce.number({invalid_type_error: 'Seleccione un tipo de documento'}).min(1, 'Seleccione un tipo de documento'),
   genero_id: z.coerce.number({invalid_type_error: 'Seleccione un género'}).min(1, 'Seleccione un género'),
   ubigeo_nacimiento_id: z.coerce.number({invalid_type_error: 'Seleccione un ubigeo de nacimiento'}).min(1, 'Seleccione un ubigeo de nacimiento'),
@@ -120,4 +121,8 @@ export type FoundPerson = {
   genero: string;
   celular_primario: string;
   fecha_nacimiento: string; // ISO String
+  correo_primario: string;
+  correo_secundario: string;
+  domicilio: string;
+  persona_estado_id: number;
 }

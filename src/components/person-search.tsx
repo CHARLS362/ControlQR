@@ -12,12 +12,14 @@ import { es } from 'date-fns/locale';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Separator } from '@/components/ui/separator';
-import { LoaderCircle, Search, User, Calendar, Phone, Hash, Fingerprint } from 'lucide-react';
+import { LoaderCircle, Search, User, Calendar, Phone, Hash, Fingerprint, Edit } from 'lucide-react';
 import type { FoundPerson } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import PersonRegistrationForm from './person-registration-form';
 
 const searchSchema = z.object({
   name: z.string().min(2, { message: 'El nombre debe tener al menos 2 caracteres.' }),
@@ -25,35 +27,55 @@ const searchSchema = z.object({
 
 type SearchFormValues = z.infer<typeof searchSchema>;
 
-function PersonResultCard({ person }: { person: FoundPerson }) {
+function PersonResultCard({ person, onEditSuccess }: { person: FoundPerson, onEditSuccess: () => void }) {
+  const [isDialogOpen, setIsDialogOpen] = React.useState(false);
+  
+  const handleSuccess = () => {
+    setIsDialogOpen(false);
+    onEditSuccess();
+  }
+
   return (
-    <Card className="shadow-subtle">
+    <Card className="shadow-subtle flex flex-col">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
+        <CardTitle className="flex items-center gap-2 text-lg">
             <User /> {person.nombres} {person.apellido_paterno} {person.apellido_materno}
         </CardTitle>
         <CardDescription>ID de Registro: {person.id}</CardDescription>
       </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-            <div className="flex items-center gap-2">
-                <Fingerprint className="text-muted-foreground" />
-                <strong>Documento:</strong> {person.documento_numero}
-            </div>
-            <div className="flex items-center gap-2">
-                <Hash className="text-muted-foreground" />
-                <strong>Género:</strong> {person.genero}
-            </div>
-            <div className="flex items-center gap-2">
-                <Calendar className="text-muted-foreground" />
-                <strong>Fecha Nac.:</strong> {format(parseISO(person.fecha_nacimiento), 'dd/MM/yyyy')}
-            </div>
-             <div className="flex items-center gap-2">
-                <Phone className="text-muted-foreground" />
-                <strong>Celular:</strong> {person.celular_primario}
-            </div>
-        </div>
+      <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm flex-grow">
+          <div className="flex items-center gap-2">
+              <Fingerprint className="text-muted-foreground w-4 h-4" />
+              <strong>Documento:</strong> {person.documento_numero}
+          </div>
+          <div className="flex items-center gap-2">
+              <Hash className="text-muted-foreground w-4 h-4" />
+              <strong>Género:</strong> {person.genero}
+          </div>
+          <div className="flex items-center gap-2">
+              <Calendar className="text-muted-foreground w-4 h-4" />
+              <strong>Fecha Nac.:</strong> {format(parseISO(person.fecha_nacimiento), 'dd/MM/yyyy')}
+          </div>
+           <div className="flex items-center gap-2">
+              <Phone className="text-muted-foreground w-4 h-4" />
+              <strong>Celular:</strong> {person.celular_primario}
+          </div>
       </CardContent>
+       <CardFooter>
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogTrigger asChild>
+            <Button variant="outline" className="w-full">
+              <Edit className="mr-2 h-4 w-4" /> Editar
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-4xl">
+            <DialogHeader>
+              <DialogTitle>Editar Persona</DialogTitle>
+            </DialogHeader>
+            <PersonRegistrationForm person={person} onSuccess={handleSuccess} />
+          </DialogContent>
+        </Dialog>
+      </CardFooter>
     </Card>
   )
 }
@@ -101,6 +123,12 @@ export default function PersonSearch() {
       setIsSubmitting(false);
     }
   };
+  
+  const handleEditSuccess = () => {
+    // Re-ejecutar la última búsqueda para refrescar los datos
+    form.handleSubmit(onSubmit)();
+  };
+
 
   return (
     <div className="space-y-6">
@@ -111,12 +139,12 @@ export default function PersonSearch() {
             </CardHeader>
             <CardContent>
                 <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="flex items-start gap-4">
+                <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col sm:flex-row items-start gap-4">
                     <FormField
                     control={form.control}
                     name="name"
                     render={({ field }) => (
-                        <FormItem className="flex-grow">
+                        <FormItem className="flex-grow w-full">
                         <FormControl>
                             <Input placeholder="Ej: Juan Pérez" {...field} />
                         </FormControl>
@@ -124,13 +152,13 @@ export default function PersonSearch() {
                         </FormItem>
                     )}
                     />
-                    <Button type="submit" disabled={isSubmitting}>
+                    <Button type="submit" disabled={isSubmitting} className="w-full sm:w-auto">
                     {isSubmitting ? (
                         <LoaderCircle className="animate-spin" />
                     ) : (
                         <Search />
                     )}
-                    <span className="ml-2 hidden sm:inline">Buscar</span>
+                    <span className="ml-2">Buscar</span>
                     </Button>
                 </form>
                 </Form>
@@ -143,12 +171,12 @@ export default function PersonSearch() {
             <h3 className="text-lg font-semibold">Resultados de la Búsqueda</h3>
             {isSubmitting ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <Skeleton className="h-40 w-full" />
-                    <Skeleton className="h-40 w-full" />
+                    <Skeleton className="h-48 w-full" />
+                    <Skeleton className="h-48 w-full" />
                 </div>
             ) : results.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {results.map(person => <PersonResultCard key={person.id} person={person} />)}
+                    {results.map(person => <PersonResultCard key={person.id} person={person} onEditSuccess={handleEditSuccess} />)}
                 </div>
             ) : hasSearched ? (
                  <div className="text-center py-12 text-muted-foreground">
