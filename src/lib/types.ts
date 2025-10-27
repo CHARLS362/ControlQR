@@ -87,10 +87,10 @@ export const courseSchema = z.object({
 export type CourseFormValues = z.infer<typeof courseSchema>;
 
 export const personaCompletaSchema = z.object({
-  documento_tipo_id: z.string().min(1, 'Seleccione un tipo de documento').transform(Number),
-  genero_id: z.string().min(1, 'Seleccione un género').transform(Number),
-  ubigeo_nacimiento_id: z.string().min(1, 'Seleccione un ubigeo de nacimiento').transform(Number),
-  domicilio_ubigeo_id: z.string().min(1, 'Seleccione un ubigeo de domicilio').transform(Number),
+  documento_tipo_id: z.coerce.number({invalid_type_error: 'Seleccione un tipo de documento'}).min(1, 'Seleccione un tipo de documento'),
+  genero_id: z.coerce.number({invalid_type_error: 'Seleccione un género'}).min(1, 'Seleccione un género'),
+  ubigeo_nacimiento_id: z.coerce.number({invalid_type_error: 'Seleccione un ubigeo de nacimiento'}).min(1, 'Seleccione un ubigeo de nacimiento'),
+  domicilio_ubigeo_id: z.coerce.number({invalid_type_error: 'Seleccione un ubigeo de domicilio'}).min(1, 'Seleccione un ubigeo de domicilio'),
   documento_numero: z.string().min(8, 'El número de documento es requerido'),
   apellido_paterno: z.string().min(2, 'El apellido paterno es requerido'),
   apellido_materno: z.string().min(2, 'El apellido materno es requerido'),
@@ -101,7 +101,7 @@ export const personaCompletaSchema = z.object({
   correo_primario: z.string().email('El correo es inválido'),
   correo_secundario: z.string().email('El correo secundario es inválido').optional().or(z.literal('')),
   domicilio: z.string().min(5, 'El domicilio es requerido'),
-  persona_estado_id: z.string().min(1, 'Seleccione un estado').transform(Number),
+  persona_estado_id: z.coerce.number({invalid_type_error: 'Seleccione un estado'}).min(0, 'Seleccione un estado'),
 });
 
 export type PersonaCompletaFormValues = z.infer<typeof personaCompletaSchema>;
