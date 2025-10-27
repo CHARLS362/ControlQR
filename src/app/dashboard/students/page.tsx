@@ -34,6 +34,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
+  DialogTrigger,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { MoreHorizontal, Upload, LoaderCircle, Search, Filter } from 'lucide-react';
@@ -447,3 +448,5 @@ export default function StudentsPage() {
     </>
   );
 }
+
+    
