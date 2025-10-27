@@ -49,7 +49,7 @@ import {
   FormControl,
   FormField,
   FormItem,
-  FormLabel,
+  FormLabel as HookFormLabel,
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
@@ -62,6 +62,7 @@ import {
 } from '@/components/ui/select';
 import { StudentDetailsModal } from '@/components/student-details-modal';
 import { Badge } from '@/components/ui/badge';
+import { Label } from '@/components/ui/label';
 
 // --- Formulario de Filtro ---
 function StudentFilter({
@@ -141,7 +142,7 @@ function StudentFilter({
       <CardContent>
         <form onSubmit={handleFilterSubmit} className="flex flex-col sm:flex-row items-end gap-4">
           <div className="w-full sm:w-1/3">
-            <FormLabel>Grado</FormLabel>
+            <Label>Grado</Label>
             <Select value={selectedGrade} onValueChange={handleGradeChange}>
               <SelectTrigger>
                 <SelectValue placeholder="Seleccionar grado..." />
@@ -156,7 +157,7 @@ function StudentFilter({
             </Select>
           </div>
           <div className="w-full sm:w-1/3">
-            <FormLabel>Sección</FormLabel>
+            <Label>Sección</Label>
              <Select value={selectedSection} onValueChange={setSelectedSection} disabled={!selectedGrade || isFetchingSections}>
               <SelectTrigger>
                 <SelectValue placeholder={isFetchingSections ? "Cargando..." : "Seleccionar sección..."} />
@@ -215,7 +216,7 @@ function StudentForm({ student, onSuccess }: { student?: Student; onSuccess: () 
           name="name"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Nombre Completo</FormLabel>
+              <HookFormLabel>Nombre Completo</HookFormLabel>
               <FormControl>
                 <Input placeholder="Ej: Juan Pérez" {...field} />
               </FormControl>
@@ -228,7 +229,7 @@ function StudentForm({ student, onSuccess }: { student?: Student; onSuccess: () 
           name="email"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Correo Electrónico</FormLabel>
+              <HookFormLabel>Correo Electrónico</HookFormLabel>
               <FormControl>
                 <Input type="email" placeholder="juan.perez@example.com" {...field} />
               </FormControl>
