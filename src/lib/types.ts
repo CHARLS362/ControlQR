@@ -198,6 +198,7 @@ export const studentEnrollmentSchema = z.object({
 export type StudentEnrollmentFormValues = z.infer<typeof studentEnrollmentSchema>;
 
 export const sectionSchema = z.object({
+  id: z.number().optional(),
   grado_id: z.coerce.number({ invalid_type_error: 'ID de grado es requerido.' }).min(1, 'ID de grado es requerido.'),
   turno_id: z.coerce.number({ invalid_type_error: 'ID de turno es requerido.' }).min(1, 'ID de turno es requerido.'),
   tutor_personal_id: z.coerce.number({ invalid_type_error: 'ID de tutor es requerido.' }).min(1, 'ID de tutor es requerido.'),
