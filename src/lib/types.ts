@@ -61,6 +61,7 @@ export type TodayAttendanceByCourse = {
 export type DashboardStats = {
   totalPersons: number;
   totalCourses: number;
+
   totalPresentToday: number;
   totalAbsentToday: number;
   recentAttendance: Attendance[];
@@ -211,6 +212,13 @@ export const sectionSchema = z.object({
 });
 
 export type SectionFormValues = z.infer<typeof sectionSchema>;
+
+export const gradeSchema = z.object({
+  nombre: z.string().min(3, { message: "El nombre del grado es requerido y debe tener al menos 3 caracteres." }),
+  descripcion: z.string().optional().or(z.literal('')),
+});
+
+export type GradeFormValues = z.infer<typeof gradeSchema>;
 
 
 // Re-export Zod for use in other files

@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -16,6 +17,7 @@ import {
   Usb,
   UserPlus,
   LayoutGrid,
+  GraduationCap,
 } from 'lucide-react';
 
 import {
@@ -79,6 +81,18 @@ function DashboardSidebar() {
               <Link href="/dashboard">
                 <Home />
                 <span>Panel de Control</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+           <SidebarMenuItem>
+            <SidebarMenuButton
+              asChild
+              isActive={isActive('/dashboard/grades')}
+              tooltip="Grados"
+            >
+              <Link href="/dashboard/grades">
+                <GraduationCap />
+                <span>Grados</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
@@ -208,6 +222,7 @@ function DashboardBreadcrumb() {
 
   const translatedSegments: { [key: string]: string } = {
     dashboard: 'Panel de Control',
+    grades: 'Grados',
     sections: 'Secciones',
     students: 'Estudiantes',
     scan: 'Escaner Cámara',
@@ -282,6 +297,13 @@ export default function DashboardLayout({
                 >
                   <Home className="h-5 w-5" />
                   Panel de Control
+                </Link>
+                 <Link
+                  href="/dashboard/grades"
+                  className="flex items-center gap-4 px-2.5 text-sidebar-foreground/70 hover:text-sidebar-foreground"
+                >
+                  <GraduationCap className="h-5 w-5" />
+                  Grados
                 </Link>
                  <Link
                   href="/dashboard/sections"
