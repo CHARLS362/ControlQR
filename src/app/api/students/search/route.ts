@@ -7,20 +7,24 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     const studentId = searchParams.get('id');
     const docNumber = searchParams.get('doc');
+    let externalApiUrl = '';
 
-    if (!studentId && !docNumber) {
+    if (studentId) {
+      // Búsqueda por ID de estudiante
+      externalApiUrl = `http://31.97.169.107:8093/api/estudiante/consultar/${studentId}`;
+    } else if (docNumber) {
+      // Búsqueda por número de documento como query param
+      externalApiUrl = `http://31.97.169.107:8093/api/estudiante/consultar?documento_numero=${docNumber}`;
+    } else {
       return NextResponse.json({ message: 'El parámetro de búsqueda "id" o "doc" es requerido' }, { status: 400 });
     }
     
-    // La API externa de consulta parece aceptar diferentes tipos de identificadores en la misma ruta
-    const searchTerm = studentId || docNumber;
-
-    const externalApiUrl = `http://31.97.169.107:8093/api/estudiante/consultar/${searchTerm}`;
     const response = await fetch(externalApiUrl);
     
     if (!response.ok) {
         const errorData = await response.json().catch(() => ({ message: "Error desconocido en la API externa."}));
-        return NextResponse.json({ message: 'Error desde la API externa', details: errorData }, { status: response.status });
+        const errorMessage = errorData.message || 'Estudiante no encontrado o error en la API externa.';
+        return NextResponse.json({ message: errorMessage, details: errorData }, { status: response.status });
     }
 
     const responseData = await response.json();

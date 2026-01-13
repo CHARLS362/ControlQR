@@ -28,13 +28,11 @@ export async function POST(request: Request) {
     const responseData = await response.json();
 
     if (!response.ok || responseData.success !== 1) {
-      // Si la API externa devuelve un error, lo reenviamos al cliente
       const errorMessage = responseData.message || 'Credenciales incorrectas.';
       return NextResponse.json({ message: errorMessage, details: responseData }, { status: response.status });
     }
 
-    // Si todo fue bien, reenviamos la respuesta exitosa de la API externa
-    // que debería contener los datos del usuario.
+   
     return NextResponse.json(responseData.data, { status: 200 });
 
   } catch (error) {
