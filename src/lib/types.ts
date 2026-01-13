@@ -222,6 +222,13 @@ export const gradeSchema = z.object({
 
 export type GradeFormValues = z.infer<typeof gradeSchema>;
 
+export const academicYearGradeAssignmentSchema = z.object({
+  anio_academico_id: z.coerce.number().min(1, 'Debes seleccionar un año académico.'),
+  grado_ids: z.array(z.number()).min(1, 'Debes seleccionar al menos un grado.'),
+});
+
+export type AcademicYearGradeAssignmentFormValues = z.infer<typeof academicYearGradeAssignmentSchema>;
+
 
 // Re-export Zod for use in other files
 export { z };
