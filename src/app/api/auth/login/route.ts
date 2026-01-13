@@ -16,8 +16,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: 'Credenciales incorrectas' }, { status: 401 });
     }
 
-    // En una aplicación real, aquí se generaría un token (JWT) y se enviaría en una cookie.
-    // Por simplicidad, solo devolvemos los datos del usuario.
+    
     return NextResponse.json(user);
 
   } catch (error) {

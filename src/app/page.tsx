@@ -19,37 +19,16 @@ export default function LoginPage() {
   const [password, setPassword] = useState('admin123');
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-
-    try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        toast({
-          title: 'Inicio de sesión exitoso',
-          description: `Bienvenido, ${data.name}.`,
-        });
-        router.push('/dashboard');
-      } else {
-        throw new Error(data.message || 'Error al iniciar sesión.');
-      }
-    } catch (error) {
-      toast({
-        variant: 'destructive',
-        title: 'Error de inicio de sesión',
-        description: error instanceof Error ? error.message : 'Ocurrió un error inesperado.',
-      });
-    } finally {
-      setLoading(false);
-    }
+    
+    // Mockup: Redirige directamente al dashboard para pruebas.
+    toast({
+      title: 'Acceso de prueba',
+      description: 'Omitiendo validación para desarrollo.',
+    });
+    router.push('/dashboard');
   };
 
   return (
