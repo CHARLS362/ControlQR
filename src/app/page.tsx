@@ -15,20 +15,43 @@ import { cn } from '@/lib/utils';
 export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
-  const [email, setEmail] = useState('admin@example.com');
+  const [usuario, setUsuario] = useState('admin');
   const [password, setPassword] = useState('admin123');
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     
-    // Mockup: Redirige directamente al dashboard para pruebas.
-    toast({
-      title: 'Acceso de prueba',
-      description: 'Omitiendo validación para desarrollo.',
-    });
-    router.push('/dashboard');
+    try {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: usuario, password }), // El endpoint espera 'email' internamente por ahora
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Error al iniciar sesión.');
+      }
+      
+      toast({
+        title: 'Inicio de Sesión Exitoso',
+        description: `Bienvenido de nuevo, ${data.name || 'usuario'}.`,
+      });
+      router.push('/dashboard');
+
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Ocurrió un error inesperado.';
+      toast({
+        variant: 'destructive',
+        title: 'Error de Autenticación',
+        description: errorMessage,
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -51,14 +74,14 @@ export default function LoginPage() {
           <form onSubmit={handleSubmit} className="text-white">
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email" className="text-gray-300">Correo Electrónico</Label>
+                <Label htmlFor="usuario" className="text-gray-300">Usuario</Label>
                 <Input
-                  id="email"
-                  type="email"
-                  placeholder="admin@example.com"
+                  id="usuario"
+                  type="text"
+                  placeholder="tu-usuario"
                   required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  value={usuario}
+                  onChange={(e) => setUsuario(e.target.value)}
                   className="bg-black/30 border-white/20 text-white placeholder:text-gray-500 focus:ring-blue-400"
                 />
               </div>
