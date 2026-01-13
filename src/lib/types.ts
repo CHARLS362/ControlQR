@@ -1,4 +1,9 @@
 
+// Tipos para validación de formularios
+import { z } from 'zod';
+
+// --- Tipos de Entidades Principales (basados en API externa) ---
+
 export type Student = {
   id: number;
   persona_id: number;
@@ -8,65 +13,6 @@ export type Student = {
   celular_primario: string;
   correo_primario: string;
 };
-
-export type Course = {
-  id: string;
-  name: string;
-  description: string;
-  studentCount: number;
-};
-
-export type Attendance = {
-  id: number; // Suponiendo que la API devuelve un ID numérico.
-  estudiante_id: number;
-  nombres: string;
-  grado_descripcion: string;
-  seccion_descripcion: string;
-  fecha_hora: string; // ISO 8601 string
-  estado: 'Presente' | 'Ausente' | 'Tardanza'; // La API puede tener más estados.
-};
-
-export type User = {
-    id: number;
-    name: string;
-    email: string;
-    password?: string; // El hash de la contraseña, opcional para no exponerlo siempre
-    role?: string;
-    created_at?: string;
-}
-
-export type AttendanceReport = {
-  id: number;
-  student_id: string;
-  studentName: string;
-  course_id: string;
-  courseName: string;
-  report_date: string; // Date
-  total_classes: number;
-  attended_classes: number;
-  absent_classes: number;
-  attendance_percentage: number;
-  generated_by: string | null;
-  generated_at: string; // Timestamp
-}
-
-// --- Tipos para el Dashboard ---
-export type TodayAttendanceByCourse = {
-  courseName: string;
-  presentes: number;
-  ausentes: number;
-}
-
-export type DashboardStats = {
-  totalPersons: number;
-  totalCourses: number;
-  totalPresentToday: number;
-  totalAbsentToday: number;
-  recentAttendance: Attendance[];
-  todayAttendanceByCourse: TodayAttendanceByCourse[];
-};
-
-// --- Tipos de la API Externa ---
 
 export type StudentDetails = {
   id: number;
@@ -89,7 +35,7 @@ export type StudentDetails = {
   seccion: string;
   seguro: string;
   codigo_hash: string;
-}
+};
 
 export type Section = {
   id: number;
@@ -106,26 +52,93 @@ export type Section = {
   tutor_nombre: string;
 };
 
+export type Grado = {
+  id: number;
+  nombre: string;
+  descripcion: string;
+  asignado: number; // 0 o 1
+};
 
-// Tipos para validación de formularios
-import { z } from 'zod';
+export type Gender = {
+  id: number;
+  nombre: string;
+  descripcion: string;
+  vigente: boolean;
+};
 
-export const studentSchema = z.object({
-  name: z.string().min(3, { message: "El nombre debe tener al menos 3 caracteres." }),
-  email: z.string().email({ message: "Por favor, introduce un correo electrónico válido." }),
-  avatar: z.string().optional(),
-  courseId: z.string().min(1, { message: "Debes seleccionar un curso." }),
-});
+export type FoundPerson = {
+  id: number;
+  documento_tipo_id: number;
+  genero_id: number;
+  ubigeo_nacimiento_id: number;
+  domicilio_ubigeo_id: number;
+  documento_numero: string;
+  apellido_paterno: string;
+  apellido_materno: string;
+  nombres: string;
+  genero: string;
+  celular_primario: string;
+  celular_secundario: string | null;
+  correo_primario: string;
+  correo_secundario: string | null;
+  domicilio: string;
+  fecha_nacimiento: string; // ISO String
+  persona_estado_id: number;
+  grado_id: number;
+  grado: string | null;
+};
 
-export type StudentFormValues = z.infer<typeof studentSchema>;
+export type User = {
+    id: number;
+    name: string;
+    email: string;
+    role?: string;
+};
 
 
-export const courseSchema = z.object({
-  name: z.string().min(3, { message: "El nombre del curso debe tener al menos 3 caracteres." }),
-  description: z.string().optional(),
-});
+// --- Tipos para Asistencia y Reportes ---
 
-export type CourseFormValues = z.infer<typeof courseSchema>;
+export type Attendance = {
+  id: number;
+  estudiante_id: number;
+  nombres: string;
+  grado_descripcion: string;
+  seccion_descripcion: string;
+  fecha_hora: string; // ISO 8601 string
+  estado: 'Presente' | 'Ausente' | 'Tardanza';
+};
+
+export type AttendanceReport = {
+  id: number;
+  studentName: string;
+  courseName: string; // O 'gradeName' si aplica
+  report_date: string;
+  total_classes: number;
+  attended_classes: number;
+  absent_classes: number;
+  attendance_percentage: number;
+};
+
+
+// --- Tipos para Estadísticas del Dashboard ---
+
+export type TodayAttendanceByCourse = {
+  courseName: string; // Mantenemos el nombre por consistencia con el componente
+  presentes: number;
+  ausentes: number;
+};
+
+export type DashboardStats = {
+  totalPersons: number;
+  totalCourses: number; // Se interpreta como total de Grados
+  totalPresentToday: number;
+  totalAbsentToday: number;
+  recentAttendance: Attendance[];
+  todayAttendanceByCourse: TodayAttendanceByCourse[];
+};
+
+
+// --- Esquemas de Validación con Zod ---
 
 export const personaCompletaSchema = z.object({
   id: z.number().optional(),
@@ -150,42 +163,6 @@ export const personaCompletaSchema = z.object({
 export type PersonaCompletaFormValues = z.infer<typeof personaCompletaSchema>;
 
 
-export type FoundPerson = {
-  id: number;
-  documento_tipo_id: number;
-  genero_id: number;
-  ubigeo_nacimiento_id: number;
-  domicilio_ubigeo_id: number;
-  documento_numero: string;
-  apellido_paterno: string;
-  apellido_materno: string;
-  nombres: string;
-  genero: string;
-  celular_primario: string;
-  celular_secundario: string | null;
-  correo_primario: string;
-  correo_secundario: string | null;
-  domicilio: string;
-  fecha_nacimiento: string; // ISO String
-  persona_estado_id: number;
-  grado_id: number;
-  grado: string | null;
-}
-
-export type Gender = {
-  id: number;
-  nombre: string;
-  descripcion: string;
-  vigente: boolean;
-};
-
-export type Grado = {
-  id: number;
-  nombre: string;
-  descripcion: string;
-  asignado: number;
-}
-
 export const studentEnrollmentSchema = z.object({
   persona_id: z.number(),
   anio_academico_id: z.coerce.number().min(1, 'El año académico es requerido.'),
@@ -198,6 +175,7 @@ export const studentEnrollmentSchema = z.object({
 });
 
 export type StudentEnrollmentFormValues = z.infer<typeof studentEnrollmentSchema>;
+
 
 export const sectionSchema = z.object({
   id: z.number().optional(),
@@ -212,6 +190,7 @@ export const sectionSchema = z.object({
 
 export type SectionFormValues = z.infer<typeof sectionSchema>;
 
+
 export const gradeSchema = z.object({
   id: z.number().optional(),
   nombre: z.string().min(3, { message: "El nombre del grado es requerido y debe tener al menos 3 caracteres." }),
@@ -219,6 +198,7 @@ export const gradeSchema = z.object({
 });
 
 export type GradeFormValues = z.infer<typeof gradeSchema>;
+
 
 export const academicYearGradeAssignmentSchema = z.object({
   anio_academico_id: z.coerce.number().min(1, 'Debes seleccionar un año académico.'),

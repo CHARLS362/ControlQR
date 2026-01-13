@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CameraOff, CheckCircle, LoaderCircle, QrCode, XCircle, AlertTriangle, List } from 'lucide-react';
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { BrowserMultiFormatReader, BarcodeFormat } from '@zxing/browser';
+import { BrowserMultiFormatReader, BarcodeFormat, DecodeHintType } from '@zxing/browser';
 
 type Status = 'searching' | 'success' | 'error' | 'permission' | 'stopped' | 'info';
 type LogEntry = {
@@ -112,7 +112,8 @@ export function Scanner() {
         BarcodeFormat.CODE_128,
         BarcodeFormat.CODE_39,
       ];
-      hints.set(2, formats); // 2 is the key for POSSIBLE_FORMATS
+      hints.set(DecodeHintType.POSSIBLE_FORMATS, formats);
+      codeReader.setHints(hints);
       
       setStatus('searching');
       setStatusMessage('Iniciando cámara...');
@@ -141,11 +142,11 @@ export function Scanner() {
   }, [registrarAsistencia, isCameraActive]);
 
   useEffect(() => {
-    startCamera();
+    // startCamera(); // No iniciar automáticamente, esperar al botón.
     return () => {
       stopCamera();
     };
-  }, []);
+  }, [stopCamera]);
 
 
   const StatusIcon = () => {
@@ -166,8 +167,8 @@ export function Scanner() {
           <CardHeader>
              <div className="flex items-center justify-between">
                 <CardTitle className="flex items-center gap-2"><QrCode />Visor del Escáner</CardTitle>
-                <Button onClick={stopCamera} variant="destructive" disabled={!isCameraActive}>
-                    <CameraOff className="mr-2" /> Desactivar Cámara
+                <Button onClick={isCameraActive ? stopCamera : startCamera} variant={isCameraActive ? "destructive" : "default"}>
+                    <CameraOff className="mr-2" /> {isCameraActive ? 'Desactivar Cámara' : 'Activar Cámara'}
                 </Button>
             </div>
           </CardHeader>
@@ -229,4 +230,3 @@ export function Scanner() {
       </div>
     </div>
   );
-}

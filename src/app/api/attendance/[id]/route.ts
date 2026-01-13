@@ -1,6 +1,5 @@
 
 import { NextResponse } from 'next/server';
-import { deleteAttendanceRecord } from '@/lib/data-service';
 
 export async function DELETE(
   request: Request,
@@ -9,16 +8,27 @@ export async function DELETE(
   try {
     const id = params.id;
     if (!id) {
-      return NextResponse.json({ message: 'Falta el ID del registro' }, { status: 400 });
+      return NextResponse.json({ message: 'Falta el ID del registro de asistencia' }, { status: 400 });
     }
 
-    await deleteAttendanceRecord(id);
+    const externalApiUrl = `http://31.97.169.107:8093/api/asistencia/eliminar/${id}`;
+    
+    const response = await fetch(externalApiUrl, {
+      method: 'DELETE',
+    });
 
-    return NextResponse.json({ message: `Registro con ID ${id} eliminado correctamente` });
+    const responseData = await response.json();
+
+    if (!response.ok || responseData.success !== 1) {
+      const errorMessage = responseData.message || 'Error al eliminar el registro de asistencia.';
+      return NextResponse.json({ message: errorMessage, details: responseData }, { status: response.status });
+    }
+
+    return NextResponse.json(responseData, { status: 200 });
 
   } catch (error) {
     console.error('Error en DELETE /api/attendance/[id]:', error);
     const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
-    return NextResponse.json({ message: 'Error al eliminar el registro', error: errorMessage }, { status: 500 });
+    return NextResponse.json({ message: 'Error interno del servidor', error: errorMessage }, { status: 500 });
   }
 }

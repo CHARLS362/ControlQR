@@ -32,8 +32,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { Calendar as CalendarIcon, Download, MoreHorizontal, FilePlus, LoaderCircle, BarChart } from 'lucide-react';
-import type { AttendanceReport, Course } from '@/lib/types';
+import { Calendar as CalendarIcon, Download, MoreHorizontal, FilePlus, LoaderCircle, BarChart, AlertTriangle } from 'lucide-react';
+import type { AttendanceReport, Section, Grado } from '@/lib/types';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { format } from 'date-fns';
@@ -44,23 +44,43 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Progress } from '@/components/ui/progress';
 
 function GenerateReportCard({
-  courses,
+  grades,
   onReportGenerated,
 }: {
-  courses: Course[];
+  grades: Grado[];
   onReportGenerated: () => void;
 }) {
-  const [selectedCourse, setSelectedCourse] = React.useState<string | undefined>();
+  const [selectedGrade, setSelectedGrade] = React.useState<string | undefined>();
+  const [selectedSection, setSelectedSection] = React.useState<string | undefined>();
+  const [sections, setSections] = React.useState<Section[]>([]);
   const [date, setDate] = React.useState<Date | undefined>(new Date());
   const [isGenerating, setIsGenerating] = React.useState(false);
   const { toast } = useToast();
 
+  React.useEffect(() => {
+    if (!selectedGrade) {
+      setSections([]);
+      setSelectedSection(undefined);
+      return;
+    }
+    const fetchSections = async () => {
+      try {
+        const response = await fetch(`/api/sections/${selectedGrade}`);
+        if (!response.ok) throw new Error('No se pudieron cargar las secciones');
+        setSections(await response.json());
+      } catch (error) {
+        toast({ variant: 'destructive', title: 'Error', description: 'No se pudieron cargar las secciones del grado.' });
+      }
+    };
+    fetchSections();
+  }, [selectedGrade, toast]);
+
   const handleGenerate = async () => {
-    if (!selectedCourse || !date) {
+    if (!selectedSection || !date) {
       toast({
         variant: 'destructive',
         title: 'Datos incompletos',
-        description: 'Por favor, selecciona un curso y una fecha.',
+        description: 'Por favor, selecciona un grado, sección y una fecha.',
       });
       return;
     }
@@ -70,7 +90,7 @@ function GenerateReportCard({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          courseId: selectedCourse,
+          sectionId: selectedSection,
           reportDate: format(date, 'yyyy-MM-dd'),
         }),
       });
@@ -83,7 +103,7 @@ function GenerateReportCard({
 
       toast({
         title: 'Reporte Generado Exitosamente',
-        description: `El reporte para el curso seleccionado ha sido creado.`,
+        description: `El reporte para la sección seleccionada ha sido creado.`,
       });
       onReportGenerated();
     } catch (error) {
@@ -105,19 +125,23 @@ function GenerateReportCard({
           Generar Nuevo Reporte de Asistencia
         </CardTitle>
         <CardDescription>
-          Selecciona un curso y una fecha para compilar un nuevo reporte de asistencia.
+          Selecciona un grado, sección y una fecha para compilar un nuevo reporte de asistencia.
         </CardDescription>
       </CardHeader>
-      <CardContent className="grid sm:grid-cols-3 gap-4">
-        <Select value={selectedCourse} onValueChange={setSelectedCourse}>
-          <SelectTrigger>
-            <SelectValue placeholder="Seleccionar un curso" />
-          </SelectTrigger>
+      <CardContent className="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
+        <Select value={selectedGrade} onValueChange={setSelectedGrade}>
+          <SelectTrigger><SelectValue placeholder="Seleccionar Grado" /></SelectTrigger>
           <SelectContent>
-            {courses.map((course) => (
-              <SelectItem key={course.id} value={String(course.id)}>
-                {course.name}
-              </SelectItem>
+            {grades.map((grade) => (
+              <SelectItem key={grade.id} value={String(grade.id)}>{grade.nombre}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select value={selectedSection} onValueChange={setSelectedSection} disabled={!selectedGrade}>
+          <SelectTrigger><SelectValue placeholder="Seleccionar Sección" /></SelectTrigger>
+          <SelectContent>
+            {sections.map((section) => (
+              <SelectItem key={section.id} value={String(section.id)}>{section.nombre}</SelectItem>
             ))}
           </SelectContent>
         </Select>
@@ -125,10 +149,7 @@ function GenerateReportCard({
           <PopoverTrigger asChild>
             <Button
               variant={'outline'}
-              className={cn(
-                'justify-start text-left font-normal',
-                !date && 'text-muted-foreground'
-              )}
+              className={cn('justify-start text-left font-normal', !date && 'text-muted-foreground')}
             >
               <CalendarIcon className="mr-2 h-4 w-4" />
               {date ? format(date, 'PPP', { locale: es }) : <span>Elige una fecha</span>}
@@ -140,16 +161,12 @@ function GenerateReportCard({
               selected={date}
               onSelect={setDate}
               initialFocus
-              disabled={(date) => date > new Date() || date < new Date('1900-01-01')}
+              disabled={(date) => date > new Date() || date < new Date('2020-01-01')}
             />
           </PopoverContent>
         </Popover>
         <Button onClick={handleGenerate} disabled={isGenerating}>
-          {isGenerating ? (
-            <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
-          ) : (
-            <BarChart className="mr-2 h-4 w-4" />
-          )}
+          {isGenerating ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : <BarChart className="mr-2 h-4 w-4" />}
           Generar Reporte
         </Button>
       </CardContent>
@@ -159,33 +176,33 @@ function GenerateReportCard({
 
 export default function ReportsPage() {
   const [reports, setReports] = React.useState<AttendanceReport[]>([]);
-  const [courses, setCourses] = React.useState<Course[]>([]);
+  const [grades, setGrades] = React.useState<Grado[]>([]);
   const [loading, setLoading] = React.useState(true);
   const { toast } = useToast();
 
-  const fetchReportsAndCourses = React.useCallback(async () => {
+  const fetchReportsAndGrades = React.useCallback(async () => {
     setLoading(true);
     try {
-      const [reportsRes, coursesRes] = await Promise.all([
-        fetch('/api/reports'),
-        fetch('/api/courses'),
+      // Como los reportes ahora son una funcionalidad no soportada, solo cargamos los grados
+      // para el formulario de generación.
+      const [gradesRes] = await Promise.all([
+        fetch('/api/grades'),
       ]);
 
-      if (!reportsRes.ok || !coursesRes.ok) {
-        throw new Error('Error al cargar los datos');
+      if (!gradesRes.ok) {
+        throw new Error('Error al cargar los datos de grados.');
       }
+      
+      const gradesData = await gradesRes.json();
+      setGrades(gradesData);
+      setReports([]); // Se vacían los reportes ya que no hay endpoint para listarlos
 
-      const reportsData = await reportsRes.json();
-      const coursesData = await coursesRes.json();
-
-      setReports(reportsData);
-      setCourses(coursesData);
     } catch (error) {
       console.error(error);
       toast({
         variant: 'destructive',
         title: 'Error',
-        description: 'No se pudieron cargar los reportes.',
+        description: 'No se pudieron cargar los datos necesarios.',
       });
     } finally {
       setLoading(false);
@@ -193,34 +210,11 @@ export default function ReportsPage() {
   }, [toast]);
 
   React.useEffect(() => {
-    fetchReportsAndCourses();
-  }, [fetchReportsAndCourses]);
+    fetchReportsAndGrades();
+  }, [fetchReportsAndGrades]);
 
   const exportToCSV = () => {
-    const headers = ['ID', 'Curso', 'Estudiante', 'Fecha Reporte', 'Clases Totales', 'Asistidas', 'Ausentes', '% Asistencia', 'Generado'];
-    const rows = reports.map(r => [
-      r.id,
-      r.courseName,
-      r.studentName,
-      new Date(r.report_date).toLocaleDateString(),
-      r.total_classes,
-      r.attended_classes,
-      r.absent_classes,
-      r.attendance_percentage,
-      new Date(r.generated_at).toLocaleString(),
-    ]);
-
-    let csvContent = "data:text/csv;charset=utf-8," 
-      + headers.join(",") + "\n" 
-      + rows.map(e => e.join(",")).join("\n");
-      
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "reportes_asistencia.csv");
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    toast({ title: 'Función no disponible', description: 'No hay reportes para exportar.' });
   };
 
   return (
@@ -229,7 +223,7 @@ export default function ReportsPage() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight font-headline">Reportes de Asistencia</h1>
           <p className="text-muted-foreground mt-1">
-            Genera y exporta reportes de asistencia por curso.
+            Genera y exporta reportes de asistencia por sección.
           </p>
         </div>
         <Button onClick={exportToCSV} disabled={reports.length === 0}>
@@ -237,7 +231,21 @@ export default function ReportsPage() {
         </Button>
       </div>
 
-      <GenerateReportCard courses={courses} onReportGenerated={fetchReportsAndCourses} />
+      <GenerateReportCard grades={grades} onReportGenerated={fetchReportsAndGrades} />
+      
+       <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-md">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="w-5 h-5 text-yellow-600 mt-0.5 shrink-0" />
+            <div>
+              <h3 className="text-sm font-semibold text-yellow-800">
+                Funcionalidad de Reportes Limitada
+              </h3>
+              <p className="text-sm text-yellow-700 mt-1">
+                Actualmente, la API externa no soporta la generación y listado de reportes de asistencia consolidados. El listado de reportes está deshabilitado.
+              </p>
+            </div>
+          </div>
+        </div>
 
       <Card className="shadow-subtle">
         <CardHeader>
@@ -250,7 +258,7 @@ export default function ReportsPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Curso / Estudiante</TableHead>
+                <TableHead>Grado / Sección / Estudiante</TableHead>
                 <TableHead>Fecha del Reporte</TableHead>
                 <TableHead className="text-center">Resumen</TableHead>
                 <TableHead className="text-right">Porcentaje Asistencia</TableHead>
@@ -261,7 +269,7 @@ export default function ReportsPage() {
             </TableHeader>
             <TableBody>
               {loading ? (
-                Array.from({ length: 5 }).map((_, index) => (
+                Array.from({ length: 3 }).map((_, index) => (
                    <TableRow key={index}>
                     <TableCell><Skeleton className="h-5 w-40" /></TableCell>
                     <TableCell><Skeleton className="h-5 w-24" /></TableCell>
@@ -270,48 +278,10 @@ export default function ReportsPage() {
                     <TableCell><Skeleton className="h-8 w-8" /></TableCell>
                   </TableRow>
                 ))
-              ) : reports.length > 0 ? (
-                reports.map((report: AttendanceReport) => (
-                  <TableRow key={report.id}>
-                    <TableCell className="font-medium">
-                      <div>{report.courseName}</div>
-                      <div className="text-xs text-muted-foreground">{report.studentName}</div>
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {format(new Date(report.report_date), 'dd MMM, yyyy', { locale: es })}
-                    </TableCell>
-                    <TableCell className="text-center text-xs">
-                        <span className="text-green-600 font-medium">{report.attended_classes}</span> / {' '}
-                        <span className="font-bold">{report.total_classes}</span>
-                        <span className="text-red-600 font-medium ml-2">{report.absent_classes} aus.</span>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-2">
-                         <span className="font-bold text-lg">{report.attendance_percentage}%</span>
-                         <Progress value={report.attendance_percentage} className="w-24 h-2" />
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button aria-haspopup="true" size="icon" variant="ghost">
-                            <MoreHorizontal className="h-4 w-4" />
-                            <span className="sr-only">Alternar menú</span>
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-                          <DropdownMenuItem disabled>Ver Detalles</DropdownMenuItem>
-                          <DropdownMenuItem disabled className="text-destructive">Eliminar Reporte</DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                ))
               ) : (
                 <TableRow>
                   <TableCell colSpan={5} className="h-24 text-center">
-                    No se han generado reportes.
+                    La API externa no proporciona una lista de reportes generados.
                   </TableCell>
                 </TableRow>
               )}
