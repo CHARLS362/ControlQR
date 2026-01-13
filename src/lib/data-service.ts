@@ -325,19 +325,22 @@ export async function generateReportForCourse(courseId: string, reportDate: stri
 
 // === Funciones para Estadísticas (Dashboard) ===
 
-async function countTotalPersonsFromApi(): Promise<number> {
-    // Esto es un placeholder. Idealmente, la API externa tendría un endpoint
-    // para contar el total de personas. Por ahora, simulamos una búsqueda amplia
-    // y contamos los resultados. Esto puede ser lento y no es ideal para producción.
-    try {
-        const response = await fetch(`http://31.97.169.107:8093/api/persona/buscar-persona?nombres=a`);
-        if (!response.ok) return 0;
-        const data = await response.json();
-        return Array.isArray(data.data) ? data.data.length : 0;
-    } catch (e) {
-        console.error("Could not fetch total persons from external API", e);
-        return 0; // Devolver 0 si la API externa falla
+async function getRecentAttendanceFromApi(): Promise<Attendance[]> {
+  try {
+    // Usamos una URL absoluta porque esta función se ejecuta en el servidor
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    const response = await fetch(`${baseUrl}/api/attendance/daily-report`);
+
+    if (!response.ok) {
+      console.error('Error fetching recent attendance from API proxy');
+      return [];
     }
+    const data = await response.json();
+    return data as Attendance[];
+  } catch (error) {
+    console.error('Failed to fetch recent attendance:', error);
+    return [];
+  }
 }
 
 
@@ -345,25 +348,15 @@ export async function getDashboardStats(): Promise<DashboardStats> {
   const today = new Date().toISOString().slice(0, 10);
 
   const [
-    // personsCount, // Descomentar cuando la API de conteo esté disponible
     coursesCount,
     presentCount,
     recentAttendance,
     todayAttendanceByCourse,
     totalEnrolledStudentsResult
   ] = await Promise.all([
-    // countTotalPersonsFromApi(),
     pool.query<RowDataPacket[]>("SELECT COUNT(*) as count FROM courses"),
     pool.query<RowDataPacket[]>("SELECT COUNT(*) as count FROM attendance WHERE status = 'Presente' AND DATE(date) = ?", [today]),
-    pool.query<RowDataPacket[]>(`
-        SELECT a.id, s.name as studentName, c.name as courseName, a.date, a.status
-        FROM attendance a
-        JOIN students s ON a.student_id = s.id
-        JOIN courses c ON a.course_id = c.id
-        WHERE DATE(a.date) = ?
-        ORDER BY a.date DESC
-        LIMIT 5
-    `, [today]),
+    getRecentAttendanceFromApi(),
     pool.query<RowDataPacket[]>(`
         SELECT 
             c.name as courseName,
@@ -390,7 +383,7 @@ export async function getDashboardStats(): Promise<DashboardStats> {
     totalCourses: totalCourses,
     totalPresentToday: totalPresentToday,
     totalAbsentToday: totalAbsentToday < 0 ? 0 : totalAbsentToday,
-    recentAttendance: recentAttendance[0].map(row => ({...row, id: String(row.id)})) as Attendance[],
+    recentAttendance: recentAttendance.slice(0, 5), // Limitar a 5 para el dashboard
     todayAttendanceByCourse: todayAttendanceByCourse[0].map(row => ({
       courseName: row.courseName,
       presentes: Number(row.presentes),

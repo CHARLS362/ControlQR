@@ -1,5 +1,4 @@
 
-
 export type Student = {
   id: number;
   persona_id: number;
@@ -18,13 +17,13 @@ export type Course = {
 };
 
 export type Attendance = {
-  id: string;
-  studentName: string;
-  studentId: string;
-  courseName: string;
-  courseId: string;
-  date: string; // Should be ISO 8601 string date
-  status: 'Presente' | 'Ausente';
+  id: number; // Suponiendo que la API devuelve un ID numérico.
+  estudiante_id: number;
+  nombres: string;
+  grado_descripcion: string;
+  seccion_descripcion: string;
+  fecha_hora: string; // ISO 8601 string
+  estado: 'Presente' | 'Ausente' | 'Tardanza'; // La API puede tener más estados.
 };
 
 export type User = {
@@ -61,7 +60,6 @@ export type TodayAttendanceByCourse = {
 export type DashboardStats = {
   totalPersons: number;
   totalCourses: number;
-
   totalPresentToday: number;
   totalAbsentToday: number;
   recentAttendance: Attendance[];

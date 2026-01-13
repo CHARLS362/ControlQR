@@ -28,7 +28,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import type { DashboardStats, Attendance } from '@/lib/types';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 
 function StatCard({ 
@@ -69,6 +69,8 @@ export default function Dashboard() {
     async function fetchStats() {
       setLoading(true);
       try {
+        // La URL debe ser relativa para que funcione en el cliente.
+        // El servidor Next.js manejará la llamada al endpoint de la API.
         const response = await fetch(`/api/stats/dashboard`);
         if (!response.ok) {
           throw new Error('No se pudieron cargar las estadísticas del panel.');
@@ -129,6 +131,16 @@ export default function Dashboard() {
   };
   
   const today = format(new Date(), "eeee, dd 'de' MMMM", { locale: es });
+
+  const badgeVariant = (status: Attendance['estado']) => {
+    switch (status) {
+        case 'Presente': return 'default';
+        case 'Tardanza': return 'secondary';
+        case 'Ausente': return 'destructive';
+        default: return 'outline';
+    }
+  };
+
 
   return (
     <div className="flex flex-col gap-8 py-8">
@@ -213,16 +225,16 @@ export default function Dashboard() {
                             {stats.recentAttendance.map((att: Attendance) => (
                                 <TableRow key={att.id}>
                                     <TableCell className="font-medium">
-                                        <div className="truncate">{att.studentName}</div>
-                                        <div className="text-xs text-muted-foreground truncate">{att.courseName}</div>
+                                        <div className="truncate">{att.nombres}</div>
+                                        <div className="text-xs text-muted-foreground truncate">{att.grado_descripcion} - {att.seccion_descripcion}</div>
                                     </TableCell>
                                     <TableCell>
-                                        <Badge variant={att.status === 'Presente' ? 'default' : 'destructive'}>
-                                            {att.status}
+                                        <Badge variant={badgeVariant(att.estado)}>
+                                            {att.estado}
                                         </Badge>
                                     </TableCell>
                                     <TableCell className="text-right text-muted-foreground">
-                                        {format(new Date(att.date), 'HH:mm:ss')}
+                                        {format(parseISO(att.fecha_hora), 'HH:mm:ss')}
                                     </TableCell>
                                 </TableRow>
                             ))}
