@@ -58,8 +58,8 @@ export async function GET() {
     const totalPresentToday = recentAttendance.filter(att => att.estado === 'Presente').length;
     const totalAbsentToday = totalEnrolledStudents - totalPresentToday;
 
-    // 5. Calcular asistencia por curso/grado
-    const attendanceByCourse = allGrades.map(grade => {
+    // 5. Calcular asistencia por grado
+    const attendanceByGrade = allGrades.map(grade => {
         const gradeStudentsCount = Object.entries(studentsByGradeSection)
             .filter(([key]) => key.startsWith(grade.nombre))
             .reduce((acc, [, students]) => acc + students.length, 0);
@@ -67,7 +67,7 @@ export async function GET() {
         const gradePresentCount = recentAttendance.filter(att => att.grado_descripcion === grade.nombre && att.estado === 'Presente').length;
         
         return {
-            courseName: grade.nombre,
+            gradeName: grade.nombre,
             presentes: gradePresentCount,
             ausentes: Math.max(0, gradeStudentsCount - gradePresentCount)
         };
@@ -75,11 +75,11 @@ export async function GET() {
 
     const stats = {
       totalPersons: totalPersons,
-      totalCourses: allGrades.length,
+      totalGrades: allGrades.length,
       totalPresentToday: totalPresentToday,
       totalAbsentToday: Math.max(0, totalAbsentToday),
       recentAttendance: recentAttendance.slice(0, 5),
-      todayAttendanceByCourse: attendanceByCourse,
+      todayAttendanceByGrade: attendanceByGrade,
     };
 
     return NextResponse.json(stats);

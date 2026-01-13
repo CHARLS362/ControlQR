@@ -111,7 +111,7 @@ export type Attendance = {
 export type AttendanceReport = {
   id: number;
   studentName: string;
-  courseName: string; // O 'gradeName' si aplica
+  gradeName: string;
   report_date: string;
   total_classes: number;
   attended_classes: number;
@@ -122,19 +122,19 @@ export type AttendanceReport = {
 
 // --- Tipos para Estadísticas del Dashboard ---
 
-export type TodayAttendanceByCourse = {
-  courseName: string; // Mantenemos el nombre por consistencia con el componente
+export type TodayAttendanceByGrade = {
+  gradeName: string;
   presentes: number;
   ausentes: number;
 };
 
 export type DashboardStats = {
   totalPersons: number;
-  totalCourses: number; // Se interpreta como total de Grados
+  totalGrades: number;
   totalPresentToday: number;
   totalAbsentToday: number;
   recentAttendance: Attendance[];
-  todayAttendanceByCourse: TodayAttendanceByCourse[];
+  todayAttendanceByGrade: TodayAttendanceByGrade[];
 };
 
 

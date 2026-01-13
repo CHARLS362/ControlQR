@@ -22,7 +22,7 @@ import {
   ChartTooltipContent,
 } from '@/components/ui/chart';
 import { Badge } from '@/components/ui/badge';
-import { Users, BookCopy, CheckCircle, XCircle, Clock, LoaderCircle } from 'lucide-react';
+import { Users, BookCopy, CheckCircle, XCircle, Clock, LoaderCircle, GraduationCap } from 'lucide-react';
 import React from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
@@ -69,8 +69,6 @@ export default function Dashboard() {
     async function fetchStats() {
       setLoading(true);
       try {
-        // La URL debe ser relativa para que funcione en el cliente.
-        // El servidor Next.js manejará la llamada al endpoint de la API.
         const response = await fetch(`/api/stats/dashboard`);
         if (!response.ok) {
           throw new Error('No se pudieron cargar las estadísticas del panel.');
@@ -153,9 +151,9 @@ export default function Dashboard() {
             gradientColors="bg-gradient-to-br from-green-400 to-green-600"
         />
         <StatCard 
-            title="Total de Cursos"
-            value={stats.totalCourses.toString()}
-            icon={BookCopy}
+            title="Total de Grados"
+            value={stats.totalGrades.toString()}
+            icon={GraduationCap}
             changeText="+1 desde el último semestre"
             gradientColors="bg-gradient-to-br from-blue-400 to-blue-600"
         />
@@ -177,17 +175,17 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
         <Card className="lg:col-span-3 shadow-subtle">
             <CardHeader>
-                <CardTitle className="font-headline">Asistencia de Hoy por Curso</CardTitle>
+                <CardTitle className="font-headline">Asistencia de Hoy por Grado</CardTitle>
                 <CardDescription>
-                    Resumen de presentes y ausentes por curso para el día de hoy, <span className="capitalize">{today}</span>.
+                    Resumen de presentes y ausentes por grado para el día de hoy, <span className="capitalize">{today}</span>.
                 </CardDescription>
             </CardHeader>
             <CardContent className="h-[350px]">
               <ChartContainer config={chartConfig} className="h-full w-full">
-                <BarChart data={stats.todayAttendanceByCourse} layout="vertical" margin={{ left: 10, right: 30 }}>
+                <BarChart data={stats.todayAttendanceByGrade} layout="vertical" margin={{ left: 10, right: 30 }}>
                   <CartesianGrid strokeDasharray="3 3" horizontal={false} />
                   <XAxis type="number" stroke="hsl(var(--muted-foreground))" tick={{ fill: 'hsl(var(--muted-foreground))' }} />
-                  <YAxis type="category" dataKey="courseName" width={100} tick={{ fill: 'hsl(var(--muted-foreground))' }} tickLine={false} axisLine={false} />
+                  <YAxis type="category" dataKey="gradeName" width={100} tick={{ fill: 'hsl(var(--muted-foreground))' }} tickLine={false} axisLine={false} />
                   <RechartsTooltip cursor={{ fill: 'hsl(var(--muted))', opacity: 0.5 }} content={<ChartTooltipContent indicator="dot" />} />
                   <Legend content={({ payload }) => (
                     <div className="flex justify-center gap-4 pt-4">
