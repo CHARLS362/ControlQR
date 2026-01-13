@@ -33,8 +33,9 @@ export async function POST(request: Request) {
     }
 
     // 3. Verificar si ya hay un registro de asistencia para hoy.
-    const today = format(new Date(), 'yyyy-MM-dd');
-    const attendanceCheckUrl = `${EXTERNAL_API_BASE_URL}/api/asistencia/obtener-reporte-dia?fecha=${today}&index=0&cantidad=1000`;
+    const today = new Date();
+    const todayFormatted = format(today, 'yyyy-MM-dd');
+    const attendanceCheckUrl = `${EXTERNAL_API_BASE_URL}/api/asistencia/obtener-reporte-dia?fecha=${todayFormatted}&index=0&cantidad=1000`;
     const attendanceResponse = await fetch(attendanceCheckUrl);
     const attendanceData = await attendanceResponse.json();
 
@@ -46,16 +47,14 @@ export async function POST(request: Request) {
     }
 
     // 4. Registrar la asistencia.
-    // La API externa para registrar asistencia parece no estar documentada.
-    // Asumimos que hay un endpoint /api/asistencia/registrar
     const recordAttendanceUrl = `${EXTERNAL_API_BASE_URL}/api/asistencia/registrar`;
     const registrationPayload = {
         estudiante_id: student.id,
-        // Otros campos que la API pueda requerir
+        fecha: todayFormatted,
+        hora_ingreso: format(today, 'HH:mm:ss'),
+        asistencia_estado_id: 1, // 1 para 'Presente' (asumiendo)
     };
 
-    // **COMENTADO TEMPORALMENTE** hasta tener el endpoint de registro de asistencia
-    /*
     const recordResponse = await fetch(recordAttendanceUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -66,10 +65,10 @@ export async function POST(request: Request) {
         const errorData = await recordResponse.json().catch(() => null);
         throw new Error(errorData?.message || "Error al registrar la asistencia en el sistema externo.");
     }
-    */
    
-    // Simulando una respuesta exitosa ya que el endpoint no existe
-    return NextResponse.json({ message: `Asistencia registrada para ${student.nombres} en ${student.grado} "${student.seccion}"` });
+    const recordData = await recordResponse.json();
+    
+    return NextResponse.json({ message: recordData.message || `Asistencia registrada para ${student.nombres} en ${student.grado} "${student.seccion}"` });
 
   } catch (error) {
     console.error('Error en /api/attendance/scan:', error);
@@ -77,5 +76,3 @@ export async function POST(request: Request) {
     return NextResponse.json({ message: 'Error al registrar la asistencia', error: errorMessage }, { status: 500 });
   }
 }
-
-    
