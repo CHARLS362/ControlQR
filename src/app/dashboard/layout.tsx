@@ -16,6 +16,7 @@ import {
   Users,
   Usb,
   UserPlus,
+  LayoutGrid,
 } from 'lucide-react';
 
 import {
@@ -91,6 +92,18 @@ function DashboardSidebar() {
               <Link href="/dashboard/courses">
                 <BookCopy />
                 <span>Cursos</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+           <SidebarMenuItem>
+            <SidebarMenuButton
+              asChild
+              isActive={isActive('/dashboard/sections')}
+              tooltip="Secciones"
+            >
+              <Link href="/dashboard/sections">
+                <LayoutGrid />
+                <span>Secciones</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
@@ -209,6 +222,7 @@ function DashboardBreadcrumb() {
   const translatedSegments: { [key: string]: string } = {
     dashboard: 'Panel de Control',
     courses: 'Cursos',
+    sections: 'Secciones',
     students: 'Estudiantes',
     scan: 'Escaner Cámara',
     'keyboard-scan': 'Escaner USB',
@@ -289,6 +303,13 @@ export default function DashboardLayout({
                 >
                   <BookCopy className="h-5 w-5" />
                   Cursos
+                </Link>
+                 <Link
+                  href="/dashboard/sections"
+                  className="flex items-center gap-4 px-2.5 text-sidebar-foreground/70 hover:text-sidebar-foreground"
+                >
+                  <LayoutGrid className="h-5 w-5" />
+                  Secciones
                 </Link>
                  <Link
                   href="/dashboard/students"

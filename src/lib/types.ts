@@ -197,6 +197,18 @@ export const studentEnrollmentSchema = z.object({
 
 export type StudentEnrollmentFormValues = z.infer<typeof studentEnrollmentSchema>;
 
+export const sectionSchema = z.object({
+  grado_id: z.coerce.number({ invalid_type_error: 'ID de grado es requerido.' }).min(1, 'ID de grado es requerido.'),
+  turno_id: z.coerce.number({ invalid_type_error: 'ID de turno es requerido.' }).min(1, 'ID de turno es requerido.'),
+  tutor_personal_id: z.coerce.number({ invalid_type_error: 'ID de tutor es requerido.' }).min(1, 'ID de tutor es requerido.'),
+  seccion_tipo_id: z.coerce.number({ invalid_type_error: 'ID de tipo de sección es requerido.' }).min(1, 'ID de tipo de sección es requerido.'),
+  nombre: z.string().min(1, { message: 'El nombre de la sección es requerido.' }),
+  vacantes_total: z.coerce.number({ invalid_type_error: 'El total de vacantes es requerido.' }).min(1, 'Debe haber al menos una vacante.'),
+  aula: z.string().min(1, { message: 'El nombre del aula es requerido.' }),
+});
+
+export type SectionFormValues = z.infer<typeof sectionSchema>;
+
 
 // Re-export Zod for use in other files
 export { z };
