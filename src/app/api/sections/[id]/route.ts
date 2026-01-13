@@ -44,3 +44,35 @@ export async function PUT(
     return NextResponse.json({ message: 'Error interno del servidor', error: errorMessage }, { status: 500 });
   }
 }
+
+export async function DELETE(
+  request: Request,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const id = params.id;
+    if (!id) {
+        return NextResponse.json({ message: 'El ID de la sección es requerido' }, { status: 400 });
+    }
+
+    const externalApiUrl = `http://31.97.169.107:8093/api/seccion/eliminar/${id}`;
+    
+    const response = await fetch(externalApiUrl, {
+      method: 'DELETE',
+    });
+
+    const responseData = await response.json();
+
+    if (!response.ok || responseData.success !== 1) {
+      const errorMessage = responseData.message || 'Error al eliminar la sección.';
+      return NextResponse.json({ message: errorMessage, details: responseData }, { status: response.status });
+    }
+
+    return NextResponse.json(responseData, { status: 200 });
+
+  } catch (error) {
+    console.error(`Error en DELETE /api/sections/${params.id}:`, error);
+    const errorMessage = error instanceof Error ? error.message : 'Error desconocido en el servidor proxy';
+    return NextResponse.json({ message: 'Error interno del servidor', error: errorMessage }, { status: 500 });
+  }
+}
