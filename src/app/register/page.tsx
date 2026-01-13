@@ -12,23 +12,54 @@ import { useToast } from '@/hooks/use-toast';
 import { LoaderCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-export default function LoginPage() {
+export default function RegisterPage() {
   const router = useRouter();
   const { toast } = useToast();
-  const [email, setEmail] = useState('admin@example.com');
-  const [password, setPassword] = useState('admin123');
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (password !== confirmPassword) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Las contraseñas no coinciden.',
+      });
+      return;
+    }
     setLoading(true);
-    
-    // Mockup: Redirige directamente al dashboard para pruebas.
-    toast({
-      title: 'Acceso de prueba',
-      description: 'Omitiendo validación para desarrollo.',
-    });
-    router.push('/dashboard');
+
+    try {
+      const response = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'No se pudo crear la cuenta.');
+      }
+
+      toast({
+        title: 'Cuenta Creada',
+        description: 'Tu cuenta ha sido creada exitosamente. Ahora puedes iniciar sesión.',
+      });
+      router.push('/');
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Ocurrió un error inesperado.';
+      toast({
+        variant: 'destructive',
+        title: 'Error de Registro',
+        description: errorMessage,
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -45,49 +76,57 @@ export default function LoginPage() {
             <AppLogo className="h-8 w-8 text-blue-400" />
             <CardTitle className="text-4xl font-bold font-headline">QRAttendance</CardTitle>
           </div>
-          <CardDescription className="pt-2 text-gray-400">Ingresa tus datos para acceder a tu cuenta</CardDescription>
+          <CardDescription className="pt-2 text-gray-400">Crea una nueva cuenta para empezar</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="text-white">
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email" className="text-gray-300">Correo Electrónico</Label>
+                <Label htmlFor="username" className="text-gray-300">Nombre de Usuario</Label>
                 <Input
-                  id="email"
-                  type="email"
-                  placeholder="admin@example.com"
+                  id="username"
+                  type="text"
+                  placeholder="tu-usuario"
                   required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
                   className="bg-black/30 border-white/20 text-white placeholder:text-gray-500 focus:ring-blue-400"
                 />
               </div>
               <div className="space-y-2">
-                <div className="flex items-center">
-                  <Label htmlFor="password">Contraseña</Label>
-                  <Link href="#" className="ml-auto inline-block text-sm text-gray-400 hover:text-white underline">
-                    ¿Olvidaste tu contraseña?
-                  </Link>
-                </div>
+                <Label htmlFor="password">Contraseña</Label>
                 <Input
                   id="password"
                   type="password"
+                  placeholder="********"
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="bg-black/30 border-white/20 text-white placeholder:text-gray-500 focus:ring-blue-400"
                 />
               </div>
+               <div className="space-y-2">
+                <Label htmlFor="confirm-password">Confirmar Contraseña</Label>
+                <Input
+                  id="confirm-password"
+                  type="password"
+                  placeholder="********"
+                  required
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="bg-black/30 border-white/20 text-white placeholder:text-gray-500 focus:ring-blue-400"
+                />
+              </div>
               <Button className="w-full font-bold bg-blue-600 hover:bg-blue-500 text-white" type="submit" disabled={loading}>
                 {loading && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
-                Iniciar Sesión
+                Crear Cuenta
               </Button>
             </div>
           </form>
-           <div className="mt-4 text-center text-sm text-gray-400">
-            ¿No tienes una cuenta?{' '}
-            <Link href="/register" className="underline text-blue-400 hover:text-blue-300">
-              Crear una cuenta
+          <div className="mt-4 text-center text-sm text-gray-400">
+            ¿Ya tienes una cuenta?{' '}
+            <Link href="/" className="underline text-blue-400 hover:text-blue-300">
+              Iniciar Sesión
             </Link>
           </div>
         </CardContent>
