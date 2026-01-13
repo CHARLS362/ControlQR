@@ -1,7 +1,8 @@
+
 'use client';
 
 import React, { useEffect, useRef, useState, useCallback } from 'react';
-import { CheckCircle, XCircle, Clock, AlertCircle, Scan, Usb, Wifi, WifiOff } from 'lucide-react';
+import { CheckCircle, XCircle, Clock, AlertCircle, Scan, Usb } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import {
   Card,
@@ -49,7 +50,6 @@ export default function KeyboardScanner() {
     inactividadSeg: 10
   });
 
-  // Detectar actividad del scanner
   const detectarActividad = useCallback(() => {
     const now = Date.now();
     setDispositivo(prev => ({
@@ -70,7 +70,6 @@ export default function KeyboardScanner() {
     }, config.inactividadSeg * 1000);
   }, [config.inactividadSeg]);
 
-  // Validar formato del código
   const validarCodigo = useCallback((codigo: string): { valido: boolean; mensaje?: string } => {
     if (codigo.length < config.longitudMin) {
       return { valido: false, mensaje: 'Código muy corto' };
@@ -78,13 +77,12 @@ export default function KeyboardScanner() {
     if (codigo.length > config.longitudMax) {
       return { valido: false, mensaje: 'Código muy largo' };
     }
-    if (!/^[a-zA-Z0-9-_]+$/.test(codigo)) {
+    if (!/^[a-zA-Z0-9\-_*]+$/.test(codigo)) {
       return { valido: false, mensaje: 'Caracteres no válidos' };
     }
     return { valido: true };
   }, [config]);
 
-  // Verificar duplicados
   const esDuplicado = useCallback((codigo: string): boolean => {
     const now = Date.now();
     const ultimoScan = lastScanTime.current[codigo];
@@ -94,7 +92,6 @@ export default function KeyboardScanner() {
     return false;
   }, [config.deduplicacionSeg]);
 
-  // Registrar asistencia
   const registrarAsistencia = useCallback(async (codigo: string) => {
     const id = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     const fechaHora = new Date().toISOString();
@@ -125,14 +122,20 @@ export default function KeyboardScanner() {
     lastScanTime.current[codigo] = Date.now();
 
     try {
-      const res = await fetch('/api/attendance/scan', {
+      // Usar el endpoint de búsqueda que luego internamente registra la asistencia
+      const res = await fetch(`/api/attendance/scan`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ studentId: codigo })
+        body: JSON.stringify({ codigo: codigo }) // El endpoint de scan espera `codigo`
       });
 
-      const data = await res.json();
-
+      let data;
+      try {
+        data = await res.json();
+      } catch (e) {
+        throw new Error(`Respuesta inválida de la API: ${await res.text()}`);
+      }
+      
       if (!res.ok) {
         throw new Error(data.message || 'Error al registrar');
       }
@@ -168,7 +171,6 @@ export default function KeyboardScanner() {
     }
   }, [validarCodigo, esDuplicado, toast]);
 
-  // Procesar buffer
   const procesarBuffer = useCallback(() => {
     const codigo = bufferRef.current.trim();
     bufferRef.current = '';
@@ -179,7 +181,6 @@ export default function KeyboardScanner() {
     registrarAsistencia(codigo);
   }, [registrarAsistencia]);
 
-  // Listener del teclado
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement;
