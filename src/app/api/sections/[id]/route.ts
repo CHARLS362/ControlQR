@@ -14,7 +14,7 @@ export async function GET(
       return NextResponse.json({ message: 'El parámetro gradeId es requerido' }, { status: 400 });
     }
 
-    const externalApiUrl = `http://31.97.169.107:8093/api/seccion/listar?grado_id=${gradeId}`;
+    const externalApiUrl = `http://31.97.169.107:8093/api/seccion/listar/${gradeId}`;
     const response = await fetch(externalApiUrl);
 
     const responseData = await response.json();
@@ -22,7 +22,7 @@ export async function GET(
     if (!response.ok || responseData.success !== 1) {
       return NextResponse.json({ message: 'Error desde la API externa de secciones', details: responseData }, { status: response.status });
     }
-    
+
     return NextResponse.json(responseData.data || []);
 
   } catch (error) {
@@ -40,12 +40,12 @@ export async function PUT(
   try {
     const id = params.id;
     const body = await request.json();
-    
+
     // Validamos los datos incluyendo el id del body
     const validatedData = sectionSchema.parse({ ...body, id: Number(id) });
 
     const externalApiUrl = 'http://31.97.169.107:8093/api/seccion/actualizar';
-    
+
     const response = await fetch(externalApiUrl, {
       method: 'PUT',
       headers: {
@@ -65,11 +65,11 @@ export async function PUT(
 
   } catch (error) {
     console.error(`Error en PUT /api/sections/${params.id}:`, error);
-    
+
     if (error instanceof z.ZodError) {
-        return NextResponse.json({ message: 'Datos de formulario inválidos', errors: error.errors }, { status: 400 });
+      return NextResponse.json({ message: 'Datos de formulario inválidos', errors: error.errors }, { status: 400 });
     }
-    
+
     const errorMessage = error instanceof Error ? error.message : 'Error desconocido en el servidor proxy';
     return NextResponse.json({ message: 'Error interno del servidor', error: errorMessage }, { status: 500 });
   }
@@ -82,11 +82,11 @@ export async function DELETE(
   try {
     const id = params.id;
     if (!id) {
-        return NextResponse.json({ message: 'El ID de la sección es requerido' }, { status: 400 });
+      return NextResponse.json({ message: 'El ID de la sección es requerido' }, { status: 400 });
     }
 
     const externalApiUrl = `http://31.97.169.107:8093/api/seccion/eliminar/${id}`;
-    
+
     const response = await fetch(externalApiUrl, {
       method: 'DELETE',
     });

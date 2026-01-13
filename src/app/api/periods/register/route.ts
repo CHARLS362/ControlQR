@@ -1,42 +1,45 @@
 
 import { NextResponse } from 'next/server';
-import { z } from 'zod';
-import { periodSchema } from '@/lib/types';
+
+const EXTERNAL_API_URL = 'http://31.97.169.107:8093/api/periodo/registrar';
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    
-    // Validar los datos con Zod antes de enviarlos
-    const validatedData = periodSchema.parse(body);
 
-    const externalApiUrl = 'http://31.97.169.107:8093/api/periodo/registrar';
-    
-    const response = await fetch(externalApiUrl, {
+    // Required fields: anio_academico_id, nombre, fecha_inicio, fecha_fin
+    if (!body.anio_academico_id || !body.nombre || !body.fecha_inicio || !body.fecha_fin) {
+      return NextResponse.json({ message: 'Todos los campos son requeridos.' }, { status: 400 });
+    }
+
+    const response = await fetch(EXTERNAL_API_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(validatedData),
+      body: JSON.stringify(body),
     });
 
     const responseData = await response.json();
 
-    if (!response.ok || responseData.success !== 1) {
-      const errorMessage = responseData.message || 'Error al registrar el periodo.';
-      return NextResponse.json({ message: errorMessage, details: responseData }, { status: response.status });
+    if (!response.ok) {
+      return NextResponse.json(
+        { message: responseData.message || 'Error al registrar el periodo.' },
+        { status: response.status || 400 }
+      );
     }
 
-    return NextResponse.json(responseData, { status: 201 });
+    if (responseData.success !== 1) {
+      return NextResponse.json(
+        { message: responseData.message || 'La API externa rechazó el registro.' },
+        { status: 400 }
+      );
+    }
+
+    return NextResponse.json(responseData);
 
   } catch (error) {
     console.error('Error en /api/periods/register:', error);
-    
-    if (error instanceof z.ZodError) {
-        return NextResponse.json({ message: 'Datos de formulario inválidos', errors: error.errors }, { status: 400 });
-    }
-    
-    const errorMessage = error instanceof Error ? error.message : 'Error desconocido en el servidor proxy';
-    return NextResponse.json({ message: 'Error interno del servidor', error: errorMessage }, { status: 500 });
+    return NextResponse.json({ message: 'Error interno del servidor' }, { status: 500 });
   }
 }

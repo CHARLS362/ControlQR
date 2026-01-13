@@ -48,19 +48,72 @@ interface PeriodListProps {
   onActionSuccess: () => void;
 }
 
+
+import { type AcademicYear, type Institution } from '@/lib/types';
+
 export default function PeriodList({ onActionSuccess }: PeriodListProps) {
-  const [academicYearId, setAcademicYearId] = React.useState<string>('');
+  const [institutions, setInstitutions] = React.useState<Institution[]>([]);
+  const [academicYears, setAcademicYears] = React.useState<AcademicYear[]>([]);
+  const [selectedInstitutionId, setSelectedInstitutionId] = React.useState<string>("");
+  const [academicYearId, setAcademicYearId] = React.useState<string>("");
+
   const [periods, setPeriods] = React.useState<Period[]>([]);
   const [loading, setLoading] = React.useState(false);
   const [editPeriod, setEditPeriod] = React.useState<Period | null>(null);
   const [isEditOpen, setIsEditOpen] = React.useState(false);
 
   const { toast } = useToast();
-  
+
+  // 1. Fetch Institutions
+  React.useEffect(() => {
+    async function fetchInstitutions() {
+      try {
+        const response = await fetch('/api/institutions');
+        if (response.ok) {
+          const data = await response.json();
+          setInstitutions(data);
+          // Select first if available
+          if (data.length > 0) setSelectedInstitutionId(String(data[0].id));
+        }
+      } catch (error) {
+        console.error("Error fetching institutions:", error);
+      }
+    }
+    fetchInstitutions();
+  }, []);
+
+  // 2. Fetch Academic Years when Institution changes
+  React.useEffect(() => {
+    if (!selectedInstitutionId) {
+      setAcademicYears([]);
+      return;
+    }
+    async function fetchYears() {
+      try {
+        const response = await fetch(`/api/academic-year?institutionId=${selectedInstitutionId}`);
+        if (response.ok) {
+          const data = await response.json();
+          setAcademicYears(data);
+          if (data.length > 0) {
+            // Automatically select the most recent year or first one
+            setAcademicYearId(String(data[0].id));
+            handleFetchPeriods(String(data[0].id));
+          } else {
+            setAcademicYearId("");
+            setPeriods([]);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching academic years:", error);
+      }
+    }
+    fetchYears();
+  }, [selectedInstitutionId]);
+
   const handleFetchPeriods = async (yearId: string) => {
     if (!yearId) {
-        setPeriods([]);
-        return;
+      setPeriods([]);
+      return;
     }
     setLoading(true);
     try {
@@ -68,9 +121,7 @@ export default function PeriodList({ onActionSuccess }: PeriodListProps) {
       if (!response.ok) throw new Error('No se pudieron cargar los periodos.');
       const data = await response.json();
       setPeriods(data);
-      if(data.length === 0) {
-        toast({ title: "Sin Periodos", description: "No se encontraron periodos para el año seleccionado."})
-      }
+      // Optional: Toast only if explicit action, not auto-load
     } catch (error) {
       toast({ variant: 'destructive', title: 'Error', description: error instanceof Error ? error.message : 'Error desconocido' });
     } finally {
@@ -78,23 +129,30 @@ export default function PeriodList({ onActionSuccess }: PeriodListProps) {
     }
   };
 
+  const onYearChange = (val: string) => {
+    setAcademicYearId(val);
+    handleFetchPeriods(val);
+  }
+
+  // ... (handleDelete and handleEditSuccess remain same) ...
+
   const handleDelete = async (periodId: number) => {
     try {
-        const response = await fetch(`/api/periods/${periodId}`, {
-            method: 'DELETE',
-        });
-        const data = await response.json();
-        if (!response.ok) {
-            throw new Error(data.message || 'Error al eliminar el periodo.');
-        }
-        toast({ title: 'Periodo Eliminado', description: 'El periodo ha sido eliminado correctamente.' });
-        handleFetchPeriods(academicYearId);
-        onActionSuccess();
+      const response = await fetch(`/api/periods/${periodId}`, {
+        method: 'DELETE',
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message || 'Error al eliminar el periodo.');
+      }
+      toast({ title: 'Periodo Eliminado', description: 'El periodo ha sido eliminado correctamente.' });
+      handleFetchPeriods(academicYearId);
+      onActionSuccess();
     } catch (error) {
-        toast({ variant: 'destructive', title: 'Error', description: error instanceof Error ? error.message : 'Error desconocido' });
+      toast({ variant: 'destructive', title: 'Error', description: error instanceof Error ? error.message : 'Error desconocido' });
     }
   };
-  
+
   const handleEditSuccess = () => {
     setIsEditOpen(false);
     handleFetchPeriods(academicYearId);
@@ -103,25 +161,40 @@ export default function PeriodList({ onActionSuccess }: PeriodListProps) {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-end gap-4">
-        <div className="flex-grow">
-            <label htmlFor="year-select" className="text-sm font-medium text-gray-700 mb-1 block">
-                Año Académico
-            </label>
-            <Select onValueChange={setAcademicYearId} value={academicYearId}>
-                <SelectTrigger id="year-select">
-                    <SelectValue placeholder="Selecciona un año académico" />
-                </SelectTrigger>
-                <SelectContent>
-                    <SelectItem value="1">2025</SelectItem>
-                    <SelectItem value="2">2024</SelectItem>
-                </SelectContent>
-            </Select>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label className="text-sm font-medium text-gray-700 mb-1 block">Institución</label>
+          <Select onValueChange={setSelectedInstitutionId} value={selectedInstitutionId}>
+            <SelectTrigger>
+              <SelectValue placeholder="Selecciona Institución" />
+            </SelectTrigger>
+            <SelectContent>
+              {institutions.map(inst => (
+                <SelectItem key={inst.id} value={String(inst.id)}>{inst.nombre}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
-        <Button onClick={() => handleFetchPeriods(academicYearId)} disabled={!academicYearId || loading}>
-          {loading ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : <Search className="mr-2 h-4 w-4" />}
-          Buscar Periodos
-        </Button>
+        <div>
+          <label className="text-sm font-medium text-gray-700 mb-1 block">Año Académico</label>
+          <div className="flex gap-2">
+            <Select onValueChange={onYearChange} value={academicYearId}>
+              <SelectTrigger className="flex-grow">
+                <SelectValue placeholder="Selecciona Año" />
+              </SelectTrigger>
+              <SelectContent>
+                {academicYears.map(year => (
+                  <SelectItem key={year.id} value={String(year.id)}>
+                    {year.anio} {year.fec_mat_inicio ? `(${year.fec_mat_inicio})` : ''}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button variant="outline" size="icon" onClick={() => handleFetchPeriods(academicYearId)} disabled={!academicYearId || loading}>
+              {loading ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+            </Button>
+          </div>
+        </div>
       </div>
 
       <Table>
@@ -152,25 +225,25 @@ export default function PeriodList({ onActionSuccess }: PeriodListProps) {
                 <TableCell>{format(parseISO(period.fecha_inicio), 'dd/MM/yyyy')}</TableCell>
                 <TableCell>{format(parseISO(period.fecha_fin), 'dd/MM/yyyy')}</TableCell>
                 <TableCell className="text-center">
-                    <Badge variant={period.vigente ? 'default' : 'secondary'}>
-                        {period.vigente ? 'Sí' : 'No'}
-                    </Badge>
+                  <Badge variant={period.vigente ? 'default' : 'secondary'}>
+                    {period.vigente ? 'Sí' : 'No'}
+                  </Badge>
                 </TableCell>
                 <TableCell className="text-right">
-                    <Dialog open={isEditOpen && editPeriod?.id === period.id} onOpenChange={(open) => { if(!open) setEditPeriod(null); setIsEditOpen(open); }}>
-                        <DialogTrigger asChild>
-                            <Button variant="ghost" size="icon" onClick={() => { setEditPeriod(period); setIsEditOpen(true); }}>
-                                <Edit className="h-4 w-4" />
-                            </Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                            <DialogHeader>
-                                <DialogTitle>Editar Periodo</DialogTitle>
-                            </DialogHeader>
-                            {editPeriod && <PeriodForm period={editPeriod} onSuccess={handleEditSuccess} />}
-                        </DialogContent>
-                    </Dialog>
-                  
+                  <Dialog open={isEditOpen && editPeriod?.id === period.id} onOpenChange={(open) => { if (!open) setEditPeriod(null); setIsEditOpen(open); }}>
+                    <DialogTrigger asChild>
+                      <Button variant="ghost" size="icon" onClick={() => { setEditPeriod(period); setIsEditOpen(true); }}>
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Editar Periodo</DialogTitle>
+                      </DialogHeader>
+                      {editPeriod && <PeriodForm period={editPeriod} onSuccess={handleEditSuccess} />}
+                    </DialogContent>
+                  </Dialog>
+
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
                       <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">

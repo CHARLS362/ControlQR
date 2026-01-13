@@ -325,22 +325,22 @@ function DashboardBreadcrumb() {
       <BreadcrumbList>
         <BreadcrumbItem>
           <BreadcrumbLink asChild>
-            <Link href="/dashboard" className="text-blue-200/60 hover:text-blue-400 transition-colors">Panel de Control</Link>
+            <Link href="/dashboard" className="text-muted-foreground hover:text-foreground transition-colors">Panel de Control</Link>
           </BreadcrumbLink>
         </BreadcrumbItem>
         {segments.slice(1).map((segment, index) => (
           <React.Fragment key={segment}>
-            <BreadcrumbSeparator className="text-white/20" />
+            <BreadcrumbSeparator className="text-muted-foreground/60" />
             <BreadcrumbItem>
               {index === segments.length - 2 ? (
-                <BreadcrumbPage className="capitalize text-white font-medium">
+                <BreadcrumbPage className="capitalize text-foreground font-medium">
                   {translatedSegments[segment] || segment.replace('-', ' ')}
                 </BreadcrumbPage>
               ) : (
                 <BreadcrumbLink asChild>
                   <Link
                     href={`/${segments.slice(0, index + 2).join('/')}`}
-                    className="capitalize text-blue-200/60 hover:text-blue-400 transition-colors"
+                    className="capitalize text-muted-foreground hover:text-foreground transition-colors"
                   >
                     {translatedSegments[segment] || segment.replace('-', ' ')}
                   </Link>
