@@ -35,6 +35,7 @@ export type StudentDetails = {
   seccion: string;
   seguro: string;
   codigo_hash: string;
+  documento_numero?: string;
 };
 
 export type Section = {

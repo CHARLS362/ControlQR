@@ -22,7 +22,7 @@ import {
   ChartTooltipContent,
 } from '@/components/ui/chart';
 import { Badge } from '@/components/ui/badge';
-import { Users, BookCopy, CheckCircle, XCircle, Clock, LoaderCircle, GraduationCap } from 'lucide-react';
+import { Users, BookCopy, CheckCircle, XCircle, Clock, LoaderCircle, GraduationCap, Building, CalendarDays, ArrowRight } from 'lucide-react';
 import React from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
@@ -30,6 +30,7 @@ import { cn } from '@/lib/utils';
 import type { DashboardStats, Attendance } from '@/lib/types';
 import { format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
+import Link from 'next/link';
 
 function StatCard({
   title,
@@ -58,6 +59,29 @@ function StatCard({
       <div className="text-xs text-white/90 mt-4">{changeText}</div>
     </Card>
   );
+}
+
+function QuickActionCard({ title, href, icon: Icon, description, color }: { title: string, href: string, icon: React.ElementType, description: string, color: string }) {
+  return (
+    <Link href={href}>
+      <Card className="shadow-subtle hover:shadow-md transition-shadow cursor-pointer h-full border-l-4 border-l-transparent hover:border-l-primary group">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">
+            {title}
+          </CardTitle>
+          <Icon className={cn("h-4 w-4 text-muted-foreground group-hover:scale-110 transition-transform", color)} />
+        </CardHeader>
+        <CardContent>
+          {/* Spacer to align with StatCards roughly or just be uniform */}
+          <div className="text-2xl font-bold invisible h-0">0</div>
+          <p className="text-xs text-muted-foreground mt-[-10px]">{description}</p>
+          <div className="flex items-center text-primary text-xs font-medium mt-4 opacity-0 group-hover:opacity-100 transition-opacity">
+            Ir a gestión <ArrowRight className="ml-1 h-3 w-3" />
+          </div>
+        </CardContent>
+      </Card>
+    </Link>
+  )
 }
 
 export default function Dashboard() {
@@ -144,7 +168,7 @@ export default function Dashboard() {
     <div className="flex flex-col gap-8 py-8">
       <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
         <StatCard
-          title="Total de Personas"
+          title="Total de Estudiantes"
           value={stats.totalPersons.toString()}
           icon={Users}
           changeText="+20 desde el mes pasado"
@@ -172,6 +196,18 @@ export default function Dashboard() {
           gradientColors="bg-gradient-to-br from-yellow-400 to-orange-500"
         />
       </div>
+
+      <div>
+        <h2 className="text-xl font-bold tracking-tight mb-4 font-headline">Gestión Académica Rápida</h2>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {/* Quick Link Cards */}
+          <QuickActionCard title="Instituciones" href="/dashboard/institutions" icon={Building} description="Configurar sedes" color="text-blue-500" />
+          <QuickActionCard title="Periodos" href="/dashboard/periods" icon={CalendarDays} description="Ciclos académicos" color="text-green-500" />
+          <QuickActionCard title="Grados" href="/dashboard/grades" icon={GraduationCap} description="Niveles educativos" color="text-purple-500" />
+          <QuickActionCard title="Secciones" href="/dashboard/sections" icon={BookCopy} description="Aulas y turnos" color="text-orange-500" />
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
         <Card className="lg:col-span-3 shadow-subtle">
           <CardHeader>

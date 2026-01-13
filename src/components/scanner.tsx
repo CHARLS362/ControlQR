@@ -5,7 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CameraOff, CheckCircle, LoaderCircle, QrCode, XCircle, AlertTriangle, List } from 'lucide-react';
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { BrowserMultiFormatReader, BarcodeFormat, DecodeHintType } from '@zxing/browser';
+import { BrowserMultiFormatReader } from '@zxing/browser';
+import { BarcodeFormat, DecodeHintType } from '@zxing/library';
 
 type Status = 'searching' | 'success' | 'error' | 'permission' | 'stopped' | 'info';
 type LogEntry = {
@@ -104,7 +105,7 @@ export function Scanner() {
     try {
       const codeReader = new BrowserMultiFormatReader();
       codeReaderRef.current = codeReader;
-      
+
       const hints = new Map();
       const formats = [
         BarcodeFormat.QR_CODE,
@@ -114,17 +115,17 @@ export function Scanner() {
       ];
       hints.set(DecodeHintType.POSSIBLE_FORMATS, formats);
       codeReader.setHints(hints);
-      
+
       setStatus('searching');
       setStatusMessage('Iniciando cámara...');
-      
+
       const controls = await codeReader.decodeFromVideoDevice(undefined, videoRef.current, (result, err) => {
         if (result) {
           registrarAsistencia(result.getText());
         }
       });
       controlsRef.current = controls;
-      
+
       setIsCameraActive(true);
       setStatus('searching');
       setStatusMessage('Apunte el código QR o de barras dentro del recuadro.');
@@ -165,11 +166,11 @@ export function Scanner() {
       <div className="lg:col-span-2">
         <Card className="w-full shadow-subtle">
           <CardHeader>
-             <div className="flex items-center justify-between">
-                <CardTitle className="flex items-center gap-2"><QrCode />Visor del Escáner</CardTitle>
-                <Button onClick={isCameraActive ? stopCamera : startCamera} variant={isCameraActive ? "destructive" : "default"}>
-                    <CameraOff className="mr-2" /> {isCameraActive ? 'Desactivar Cámara' : 'Activar Cámara'}
-                </Button>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2"><QrCode />Visor del Escáner</CardTitle>
+              <Button onClick={isCameraActive ? stopCamera : startCamera} variant={isCameraActive ? "destructive" : "default"}>
+                <CameraOff className="mr-2" /> {isCameraActive ? 'Desactivar Cámara' : 'Activar Cámara'}
+              </Button>
             </div>
           </CardHeader>
           <CardContent>
@@ -202,7 +203,7 @@ export function Scanner() {
 
         <Card className="shadow-subtle mt-6">
           <CardHeader>
-             <CardTitle className="flex items-center gap-2"><List />Últimos Registros</CardTitle>
+            <CardTitle className="flex items-center gap-2"><List />Últimos Registros</CardTitle>
           </CardHeader>
           <CardContent>
             {log.length === 0 ? (
@@ -211,16 +212,16 @@ export function Scanner() {
               <ul className="space-y-3">
                 {log.map((entry, index) => (
                   <li key={index} className="flex items-start gap-3 text-sm p-2 rounded-md bg-muted/50">
-                     {entry.status === 'success' ? (
-                        <CheckCircle className="h-5 w-5 text-green-500 shrink-0 mt-0.5" />
-                      ) : (
-                        <XCircle className="h-5 w-5 text-red-500 shrink-0 mt-0.5" />
-                      )}
+                    {entry.status === 'success' ? (
+                      <CheckCircle className="h-5 w-5 text-green-500 shrink-0 mt-0.5" />
+                    ) : (
+                      <XCircle className="h-5 w-5 text-red-500 shrink-0 mt-0.5" />
+                    )}
                     <div>
                       <p className="font-semibold break-all">{entry.value}</p>
                       <p className="text-muted-foreground text-xs">{entry.message}</p>
                     </div>
-                     <span className="ml-auto text-xs text-muted-foreground shrink-0">{entry.timestamp}</span>
+                    <span className="ml-auto text-xs text-muted-foreground shrink-0">{entry.timestamp}</span>
                   </li>
                 ))}
               </ul>
@@ -230,3 +231,4 @@ export function Scanner() {
       </div>
     </div>
   );
+}
