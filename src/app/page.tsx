@@ -4,13 +4,13 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { AppLogo } from '@/components/icons';
 import { useToast } from '@/hooks/use-toast';
-import { LoaderCircle } from 'lucide-react';
+import { LoaderCircle, Lock, User, ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { motion } from 'framer-motion';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -55,66 +55,125 @@ export default function LoginPage() {
   };
 
   return (
-    <main className="relative flex min-h-screen w-full flex-col items-center justify-center p-4 overflow-hidden bg-animated-gradient">
-      <Card className={cn(
-          "relative z-10 mx-auto w-full max-w-sm rounded-2xl border border-white/10 shadow-2xl shadow-black/50",
-          "bg-black/30 backdrop-blur-lg"
-      )}>
-        <div className="absolute -top-px left-1/2 -translate-x-1/2 h-px w-3/4 bg-gradient-to-r from-transparent via-blue-400 to-transparent"></div>
-        <div className="absolute -bottom-px left-1/2 -translate-x-1/2 h-px w-3/4 bg-gradient-to-r from-transparent via-blue-400 to-transparent"></div>
-
-        <CardHeader className="space-y-2 text-center">
-          <div className="flex justify-center items-center gap-3 text-white">
-            <AppLogo className="h-8 w-8 text-blue-400" />
-            <CardTitle className="text-4xl font-bold font-headline">QRAttendance</CardTitle>
+    <main className="relative flex min-h-screen w-full flex-col items-center justify-center overflow-hidden bg-animated-gradient p-4">
+      {/* Dynamic Background Elements */}
+      <div className="absolute inset-0 w-full h-full bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-900/20 via-transparent to-transparent pointer-events-none" />
+      
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, ease: "easeOut" }}
+        className="relative z-10 w-full max-w-md"
+      >
+        <div className="glass-card rounded-2xl p-8 border-t border-white/20 shadow-[0_0_40px_-10px_rgba(0,0,0,0.5)]">
+          {/* Header */}
+          <div className="flex flex-col items-center space-y-4 mb-8 text-center">
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: 0.2, duration: 0.5 }}
+              className="p-3 bg-blue-600/20 rounded-full ring-1 ring-blue-400/30 shadow-[0_0_15px_rgba(37,99,235,0.3)]"
+            >
+              <AppLogo className="h-10 w-10 text-blue-400 drop-shadow-[0_0_8px_rgba(59,130,246,0.6)]" />
+            </motion.div>
+            
+            <div className="space-y-1">
+              <h1 className="text-3xl font-bold text-white tracking-tight text-glow">
+                QRAttendance
+              </h1>
+              <p className="text-blue-100/60 text-sm">
+                Gestión académica inteligente
+              </p>
+            </div>
           </div>
-          <CardDescription className="pt-2 text-gray-400">Ingresa tus datos para acceder a tu cuenta</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="text-white">
+
+          {/* Form */}
+          <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-4">
+              {/* User Input */}
               <div className="space-y-2">
-                <Label htmlFor="usuario" className="text-gray-300">Usuario</Label>
-                <Input
-                  id="usuario"
-                  type="text"
-                  placeholder="tu-usuario"
-                  required
-                  value={usuario}
-                  onChange={(e) => setUsuario(e.target.value)}
-                  className="bg-black/30 border-white/20 text-white placeholder:text-gray-500 focus:ring-blue-400"
-                />
+                <Label htmlFor="usuario" className="text-blue-100/80 text-xs uppercase tracking-wider font-semibold ml-1">
+                  Usuario
+                </Label>
+                <div className="relative group">
+                  <div className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-300/50 transition-colors group-focus-within:text-blue-400">
+                    <User className="h-5 w-5" />
+                  </div>
+                  <Input
+                    id="usuario"
+                    type="text"
+                    placeholder="Ingrese su usuario"
+                    required
+                    value={usuario}
+                    onChange={(e) => setUsuario(e.target.value)}
+                    className="pl-10 bg-black/20 border-white/10 text-white placeholder:text-blue-200/20 focus:bg-black/40 focus:border-blue-500/50 focus:ring-blue-500/20 rounded-xl h-12 transition-all duration-300"
+                  />
+                </div>
               </div>
+
+              {/* Password Input */}
               <div className="space-y-2">
-                <div className="flex items-center">
-                  <Label htmlFor="password">Contraseña</Label>
-                  <Link href="#" className="ml-auto inline-block text-sm text-gray-400 hover:text-white underline">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="password" className="text-blue-100/80 text-xs uppercase tracking-wider font-semibold ml-1">
+                    Contraseña
+                  </Label>
+                  <Link href="#" className="text-xs text-blue-400/80 hover:text-blue-300 transition-colors">
                     ¿Olvidaste tu contraseña?
                   </Link>
                 </div>
-                <Input
-                  id="password"
-                  type="password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="bg-black/30 border-white/20 text-white placeholder:text-gray-500 focus:ring-blue-400"
-                />
+                <div className="relative group">
+                  <div className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-300/50 transition-colors group-focus-within:text-blue-400">
+                    <Lock className="h-5 w-5" />
+                  </div>
+                  <Input
+                    id="password"
+                    type="password"
+                    placeholder="••••••••"
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="pl-10 bg-black/20 border-white/10 text-white placeholder:text-blue-200/20 focus:bg-black/40 focus:border-blue-500/50 focus:ring-blue-500/20 rounded-xl h-12 transition-all duration-300"
+                  />
+                </div>
               </div>
-              <Button className="w-full font-bold bg-blue-600 hover:bg-blue-500 text-white" type="submit" disabled={loading}>
-                {loading && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
-                Iniciar Sesión
-              </Button>
             </div>
+
+            <Button 
+              className="w-full h-12 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 text-white font-bold rounded-xl shadow-[0_4px_20px_-4px_rgba(37,99,235,0.5)] hover:shadow-[0_8px_30px_-4px_rgba(37,99,235,0.6)] transition-all duration-300 transform hover:-translate-y-0.5"
+              type="submit" 
+              disabled={loading}
+            >
+              {loading ? (
+                <LoaderCircle className="mr-2 h-5 w-5 animate-spin" />
+              ) : (
+                <span className="flex items-center gap-2">
+                  Iniciar Sesión <ArrowRight className="w-4 h-4" />
+                </span>
+              )}
+            </Button>
           </form>
-           <div className="mt-4 text-center text-sm text-gray-400">
-            ¿No tienes una cuenta?{' '}
-            <Link href="/register" className="underline text-blue-400 hover:text-blue-300">
-              Crear una cuenta
-            </Link>
+
+          {/* Footer */}
+          <div className="mt-8 text-center">
+            <p className="text-sm text-blue-200/40">
+              ¿No tienes cuenta?{' '}
+              <Link href="/register" className="text-blue-400 hover:text-blue-300 font-medium transition-colors hover:underline underline-offset-4">
+                Solicita acceso aquí
+              </Link>
+            </p>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+        
+        {/* Decorative footer text */}
+        <motion.p 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5, duration: 1 }}
+          className="mt-8 text-center text-xs text-white/20 font-light"
+        >
+          © 2024 QRAttendance System. V1.5
+        </motion.p>
+      </motion.div>
     </main>
   );
 }

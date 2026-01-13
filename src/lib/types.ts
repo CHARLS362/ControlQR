@@ -67,13 +67,13 @@ export type Gender = {
 };
 
 export type Period = {
-    id: number;
-    anio_academico_id: number;
-    nombre: string;
-    fecha_inicio: string;
-    fecha_fin: string;
-    anio_academico: number;
-    vigente: boolean;
+  id: number;
+  anio_academico_id: number;
+  nombre: string;
+  fecha_inicio: string;
+  fecha_fin: string;
+  anio_academico: number;
+  vigente: boolean;
 };
 
 export type FoundPerson = {
@@ -110,10 +110,10 @@ export type Institution = {
 };
 
 export type User = {
-    id: number;
-    name: string;
-    email: string;
-    role?: string;
+  id: number;
+  name: string;
+  email: string;
+  role?: string;
 };
 
 
@@ -125,7 +125,8 @@ export type Attendance = {
   nombres: string;
   grado_descripcion: string;
   seccion_descripcion: string;
-  fecha_hora: string; // ISO 8601 string
+  fecha: string;
+  hora_ingreso: string;
   estado: 'Presente' | 'Ausente' | 'Tardanza';
 };
 
@@ -163,11 +164,11 @@ export type DashboardStats = {
 
 export const personaCompletaSchema = z.object({
   id: z.number().optional(),
-  documento_tipo_id: z.coerce.number({invalid_type_error: 'Seleccione un tipo de documento'}).min(1, 'Seleccione un tipo de documento'),
-  genero_id: z.coerce.number({invalid_type_error: 'Seleccione un género'}).min(1, 'Seleccione un género'),
-  grado_id: z.coerce.number({invalid_type_error: 'Seleccione un grado'}).min(1, 'Seleccione un grado'),
-  ubigeo_nacimiento_id: z.coerce.number({invalid_type_error: 'Seleccione un ubigeo de nacimiento'}).min(1, 'Seleccione un ubigeo de nacimiento'),
-  domicilio_ubigeo_id: z.coerce.number({invalid_type_error: 'Seleccione un ubigeo de domicilio'}).min(1, 'Seleccione un ubigeo de domicilio'),
+  documento_tipo_id: z.coerce.number({ invalid_type_error: 'Seleccione un tipo de documento' }).min(1, 'Seleccione un tipo de documento'),
+  genero_id: z.coerce.number({ invalid_type_error: 'Seleccione un género' }).min(1, 'Seleccione un género'),
+  grado_id: z.coerce.number({ invalid_type_error: 'Seleccione un grado' }).min(1, 'Seleccione un grado'),
+  ubigeo_nacimiento_id: z.coerce.number({ invalid_type_error: 'Seleccione un ubigeo de nacimiento' }).min(1, 'Seleccione un ubigeo de nacimiento'),
+  domicilio_ubigeo_id: z.coerce.number({ invalid_type_error: 'Seleccione un ubigeo de domicilio' }).min(1, 'Seleccione un ubigeo de domicilio'),
   documento_numero: z.string().min(8, 'El número de documento es requerido'),
   apellido_paterno: z.string().min(2, 'El apellido paterno es requerido'),
   apellido_materno: z.string().min(2, 'El apellido materno es requerido'),
@@ -178,7 +179,7 @@ export const personaCompletaSchema = z.object({
   correo_primario: z.string().email('El correo es inválido'),
   correo_secundario: z.string().email('El correo secundario es inválido').optional().or(z.literal('')),
   domicilio: z.string().min(5, 'El domicilio es requerido'),
-  persona_estado_id: z.coerce.number({invalid_type_error: 'Seleccione un estado'}).min(0, { message: 'Seleccione un estado' }),
+  persona_estado_id: z.coerce.number({ invalid_type_error: 'Seleccione un estado' }).min(0, { message: 'Seleccione un estado' }),
 });
 
 export type PersonaCompletaFormValues = z.infer<typeof personaCompletaSchema>;
@@ -187,8 +188,8 @@ export type PersonaCompletaFormValues = z.infer<typeof personaCompletaSchema>;
 export const studentEnrollmentSchema = z.object({
   persona_id: z.number(),
   anio_academico_id: z.coerce.number().min(1, 'El año académico es requerido.'),
-  grado_id: z.coerce.number({invalid_type_error: 'Seleccione un grado'}).min(1, 'El grado es requerido.'),
-  seccion_id: z.coerce.number({invalid_type_error: 'Seleccione una sección'}).min(1, 'La sección es requerida.'),
+  grado_id: z.coerce.number({ invalid_type_error: 'Seleccione un grado' }).min(1, 'El grado es requerido.'),
+  seccion_id: z.coerce.number({ invalid_type_error: 'Seleccione una sección' }).min(1, 'La sección es requerida.'),
   seguro_id: z.coerce.number().min(1, 'El seguro es requerido.'),
   celular_emergencia: z.string().min(9, 'El celular de emergencia es requerido.'),
   codigo: z.string().min(1, 'El código de estudiante es requerido.'),
@@ -230,11 +231,11 @@ export type AcademicYearGradeAssignmentFormValues = z.infer<typeof academicYearG
 
 
 export const periodSchema = z.object({
-    id: z.number().optional(),
-    anio_academico_id: z.coerce.number({ invalid_type_error: 'Selecciona un año académico.'}).min(1, 'Selecciona un año académico.'),
-    nombre: z.string().min(3, 'El nombre es requerido.'),
-    fecha_inicio: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Formato de fecha inválido (YYYY-MM-DD).'),
-    fecha_fin: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Formato de fecha inválido (YYYY-MM-DD).'),
+  id: z.number().optional(),
+  anio_academico_id: z.coerce.number({ invalid_type_error: 'Selecciona un año académico.' }).min(1, 'Selecciona un año académico.'),
+  nombre: z.string().min(3, 'El nombre es requerido.'),
+  fecha_inicio: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Formato de fecha inválido (YYYY-MM-DD).'),
+  fecha_fin: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Formato de fecha inválido (YYYY-MM-DD).'),
 });
 
 export type PeriodFormValues = z.infer<typeof periodSchema>;
@@ -252,6 +253,42 @@ export const institutionSchema = z.object({
 
 export type InstitutionFormValues = z.infer<typeof institutionSchema>;
 
+
+
+export const academicYearSchema = z.object({
+  id: z.number().optional(),
+  institucion_id: z.coerce.number().min(1, "Seleccione una institución."),
+  anio: z.coerce.number().min(2020, "Ingrese un año válido."),
+  fec_mat_inicio: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Formato de fecha inválido (YYYY-MM-DD).'),
+  fec_mat_fin: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Formato de fecha inválido (YYYY-MM-DD).'),
+  fec_mat_extemporaneo: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Formato de fecha inválido (YYYY-MM-DD).'),
+  fecha_inicio: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Formato de fecha inválido (YYYY-MM-DD).'),
+  descripcion: z.string().optional(), // For listing display if needed
+  estado: z.string().optional(), // For listing display
+});
+
+export type AcademicYearFormValues = z.infer<typeof academicYearSchema>;
+
+export type AcademicYear = {
+  id: number;
+  institucion_id: number;
+  anio: number;
+  fec_mat_inicio: string;
+  fec_mat_fin: string;
+  fec_mat_extemporaneo: string;
+  fecha_inicio: string;
+  nombre?: string; // Sometimes returned by list APIs
+  estado?: string;
+};
+
+export const attendanceSchema = z.object({
+  estudiante_id: z.coerce.number().min(1, "Ingrese el ID del estudiante."),
+  fecha: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Formato YYYY-MM-DD.'),
+  hora_ingreso: z.string().regex(/^\d{2}:\d{2}(:\d{2})?$/, 'Formato HH:mm:ss.'),
+  asistencia_estado_id: z.coerce.number().min(1, "Seleccione un estado."),
+});
+
+export type AttendanceFormValues = z.infer<typeof attendanceSchema>;
 
 // Re-export Zod for use in other files
 export { z };
