@@ -66,6 +66,16 @@ export type Gender = {
   vigente: boolean;
 };
 
+export type Period = {
+    id: number;
+    anio_academico_id: number;
+    nombre: string;
+    fecha_inicio: string;
+    fecha_fin: string;
+    anio_academico: number;
+    vigente: boolean;
+};
+
 export type FoundPerson = {
   id: number;
   documento_tipo_id: number;
@@ -206,6 +216,17 @@ export const academicYearGradeAssignmentSchema = z.object({
 });
 
 export type AcademicYearGradeAssignmentFormValues = z.infer<typeof academicYearGradeAssignmentSchema>;
+
+
+export const periodSchema = z.object({
+    id: z.number().optional(),
+    anio_academico_id: z.coerce.number({ invalid_type_error: 'Selecciona un año académico.'}).min(1, 'Selecciona un año académico.'),
+    nombre: z.string().min(3, 'El nombre es requerido.'),
+    fecha_inicio: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Formato de fecha inválido (YYYY-MM-DD).'),
+    fecha_fin: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Formato de fecha inválido (YYYY-MM-DD).'),
+});
+
+export type PeriodFormValues = z.infer<typeof periodSchema>;
 
 
 // Re-export Zod for use in other files

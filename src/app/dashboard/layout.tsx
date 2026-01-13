@@ -19,6 +19,7 @@ import {
   LayoutGrid,
   GraduationCap,
   CalendarClock,
+  CalendarDays,
 } from 'lucide-react';
 
 import {
@@ -94,6 +95,18 @@ function DashboardSidebar() {
               <Link href="/dashboard/academic-year">
                 <CalendarClock />
                 <span>Año Académico</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+           <SidebarMenuItem>
+            <SidebarMenuButton
+              asChild
+              isActive={isActive('/dashboard/periods')}
+              tooltip="Periodos"
+            >
+              <Link href="/dashboard/periods">
+                <CalendarDays />
+                <span>Periodos</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
@@ -236,6 +249,7 @@ function DashboardBreadcrumb() {
   const translatedSegments: { [key: string]: string } = {
     dashboard: 'Panel de Control',
     'academic-year': 'Año Académico',
+    periods: 'Periodos',
     grades: 'Grados',
     sections: 'Secciones',
     students: 'Estudiantes',
@@ -318,6 +332,13 @@ export default function DashboardLayout({
                 >
                   <CalendarClock className="h-5 w-5" />
                   Año Académico
+                </Link>
+                <Link
+                  href="/dashboard/periods"
+                  className="flex items-center gap-4 px-2.5 text-sidebar-foreground/70 hover:text-sidebar-foreground"
+                >
+                  <CalendarDays className="h-5 w-5" />
+                  Periodos
                 </Link>
                  <Link
                   href="/dashboard/grades"
