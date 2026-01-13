@@ -144,7 +144,7 @@ export default function KeyboardScanner() {
         throw new Error(data.message || 'Error al registrar');
       }
 
-      const resRegistro = await fetch('http://31.97.169.107:8093/api/asistencia/registrar', {
+      const resRegistro = await fetch('/api/proxy/api/asistencia/registrar', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ estudiante_id: data.data.id, fecha: data.data.fecha_hora_marcacion.substring(0, 10), hora_ingreso: data.data.fecha_hora_marcacion.substring(11, 19), asistencia_estado_id: data.data.marcacion_estado_id })
@@ -270,8 +270,8 @@ export default function KeyboardScanner() {
                 </div>
               )}
               <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border-2 transition-all ${dispositivo.conectado
-                  ? 'bg-green-100/50 border-green-400'
-                  : 'bg-muted/50 border-gray-300'
+                ? 'bg-green-100/50 border-green-400'
+                : 'bg-muted/50 border-gray-300'
                 }`}>
                 <Usb className={`w-5 h-5 ${dispositivo.conectado ? 'text-green-600' : 'text-gray-400'}`} />
                 <div className="text-left">
