@@ -15,11 +15,12 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Separator } from '@/components/ui/separator';
-import { LoaderCircle, Search, User, Calendar, Phone, Hash, Fingerprint, Edit, GraduationCap } from 'lucide-react';
+import { LoaderCircle, Search, User, Calendar, Phone, Hash, Fingerprint, Edit, GraduationCap, School } from 'lucide-react';
 import type { FoundPerson } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import PersonRegistrationForm from './person-registration-form';
+import StudentEnrollmentForm from './student-enrollment-form';
 
 const searchSchema = z.object({
   name: z.string().min(2, { message: 'El nombre debe tener al menos 2 caracteres.' }),
@@ -27,12 +28,41 @@ const searchSchema = z.object({
 
 type SearchFormValues = z.infer<typeof searchSchema>;
 
-function PersonResultCard({ person, onEditSuccess }: { person: FoundPerson, onEditSuccess: () => void }) {
-  const [isDialogOpen, setIsDialogOpen] = React.useState(false);
+
+function EnrollmentDialog({ person, onEnrollmentSuccess }: { person: FoundPerson, onEnrollmentSuccess: () => void }) {
+    const [open, setOpen] = React.useState(false);
+
+    const handleSuccess = () => {
+        setOpen(false);
+        onEnrollmentSuccess();
+    };
+
+    return (
+        <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+                <Button variant="secondary" className="w-full">
+                    <School className="mr-2 h-4 w-4" /> Inscribir como Estudiante
+                </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl">
+                <DialogHeader>
+                    <DialogTitle>Inscribir a {person.nombres}</DialogTitle>
+                    <DialogDescription>
+                        Completa los datos para inscribir a esta persona como estudiante.
+                    </DialogDescription>
+                </DialogHeader>
+                <StudentEnrollmentForm personId={person.id} onSuccess={handleSuccess} />
+            </DialogContent>
+        </Dialog>
+    );
+}
+
+function PersonResultCard({ person, onActionSuccess }: { person: FoundPerson, onActionSuccess: () => void }) {
+  const [isEditOpen, setIsEditOpen] = React.useState(false);
   
   const handleSuccess = () => {
-    setIsDialogOpen(false);
-    onEditSuccess();
+    setIsEditOpen(false);
+    onActionSuccess();
   }
 
   return (
@@ -41,7 +71,7 @@ function PersonResultCard({ person, onEditSuccess }: { person: FoundPerson, onEd
         <CardTitle className="flex items-center gap-2 text-lg">
             <User /> {person.nombres} {person.apellido_paterno} {person.apellido_materno}
         </CardTitle>
-        <CardDescription>ID de Registro: {person.id}</CardDescription>
+        <CardDescription>ID de Persona: {person.id}</CardDescription>
       </CardHeader>
       <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm flex-grow">
           <div className="flex items-center gap-2">
@@ -65,11 +95,11 @@ function PersonResultCard({ person, onEditSuccess }: { person: FoundPerson, onEd
               <strong>Grado:</strong> {person.grado || 'No asignado'}
           </div>
       </CardContent>
-       <CardFooter>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+       <CardFooter className="flex-col sm:flex-row gap-2">
+        <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
           <DialogTrigger asChild>
             <Button className="w-full">
-              <Edit className="mr-2 h-4 w-4" /> Editar
+              <Edit className="mr-2 h-4 w-4" /> Editar Persona
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-4xl w-[90vw] lg:w-full">
@@ -79,6 +109,7 @@ function PersonResultCard({ person, onEditSuccess }: { person: FoundPerson, onEd
             <PersonRegistrationForm person={person} onSuccess={handleSuccess} />
           </DialogContent>
         </Dialog>
+        <EnrollmentDialog person={person} onEnrollmentSuccess={onActionSuccess} />
       </CardFooter>
     </Card>
   )
@@ -128,9 +159,11 @@ export default function PersonSearch() {
     }
   };
   
-  const handleEditSuccess = () => {
+  const handleActionSuccess = () => {
     // Re-ejecutar la última búsqueda para refrescar los datos
-    form.handleSubmit(onSubmit)();
+    if (form.getValues('name')) {
+        form.handleSubmit(onSubmit)();
+    }
   };
 
 
@@ -175,12 +208,12 @@ export default function PersonSearch() {
             <h3 className="text-lg font-semibold">Resultados de la Búsqueda</h3>
             {isSubmitting ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <Skeleton className="h-48 w-full" />
-                    <Skeleton className="h-48 w-full" />
+                    <Skeleton className="h-56 w-full" />
+                    <Skeleton className="h-56 w-full" />
                 </div>
             ) : results.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {results.map(person => <PersonResultCard key={person.id} person={person} onEditSuccess={handleEditSuccess} />)}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {results.map(person => <PersonResultCard key={person.id} person={person} onActionSuccess={handleActionSuccess} />)}
                 </div>
             ) : hasSearched ? (
                  <div className="text-center py-12 text-muted-foreground">

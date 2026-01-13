@@ -184,5 +184,19 @@ export type Grado = {
   asignado: number;
 }
 
+export const studentEnrollmentSchema = z.object({
+  persona_id: z.number(),
+  anio_academico_id: z.coerce.number().min(1, 'El año académico es requerido.'),
+  grado_id: z.coerce.number({invalid_type_error: 'Seleccione un grado'}).min(1, 'El grado es requerido.'),
+  seccion_id: z.coerce.number({invalid_type_error: 'Seleccione una sección'}).min(1, 'La sección es requerida.'),
+  seguro_id: z.coerce.number().min(1, 'El seguro es requerido.'),
+  celular_emergencia: z.string().min(9, 'El celular de emergencia es requerido.'),
+  codigo: z.string().min(1, 'El código de estudiante es requerido.'),
+  observacion: z.string().optional().or(z.literal('')),
+});
+
+export type StudentEnrollmentFormValues = z.infer<typeof studentEnrollmentSchema>;
+
+
 // Re-export Zod for use in other files
 export { z };
