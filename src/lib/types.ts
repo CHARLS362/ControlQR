@@ -184,6 +184,7 @@ export type Gender = {
 export type Grado = {
   id: number;
   nombre: string;
+  descripcion: string;
   asignado: number;
 }
 
@@ -214,6 +215,7 @@ export const sectionSchema = z.object({
 export type SectionFormValues = z.infer<typeof sectionSchema>;
 
 export const gradeSchema = z.object({
+  id: z.number().optional(),
   nombre: z.string().min(3, { message: "El nombre del grado es requerido y debe tener al menos 3 caracteres." }),
   descripcion: z.string().optional().or(z.literal('')),
 });
