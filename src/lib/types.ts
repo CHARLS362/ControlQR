@@ -52,18 +52,19 @@ export type AttendanceReport = {
 }
 
 // --- Tipos para el Dashboard ---
-export type ChartDataPoint = {
-  time: string;
+export type TodayAttendanceByCourse = {
+  courseName: string;
   presentes: number;
   ausentes: number;
 }
 
 export type DashboardStats = {
-  totalStudents: number;
+  totalPersons: number;
   totalCourses: number;
-  totalPresent: number;
-  totalAbsent: number;
-  chartData: ChartDataPoint[];
+  totalPresentToday: number;
+  totalAbsentToday: number;
+  recentAttendance: Attendance[];
+  todayAttendanceByCourse: TodayAttendanceByCourse[];
 };
 
 // --- Tipos de la API Externa ---

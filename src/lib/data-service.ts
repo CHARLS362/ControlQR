@@ -1,6 +1,6 @@
 
 import pool from './db';
-import type { Student, Course, Attendance, User, StudentFormValues, CourseFormValues, AttendanceReport, DashboardStats, ChartDataPoint } from './types';
+import type { Student, Course, Attendance, User, StudentFormValues, CourseFormValues, AttendanceReport, DashboardStats, TodayAttendanceByCourse } from './types';
 import { RowDataPacket } from 'mysql2';
 import crypto from 'crypto';
 
@@ -325,65 +325,76 @@ export async function generateReportForCourse(courseId: string, reportDate: stri
 
 // === Funciones para Estadísticas (Dashboard) ===
 
-export async function getDashboardStats(range: 'monthly' | 'weekly'): Promise<DashboardStats> {
-  // Queries for the 4 main stat cards
-  const [[studentsCount]]: any = await pool.query("SELECT COUNT(*) as count FROM students");
-  const [[coursesCount]]: any = await pool.query("SELECT COUNT(*) as count FROM courses");
-  const thirtyDaysAgo = new Date();
-  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-  const [[presentCount]]: any = await pool.query("SELECT COUNT(*) as count FROM attendance WHERE status = 'Presente' AND date >= ?", [thirtyDaysAgo]);
-  const [[absentCount]]: any = await pool.query("SELECT COUNT(*) as count FROM attendance WHERE status = 'Ausente' AND date >= ?", [thirtyDaysAgo]);
+async function countTotalPersonsFromApi(): Promise<number> {
+    // Esto es un placeholder. Idealmente, la API externa tendría un endpoint
+    // para contar el total de personas. Por ahora, simulamos una búsqueda amplia
+    // y contamos los resultados. Esto puede ser lento y no es ideal para producción.
+    try {
+        const response = await fetch(`http://31.97.169.107:8093/api/persona/buscar-persona?nombres=a`);
+        if (!response.ok) return 0;
+        const data = await response.json();
+        return Array.isArray(data.data) ? data.data.length : 0;
+    } catch (e) {
+        console.error("Could not fetch total persons from external API", e);
+        return 0; // Devolver 0 si la API externa falla
+    }
+}
 
-  // Query for the chart data
-  let chartData: ChartDataPoint[] = [];
-  if (range === 'monthly') {
-    const sixMonthsAgo = new Date();
-    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
-    const [monthlyRows]: any = await pool.query(`
-      SELECT 
-          DATE_FORMAT(date, '%Y-%m') as time,
-          SUM(CASE WHEN status = 'Presente' THEN 1 ELSE 0 END) as presentes,
-          SUM(CASE WHEN status = 'Ausente' THEN 1 ELSE 0 END) as ausentes
-      FROM attendance
-      WHERE date >= ?
-      GROUP BY time
-      ORDER BY time ASC;
-    `, [sixMonthsAgo]);
 
-    const monthNames = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
-    chartData = monthlyRows.map((row: any) => ({
-      time: monthNames[new Date(row.time + '-02').getMonth()],
-      presentes: Number(row.presentes),
-      ausentes: Number(row.ausentes)
-    }));
+export async function getDashboardStats(): Promise<DashboardStats> {
+  const today = new Date().toISOString().slice(0, 10);
 
-  } else { // weekly
-    const sevenDaysAgo = new Date();
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-    const [weeklyRows]: any = await pool.query(`
+  const [
+    // personsCount, // Descomentar cuando la API de conteo esté disponible
+    coursesCount,
+    presentCount,
+    recentAttendance,
+    todayAttendanceByCourse,
+    totalEnrolledStudentsResult
+  ] = await Promise.all([
+    // countTotalPersonsFromApi(),
+    pool.query<RowDataPacket[]>("SELECT COUNT(*) as count FROM courses"),
+    pool.query<RowDataPacket[]>("SELECT COUNT(*) as count FROM attendance WHERE status = 'Presente' AND DATE(date) = ?", [today]),
+    pool.query<RowDataPacket[]>(`
+        SELECT a.id, s.name as studentName, c.name as courseName, a.date, a.status
+        FROM attendance a
+        JOIN students s ON a.student_id = s.id
+        JOIN courses c ON a.course_id = c.id
+        WHERE DATE(a.date) = ?
+        ORDER BY a.date DESC
+        LIMIT 5
+    `, [today]),
+    pool.query<RowDataPacket[]>(`
         SELECT 
-            DATE_FORMAT(date, '%Y-%m-%d') as time,
-            SUM(CASE WHEN status = 'Presente' THEN 1 ELSE 0 END) as presentes,
-            SUM(CASE WHEN status = 'Ausente' THEN 1 ELSE 0 END) as ausentes
-        FROM attendance
-        WHERE date >= ?
-        GROUP BY time
-        ORDER BY time ASC;
-    `, [sevenDaysAgo]);
+            c.name as courseName,
+            SUM(CASE WHEN a.status = 'Presente' THEN 1 ELSE 0 END) as presentes,
+            (COUNT(DISTINCT sc.student_id) - SUM(CASE WHEN a.status = 'Presente' THEN 1 ELSE 0 END)) as ausentes
+        FROM courses c
+        LEFT JOIN student_courses sc ON c.id = sc.course_id
+        LEFT JOIN attendance a ON sc.student_id = a.student_id AND c.id = a.course_id AND DATE(a.date) = ?
+        GROUP BY c.id, c.name
+        ORDER BY c.name ASC
+    `, [today]),
+    pool.query<RowDataPacket[]>("SELECT COUNT(DISTINCT student_id) as count FROM student_courses")
+  ]);
 
-    const dayNames = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
-    chartData = weeklyRows.map((row: any) => ({
-      time: dayNames[new Date(row.time).getUTCDay()],
-      presentes: Number(row.presentes),
-      ausentes: Number(row.ausentes)
-    }));
-  }
+  const totalPersons = 150; // Valor placeholder hasta tener endpoint de conteo
+
+  const totalCourses = (coursesCount[0] as any)[0].count;
+  const totalPresentToday = (presentCount[0] as any)[0].count;
+  const totalEnrolledStudents = (totalEnrolledStudentsResult[0] as any)[0].count;
+  const totalAbsentToday = totalEnrolledStudents - totalPresentToday;
 
   return {
-    totalStudents: studentsCount.count,
-    totalCourses: coursesCount.count,
-    totalPresent: presentCount.count,
-    totalAbsent: absentCount.count,
-    chartData: chartData,
+    totalPersons: totalPersons,
+    totalCourses: totalCourses,
+    totalPresentToday: totalPresentToday,
+    totalAbsentToday: totalAbsentToday < 0 ? 0 : totalAbsentToday,
+    recentAttendance: recentAttendance[0].map(row => ({...row, id: String(row.id)})) as Attendance[],
+    todayAttendanceByCourse: todayAttendanceByCourse[0].map(row => ({
+      courseName: row.courseName,
+      presentes: Number(row.presentes),
+      ausentes: Number(row.ausentes < 0 ? 0 : row.ausentes)
+    })) as TodayAttendanceByCourse[],
   };
 }

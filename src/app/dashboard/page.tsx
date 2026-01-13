@@ -1,6 +1,6 @@
 'use client';
 
-import { BarChart, Bar, CartesianGrid, XAxis, YAxis, Legend } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend, Tooltip as RechartsTooltip } from 'recharts';
 import {
   Card,
   CardContent,
@@ -9,18 +9,27 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
 } from '@/components/ui/chart';
-import { Button } from '@/components/ui/button';
-import { BookCopy, Users, CheckCircle, XCircle, LoaderCircle } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Users, BookCopy, CheckCircle, XCircle, Clock, LoaderCircle } from 'lucide-react';
 import React from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import type { DashboardStats } from '@/lib/types';
-
+import type { DashboardStats, Attendance } from '@/lib/types';
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
 
 function StatCard({ 
     title, 
@@ -54,22 +63,15 @@ function StatCard({
 export default function Dashboard() {
   const [stats, setStats] = React.useState<DashboardStats | null>(null);
   const [loading, setLoading] = React.useState(true);
-  const [filter, setFilter] = React.useState<'monthly' | 'weekly'>('monthly');
-  const [isChartLoading, setIsChartLoading] = React.useState(false);
   const { toast } = useToast();
 
   React.useEffect(() => {
-    async function fetchStats(range: 'monthly' | 'weekly') {
-        if (range === 'monthly' && !stats) { // Only show main loading skeleton on first load
-            setLoading(true);
-        } else {
-            setIsChartLoading(true);
-        }
-
+    async function fetchStats() {
+      setLoading(true);
       try {
-        const response = await fetch(`/api/stats/dashboard?range=${range}`);
+        const response = await fetch(`/api/stats/dashboard`);
         if (!response.ok) {
-          throw new Error('Failed to fetch stats');
+          throw new Error('No se pudieron cargar las estadísticas del panel.');
         }
         const data = await response.json();
         setStats(data);
@@ -78,16 +80,14 @@ export default function Dashboard() {
         toast({
             variant: 'destructive',
             title: 'Error',
-            description: 'No se pudieron cargar las estadísticas.',
+            description: error instanceof Error ? error.message : 'No se pudieron cargar las estadísticas.',
         });
       } finally {
         setLoading(false);
-        setIsChartLoading(false);
       }
     }
-    fetchStats(filter);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filter, toast]);
+    fetchStats();
+  }, [toast]);
   
 
   if (loading || !stats) {
@@ -99,38 +99,45 @@ export default function Dashboard() {
           <Skeleton className="h-36 w-full" />
           <Skeleton className="h-36 w-full" />
         </div>
-        <Card className="shadow-subtle">
-          <CardHeader>
-            <Skeleton className="h-8 w-64" />
-            <Skeleton className="h-5 w-96 mt-2" />
-          </CardHeader>
-          <CardContent>
-            <Skeleton className="min-h-[200px] w-full" />
-          </CardContent>
-        </Card>
+        <div className="grid md:grid-cols-2 gap-8">
+            <Card className="shadow-subtle">
+              <CardHeader>
+                <Skeleton className="h-8 w-64" />
+                <Skeleton className="h-5 w-96 mt-2" />
+              </CardHeader>
+              <CardContent>
+                <Skeleton className="min-h-[250px] w-full" />
+              </CardContent>
+            </Card>
+             <Card className="shadow-subtle">
+              <CardHeader>
+                <Skeleton className="h-8 w-48" />
+                <Skeleton className="h-5 w-64 mt-2" />
+              </CardHeader>
+              <CardContent>
+                <Skeleton className="min-h-[250px] w-full" />
+              </CardContent>
+            </Card>
+        </div>
       </div>
     )
   }
 
   const chartConfig = {
-    presentes: {
-      label: 'Presentes',
-      color: 'hsl(var(--chart-2))',
-    },
-    ausentes: {
-      label: 'Ausentes',
-      color: 'hsl(var(--chart-5))',
-    },
+    presentes: { label: 'Presentes', color: 'hsl(var(--chart-2))' },
+    ausentes: { label: 'Ausentes', color: 'hsl(var(--chart-5))' },
   };
+  
+  const today = format(new Date(), "eeee, dd 'de' MMMM", { locale: es });
 
   return (
     <div className="flex flex-col gap-8 py-8">
       <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
         <StatCard 
-            title="Total de Estudiantes"
-            value={stats.totalStudents.toString()}
+            title="Total de Personas"
+            value={stats.totalPersons.toString()}
             icon={Users}
-            changeText="+2 desde el mes pasado"
+            changeText="+20 desde el mes pasado"
             gradientColors="bg-gradient-to-br from-green-400 to-green-600"
         />
         <StatCard 
@@ -141,94 +148,96 @@ export default function Dashboard() {
             gradientColors="bg-gradient-to-br from-blue-400 to-blue-600"
         />
         <StatCard 
-            title="Total de Presentes"
-            value={stats.totalPresent.toString()}
+            title="Presentes (Hoy)"
+            value={stats.totalPresentToday.toString()}
             icon={CheckCircle}
-            changeText="en los últimos 30 días"
+            changeText="Registros de asistencia hoy"
             gradientColors="bg-gradient-to-br from-purple-400 to-pink-600"
         />
         <StatCard 
-            title="Total de Ausentes"
-            value={stats.totalAbsent.toString()}
+            title="Ausentes (Hoy)"
+            value={stats.totalAbsentToday.toString()}
             icon={XCircle}
-            changeText="en los últimos 30 días"
+            changeText="Estimado de ausencias hoy"
             gradientColors="bg-gradient-to-br from-yellow-400 to-orange-500"
         />
       </div>
-      <Card className="shadow-subtle">
-        <CardHeader className="flex flex-row items-center justify-between">
-            <div>
-              <CardTitle className="font-headline">Resumen de Asistencia</CardTitle>
-              <CardDescription>
-                Un resumen de la asistencia en {filter === 'monthly' ? 'los últimos 6 meses' : 'la última semana'}.
-              </CardDescription>
-            </div>
-            <div className="flex gap-2">
-                <Button variant="outline" size="sm" className={cn(filter === 'monthly' && "bg-muted")} onClick={() => setFilter('monthly')}>Mes</Button>
-                <Button variant="outline" size="sm" className={cn(filter === 'weekly' && "bg-muted")} onClick={() => setFilter('weekly')}>Semana</Button>
-            </div>
-        </CardHeader>
-        <CardContent className="h-[350px] relative">
-            {isChartLoading && (
-                <div className="absolute inset-0 flex items-center justify-center bg-card/80 z-10 rounded-b-lg">
-                    <LoaderCircle className="h-10 w-10 animate-spin" />
-                </div>
-            )}
-          <ChartContainer config={chartConfig} className="h-full w-full">
-            <BarChart 
-                accessibilityLayer 
-                data={stats.chartData}
-                margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
-            >
-              <XAxis
-                dataKey="time"
-                stroke="hsl(var(--muted-foreground))"
-                axisLine={false}
-                tickLine={false}
-                tickFormatter={(value) => filter === 'monthly' ? value.slice(0, 3) : value}
-                tick={{ fill: 'hsl(var(--muted-foreground))' }}
-              />
-              <YAxis 
-                stroke="hsl(var(--muted-foreground))"
-                axisLine={false}
-                tickLine={false}
-                tick={{ fill: 'hsl(var(--muted-foreground))' }}
-              />
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
-              <ChartTooltip
-                cursor={{ fill: 'hsl(var(--muted))', opacity: 0.5 }}
-                content={<ChartTooltipContent 
-                    indicator="dot" 
-                />}
-              />
-              <Legend content={({ payload }) => (
-                <div className="flex justify-center gap-4 pt-4">
-                  {payload?.map((entry, index) => (
-                    <div key={`item-${index}`} className="flex items-center gap-1.5">
-                      <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: entry.color }} />
-                      <span className="text-sm text-muted-foreground">{entry.value}</span>
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
+        <Card className="lg:col-span-3 shadow-subtle">
+            <CardHeader>
+                <CardTitle className="font-headline">Asistencia de Hoy por Curso</CardTitle>
+                <CardDescription>
+                    Resumen de presentes y ausentes por curso para el día de hoy, <span className="capitalize">{today}</span>.
+                </CardDescription>
+            </CardHeader>
+            <CardContent className="h-[350px]">
+              <ChartContainer config={chartConfig} className="h-full w-full">
+                <BarChart data={stats.todayAttendanceByCourse} layout="vertical" margin={{ left: 10, right: 30 }}>
+                  <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+                  <XAxis type="number" stroke="hsl(var(--muted-foreground))" tick={{ fill: 'hsl(var(--muted-foreground))' }} />
+                  <YAxis type="category" dataKey="courseName" width={100} tick={{ fill: 'hsl(var(--muted-foreground))' }} tickLine={false} axisLine={false} />
+                  <RechartsTooltip cursor={{ fill: 'hsl(var(--muted))', opacity: 0.5 }} content={<ChartTooltipContent indicator="dot" />} />
+                  <Legend content={({ payload }) => (
+                    <div className="flex justify-center gap-4 pt-4">
+                      {payload?.map((entry, index) => (
+                        <div key={`item-${index}`} className="flex items-center gap-1.5">
+                          <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: entry.color }} />
+                          <span className="text-sm text-muted-foreground">{entry.value}</span>
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
-              )}/>
-              <Bar 
-                dataKey="presentes" 
-                fill="var(--color-presentes)" 
-                name="Presentes"
-                radius={[4, 4, 0, 0]} 
-                barSize={20}
-              />
-              <Bar 
-                dataKey="ausentes" 
-                fill="var(--color-ausentes)" 
-                name="Ausentes"
-                radius={[4, 4, 0, 0]}
-                barSize={20}
-              />
-            </BarChart>
-          </ChartContainer>
-        </CardContent>
-      </Card>
+                  )}/>
+                  <Bar dataKey="presentes" stackId="a" fill="var(--color-presentes)" radius={[0, 4, 4, 0]} />
+                  <Bar dataKey="ausentes" stackId="a" fill="var(--color-ausentes)" radius={[0, 4, 4, 0]} />
+                </BarChart>
+              </ChartContainer>
+            </CardContent>
+        </Card>
+        
+        <Card className="lg:col-span-2 shadow-subtle">
+            <CardHeader>
+                <CardTitle>Registros Recientes</CardTitle>
+                <CardDescription>Últimos 5 registros de asistencia del día.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                {stats.recentAttendance.length > 0 ? (
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Estudiante</TableHead>
+                                <TableHead>Estado</TableHead>
+                                <TableHead className="text-right">Hora</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {stats.recentAttendance.map((att: Attendance) => (
+                                <TableRow key={att.id}>
+                                    <TableCell className="font-medium">
+                                        <div className="truncate">{att.studentName}</div>
+                                        <div className="text-xs text-muted-foreground truncate">{att.courseName}</div>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Badge variant={att.status === 'Presente' ? 'default' : 'destructive'}>
+                                            {att.status}
+                                        </Badge>
+                                    </TableCell>
+                                    <TableCell className="text-right text-muted-foreground">
+                                        {format(new Date(att.date), 'HH:mm:ss')}
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                ) : (
+                    <div className="flex flex-col items-center justify-center text-center h-full min-h-[250px] text-muted-foreground">
+                        <Clock className="w-12 h-12 mb-4 opacity-50" />
+                        <p className="font-semibold">Sin registros de asistencia hoy.</p>
+                        <p className="text-sm">Los nuevos registros aparecerán aquí.</p>
+                    </div>
+                )}
+            </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
