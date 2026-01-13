@@ -122,7 +122,6 @@ export default function KeyboardScanner() {
     lastScanTime.current[codigo] = Date.now();
 
     try {
-      // Usar el endpoint de búsqueda que luego internamente registra la asistencia
       const res = await fetch(`/api/attendance/scan`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -213,7 +212,7 @@ export default function KeyboardScanner() {
     };
   }, [procesarBuffer, config.timeoutBuffer, detectarActividad]);
 
-  const getIcon = (estado: string) => {
+  const getIcon = (estado: 'exito' | 'error' | 'duplicado') => {
     switch (estado) {
       case 'exito': return <CheckCircle className="w-5 h-5 text-green-500" />;
       case 'error': return <XCircle className="w-5 h-5 text-red-500" />;
@@ -222,7 +221,7 @@ export default function KeyboardScanner() {
     }
   };
 
-  const getColorClasses = (estado: string) => {
+  const getColorClasses = (estado: 'exito' | 'error' | 'duplicado') => {
     switch (estado) {
       case 'exito': return 'bg-green-50/50 border-green-200';
       case 'error': return 'bg-red-50/50 border-red-200';
@@ -368,3 +367,5 @@ export default function KeyboardScanner() {
     </div>
   );
 }
+
+    

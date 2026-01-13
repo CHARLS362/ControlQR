@@ -77,3 +77,5 @@ export async function POST(request: Request) {
     return NextResponse.json({ message: 'Error al registrar la asistencia', error: errorMessage }, { status: 500 });
   }
 }
+
+    

@@ -122,7 +122,6 @@ export default function KeyboardScanner() {
     lastScanTime.current[codigo] = Date.now();
 
     try {
-      // Usar el endpoint de búsqueda que luego internamente registra la asistencia
       const res = await fetch(`/api/attendance/scan`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
