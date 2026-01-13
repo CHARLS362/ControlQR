@@ -104,6 +104,7 @@ export type Section = {
   aula: string;
   grado: string;
   turno: string;
+  tutor_nombre: string;
 };
 
 
