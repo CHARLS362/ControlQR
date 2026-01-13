@@ -98,6 +98,17 @@ export type FoundPerson = {
   grado: string | null;
 };
 
+export type Institution = {
+  id: number;
+  codigo_modular: string;
+  nombre: string;
+  direccion: string;
+  latitud: string;
+  longitud: string;
+  ubigeo: string;
+  estado: string;
+};
+
 export type User = {
     id: number;
     name: string;
@@ -227,6 +238,19 @@ export const periodSchema = z.object({
 });
 
 export type PeriodFormValues = z.infer<typeof periodSchema>;
+
+
+export const institutionSchema = z.object({
+  id: z.number().optional(),
+  codigo_modular: z.coerce.number({ invalid_type_error: "El código modular es requerido." }),
+  nombre: z.string().min(3, "El nombre es requerido."),
+  direccion: z.string().min(5, "La dirección es requerida."),
+  latitud: z.string().optional().or(z.literal('')),
+  longitud: z.string().optional().or(z.literal('')),
+  ubigeo: z.coerce.number({ invalid_type_error: "El ubigeo es requerido." }),
+});
+
+export type InstitutionFormValues = z.infer<typeof institutionSchema>;
 
 
 // Re-export Zod for use in other files
