@@ -4,13 +4,29 @@ import type { NextRequest } from 'next/server';
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
-    const name = searchParams.get('name');
+    
+    // Construir los parámetros de consulta para la API externa
+    const query = new URLSearchParams();
+    
+    const name = searchParams.get('nombres');
+    const docType = searchParams.get('documento_tipo_id');
+    const docNumber = searchParams.get('documento_numero');
 
-    if (!name) {
-      return NextResponse.json({ message: 'El parámetro de búsqueda "name" es requerido' }, { status: 400 });
+    if (name) {
+      query.append('nombres', name);
+    }
+    if (docType) {
+      query.append('documento_tipo_id', docType);
+    }
+    if (docNumber) {
+      query.append('documento_numero', docNumber);
+    }
+    
+    if (query.toString() === '') {
+        return NextResponse.json({ message: 'Se requiere al menos un parámetro de búsqueda.' }, { status: 400 });
     }
 
-    const externalApiUrl = `http://31.97.169.107:8093/api/persona/buscar-persona?nombres=${encodeURIComponent(name)}`;
+    const externalApiUrl = `http://31.97.169.107:8093/api/persona/buscar-persona?${query.toString()}`;
     const response = await fetch(externalApiUrl);
 
     const responseData = await response.json();
