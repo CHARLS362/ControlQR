@@ -6,12 +6,16 @@ export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
     const studentId = searchParams.get('id');
+    const docNumber = searchParams.get('doc');
 
-    if (!studentId) {
-      return NextResponse.json({ message: 'El parámetro de búsqueda "id" es requerido' }, { status: 400 });
+    if (!studentId && !docNumber) {
+      return NextResponse.json({ message: 'El parámetro de búsqueda "id" o "doc" es requerido' }, { status: 400 });
     }
+    
+    // La API externa de consulta parece aceptar diferentes tipos de identificadores en la misma ruta
+    const searchTerm = studentId || docNumber;
 
-    const externalApiUrl = `http://31.97.169.107:8093/api/estudiante/consultar/${studentId}`;
+    const externalApiUrl = `http://31.97.169.107:8093/api/estudiante/consultar/${searchTerm}`;
     const response = await fetch(externalApiUrl);
     
     if (!response.ok) {
@@ -34,3 +38,5 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ message: 'Error interno del servidor', error: errorMessage }, { status: 500 });
   }
 }
+
+    

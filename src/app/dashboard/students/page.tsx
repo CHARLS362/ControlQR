@@ -39,27 +39,30 @@ import { StudentDetailsModal } from '@/components/student-details-modal';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { StudentCodes } from '@/components/student-codes';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 
-function StudentIdSearch({ onStudentFound }: { onStudentFound: (id: string) => void }) {
+function StudentSearch({ onStudentFound }: { onStudentFound: (id: string) => void }) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
-  const [studentId, setStudentId] = React.useState('');
+  const [searchValue, setSearchValue] = React.useState('');
+  const [searchType, setSearchType] = React.useState<'id' | 'doc'>('id');
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!studentId) {
+    if (!searchValue) {
        toast({
         variant: 'destructive',
-        title: 'ID Requerido',
-        description: 'Por favor, introduce el ID del estudiante para buscar.',
+        title: 'Valor Requerido',
+        description: `Por favor, introduce el ${searchType === 'id' ? 'ID del estudiante' : 'N° de documento'} para buscar.`,
       });
       return;
     }
     
     setIsSubmitting(true);
     try {
-      const response = await fetch(`/api/students/search?id=${studentId}`);
+      const queryParam = searchType === 'id' ? `id=${searchValue}` : `doc=${searchValue}`;
+      const response = await fetch(`/api/students/search?${queryParam}`);
       const data = await response.json();
 
       if (!response.ok) {
@@ -67,7 +70,7 @@ function StudentIdSearch({ onStudentFound }: { onStudentFound: (id: string) => v
       }
 
       onStudentFound(String(data.id));
-      setStudentId('');
+      setSearchValue('');
 
     } catch (error) {
       toast({
@@ -79,27 +82,44 @@ function StudentIdSearch({ onStudentFound }: { onStudentFound: (id: string) => v
       setIsSubmitting(false);
     }
   };
+  
+  const handleSearchTypeChange = (value: 'id' | 'doc') => {
+      setSearchType(value);
+      setSearchValue(''); // Reset input when changing type
+  }
 
   return (
      <Card className="shadow-subtle mt-6">
         <CardHeader>
-            <CardTitle>Buscar Estudiante por ID</CardTitle>
-            <CardDescription>Introduce el ID numérico del estudiante para ver sus detalles.</CardDescription>
+            <CardTitle>Buscar Estudiante</CardTitle>
+            <CardDescription>Introduce el ID o N° de Documento del estudiante para ver sus detalles.</CardDescription>
         </CardHeader>
         <CardContent>
-            <form onSubmit={handleSearch} className="flex items-start gap-4">
+            <form onSubmit={handleSearch} className="space-y-4">
+              <RadioGroup value={searchType} onValueChange={handleSearchTypeChange} className="flex gap-4">
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="id" id="search-id" />
+                  <Label htmlFor="search-id">ID de Estudiante</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="doc" id="search-doc" />
+                  <Label htmlFor="search-doc">N° Documento</Label>
+                </div>
+              </RadioGroup>
+              <div className="flex items-start gap-4">
                 <Input 
-                    type="text" 
-                    inputMode="numeric" 
-                    placeholder="Ej: 191" 
-                    value={studentId}
-                    onChange={(e) => setStudentId(e.target.value)}
+                    type="text"
+                    inputMode={searchType === 'id' ? 'numeric' : 'text'}
+                    placeholder={searchType === 'id' ? 'Ej: 191' : 'Ej: 71234567'}
+                    value={searchValue}
+                    onChange={(e) => setSearchValue(e.target.value)}
                 />
                 <Button type="submit" disabled={isSubmitting}>
                     {isSubmitting && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
                     <Search className="mr-2 h-4 w-4" />
                     Buscar
                 </Button>
+              </div>
             </form>
         </CardContent>
     </Card>
@@ -311,7 +331,7 @@ export default function StudentsPage() {
           </TabsTrigger>
           <TabsTrigger value="search" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-md">
             <Search className="mr-2" />
-            Buscar por ID
+            Buscar Estudiante
           </TabsTrigger>
         </TabsList>
         <TabsContent value="filter">
@@ -441,7 +461,7 @@ export default function StudentsPage() {
             </Card>
         </TabsContent>
         <TabsContent value="search">
-            <StudentIdSearch onStudentFound={handleStudentFound} />
+            <StudentSearch onStudentFound={handleStudentFound} />
              <div className="text-center py-12 text-muted-foreground mt-6 border-2 border-dashed rounded-lg">
                 <p>El detalle del estudiante se mostrará en un modal después de la búsqueda.</p>
             </div>
@@ -477,3 +497,5 @@ export default function StudentsPage() {
     </>
   );
 }
+
+    
